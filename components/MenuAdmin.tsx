@@ -24,14 +24,15 @@ const GRUPOS: { grupo: string | null; items: Item[] }[] = [
       { href: "/gastos", texto: "Gastos", listo: true },
       { href: "/lecturas", texto: "Lecturas de agua", listo: true },
       { href: "/calculo", texto: "Cálculo mensual", listo: true },
-      { href: "/cobranza", texto: "Cobranza" },
+      { href: "/cobranza", texto: "Cobranza", listo: true },
       { href: "/estado-cuenta", texto: "Estado de cuenta" },
     ],
   },
   { grupo: "Comunicación", items: [{ href: "/chat", texto: "Chat del edificio" }] },
 ];
 
-export function MenuAdmin() {
+// porValidar: pagos en revisión que la persona puede validar (contador junto a Cobranza)
+export function MenuAdmin({ porValidar = 0 }: { porValidar?: number }) {
   const ruta = usePathname();
   return (
     <nav
@@ -52,6 +53,11 @@ export function MenuAdmin() {
                 }`}
               >
                 {i.texto}
+                {i.href === "/cobranza" && porValidar > 0 && (
+                  <span className="ml-1.5 rounded-full bg-bad px-1.5 text-xs font-bold text-white" aria-label={`${porValidar} por validar`}>
+                    {porValidar}
+                  </span>
+                )}
               </Link>
             ) : (
               <span

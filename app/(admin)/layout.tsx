@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="md:col-span-2">
         <Encabezado edificio={actual} vista="admin" variosEdificios={edificios.length > 1} />
       </div>
-      <MenuAdmin />
+      <MenuAdmin porValidar={actual.pagos_por_validar ?? 0} />
       <main className="mx-auto w-full max-w-[1200px] min-w-0 px-4 pt-5 pb-12 md:px-8">{children}</main>
     </div>
   );

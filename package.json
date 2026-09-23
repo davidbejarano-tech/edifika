@@ -13,7 +13,9 @@
     "probar:cuotas": "tsx --env-file=.env.local scripts/probar-cuotas.ts",
     "probar:permisos": "tsx --env-file=.env.local scripts/probar-permisos.ts",
     "probar:equipo": "tsx --env-file=.env.local scripts/probar-equipo.ts",
-    "probar:ciclo": "tsx --env-file=.env.local scripts/probar-ciclo.ts"
+    "probar:ciclo": "tsx --env-file=.env.local scripts/probar-ciclo.ts",
+    "demo:pagos": "tsx --env-file=.env.local scripts/crear-pagos-demo.ts",
+    "probar:cobranza": "tsx --env-file=.env.local scripts/probar-cobranza.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

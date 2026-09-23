@@ -103,15 +103,25 @@ async function main() {
   await contiene("Titular: equipo con acciones", "/equipo", titular, ["Equipo actual", "Transferir la titularidad", "Coadministrador"]);
   await contiene("Coadministrador: equipo solo lectura", "/equipo", coadmin, ["Equipo actual", "Solo el administrador titular puede cambiarlo"], ["Transferir la titularidad", "Agregar coadministrador"]);
 
-  // Etapa 3a: Gastos, Lecturas, Cálculo y Ciclo (Los Ficus: agosto abierto con gastos confirmados)
+  // Etapa 3a: Gastos, Lecturas, Cálculo y Ciclo (vale para cualquier mes abierto de Los Ficus)
   for (const ruta of ["/gastos", "/lecturas", "/calculo", "/ciclo"]) {
     await caso(`${ruta} (coadministrador)`, ruta, coadmin, `${ruta} (200)`);
     await caso(`Vecino 302 escribe ${ruta}`, ruta, v302, "/cuentas");
   }
   await contiene("Titular: gastos confirmados en solo lectura", "/gastos", titular, ["Confirmado", "Recurrentes", "Extraordinarios"], ["Registrar gasto"]);
-  await contiene("Titular: cálculo con cuotas del mes siguiente", "/calculo", titular, ["Cuotas de", "setiembre 2026", "Cuota del mes", "Recibo de agua"]);
-  await contiene("Titular: ciclo con botón para abrir el mes", "/ciclo", titular, ["Abrir setiembre", "Confirmar los gastos del mes"], ["Solo el administrador titular abre el mes"]);
+  await contiene("Titular: cálculo con cuotas del mes siguiente", "/calculo", titular, ["Cuotas de", "Cuota del mes", "Recibo de agua"]);
+  await contiene("Titular: ciclo con botón para abrir el mes", "/ciclo", titular, ["y emitir cuotas", "Confirmar los gastos del mes"], ["Solo el administrador titular abre el mes"]);
   await contiene("Coadministrador: ciclo sin abrir el mes", "/ciclo", coadmin, ["Solo el administrador titular abre el mes"]);
+
+  // Etapa 3b: Cobranza (solo lectura: no valida ni rechaza los pagos demo)
+  await caso("Cobranza (coadministrador)", "/cobranza", coadmin, "/cobranza (200)");
+  await caso("Vecino 302 escribe /cobranza", "/cobranza", v302, "/cuentas");
+  // Los pagos demo pueden estar ya validados (npm run demo:pagos crea nuevos si hay cuotas pendientes)
+  await contiene("Titular: por validar con extraordinarios", "/cobranza?t=validar", titular, ["Por validar", "Nuevo compromiso extraordinario"]);
+  await contiene("Coadministrador: no emite extraordinarios", "/cobranza?t=validar", coadmin, ["Por validar"], ["Nuevo compromiso extraordinario"]);
+  await contiene("Titular: cuentas por cobrar", "/cobranza?t=cobrar", titular, ["Por cobrar", "Vencido", "Departamentos con deuda"]);
+  await contiene("Titular: compromisos emitidos con anular", "/cobranza?t=emitidos", titular, ["Cuota de mantenimiento", "Anular"]);
+  await contiene("Coadministrador: emitidos sin anular", "/cobranza?t=emitidos", coadmin, ["Cuota de mantenimiento", "Efectivo"], [">Anular<"]);
 
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");

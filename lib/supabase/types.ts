@@ -1466,6 +1466,29 @@ export type Database = {
         Returns: undefined
       }
       codigo_disponible: { Args: { p_codigo: string }; Returns: boolean }
+      compromisos_admin: {
+        Args: { p_edificio: string }
+        Returns: {
+          anulado_motivo: string
+          compromiso_id: string
+          concepto: string
+          departamento_id: string
+          emitido_en: string
+          estado: Database["public"]["Enums"]["estado_compromiso"]
+          estado_visible: string
+          mes: string
+          monto: number
+          numero: string
+          pago_fecha: string
+          pago_metodo: string
+          puede_validar: boolean
+          soy_titular: boolean
+          tipo: Database["public"]["Enums"]["tipo_compromiso"]
+          ultimo_rechazo: string
+          validado_por: string
+          vence_en: string
+        }[]
+      }
       confirmar_gastos: { Args: { p_periodo: string }; Returns: undefined }
       crear_edificio: {
         Args: {
@@ -1728,6 +1751,25 @@ export type Database = {
       nivel_admin_de: {
         Args: { p_edificio: string }
         Returns: Database["public"]["Enums"]["nivel_admin"]
+      }
+      pagos_por_validar: {
+        Args: { p_edificio: string }
+        Returns: {
+          comprobante_path: string
+          concepto: string
+          departamento_id: string
+          enviado_en: string
+          fecha_pago: string
+          metodo: string
+          monto: number
+          motivo: string
+          numero: string
+          operacion: string
+          pago_id: string
+          puede_validar: boolean
+          registrado_por: string
+          tipo: Database["public"]["Enums"]["tipo_compromiso"]
+        }[]
       }
       puede_validar_pago: {
         Args: { p_departamento: string; p_edificio: string }
