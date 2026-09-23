@@ -103,6 +103,16 @@ async function main() {
   await contiene("Titular: equipo con acciones", "/equipo", titular, ["Equipo actual", "Transferir la titularidad", "Coadministrador"]);
   await contiene("Coadministrador: equipo solo lectura", "/equipo", coadmin, ["Equipo actual", "Solo el administrador titular puede cambiarlo"], ["Transferir la titularidad", "Agregar coadministrador"]);
 
+  // Etapa 3a: Gastos, Lecturas, Cálculo y Ciclo (Los Ficus: agosto abierto con gastos confirmados)
+  for (const ruta of ["/gastos", "/lecturas", "/calculo", "/ciclo"]) {
+    await caso(`${ruta} (coadministrador)`, ruta, coadmin, `${ruta} (200)`);
+    await caso(`Vecino 302 escribe ${ruta}`, ruta, v302, "/cuentas");
+  }
+  await contiene("Titular: gastos confirmados en solo lectura", "/gastos", titular, ["Confirmado", "Recurrentes", "Extraordinarios"], ["Registrar gasto"]);
+  await contiene("Titular: cálculo con cuotas del mes siguiente", "/calculo", titular, ["Cuotas de", "setiembre 2026", "Cuota del mes", "Recibo de agua"]);
+  await contiene("Titular: ciclo con botón para abrir el mes", "/ciclo", titular, ["Abrir setiembre", "Confirmar los gastos del mes"], ["Solo el administrador titular abre el mes"]);
+  await contiene("Coadministrador: ciclo sin abrir el mes", "/ciclo", coadmin, ["Solo el administrador titular abre el mes"]);
+
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
   console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);

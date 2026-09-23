@@ -12,7 +12,8 @@
     "probar:rutas": "tsx --env-file=.env.local scripts/probar-rutas.ts",
     "probar:cuotas": "tsx --env-file=.env.local scripts/probar-cuotas.ts",
     "probar:permisos": "tsx --env-file=.env.local scripts/probar-permisos.ts",
-    "probar:equipo": "tsx --env-file=.env.local scripts/probar-equipo.ts"
+    "probar:equipo": "tsx --env-file=.env.local scripts/probar-equipo.ts",
+    "probar:ciclo": "tsx --env-file=.env.local scripts/probar-ciclo.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

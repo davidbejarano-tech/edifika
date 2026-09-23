@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { obtenerContexto } from "@/lib/contexto";
-import { mes, soles } from "@/lib/format";
+import { TablaReparto } from "@/components/TablaReparto";
+import { mes } from "@/lib/format";
 import { FormCobranza, FormDatos, FormPago } from "./Formularios";
 
 export default async function ConfiguracionPage() {
@@ -20,11 +21,8 @@ export default async function ConfiguracionPage() {
   const previa = periodo ? await supabase.rpc("calcular_cuotas", { p_periodo: periodo.id }) : null;
   const filas = previa?.data ?? [];
   const sumaM3 = filas.reduce((s, f) => s + Number(f.m3), 0);
-  const sumaArea = filas.reduce((s, f) => s + Number(f.area_m2 ?? 0), 0);
   const areaComun = Number(e.area_comun_m2 ?? 0);
   const conAgua = e.agua_cuota === "consumo";
-  const total = (k: "comun" | "agua" | "total") => filas.reduce((s, f) => s + Number(f[k]), 0);
-  const pct = (x: number) => `${(x * 100).toFixed(2)} %`;
 
   return (
     <>
@@ -77,68 +75,7 @@ export default async function ConfiguracionPage() {
               {conAgua && (sumaM3 > 0 ? `: ${sumaM3.toLocaleString("en-US")} m³ leídos` : ": aún sin lecturas de agua")}. Así se
               repartiría la cuota del mes siguiente.
             </p>
-            <div className="tbl">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Depto</th>
-                    <th className="r">Área</th>
-                    {areaComun > 0 && <th className="r">Área asignada</th>}
-                    <th className="r">Alícuota</th>
-                    <th className="r">Cuota fija</th>
-                    {conAgua && (
-                      <>
-                        <th className="r">m³</th>
-                        <th className="r">% prorrateo</th>
-                        <th className="r">Cuota de agua</th>
-                      </>
-                    )}
-                    <th className="r">Cuota del mes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filas.map((f) => {
-                    const area = Number(f.area_m2 ?? 0);
-                    return (
-                      <tr key={f.departamento_id}>
-                        <td>{f.numero}</td>
-                        <td className="r">{f.area_m2 === null ? "—" : area.toLocaleString("en-US")}</td>
-                        {areaComun > 0 && (
-                          <td className="r">{sumaArea ? (area + (area / sumaArea) * areaComun).toFixed(3) : "—"}</td>
-                        )}
-                        <td className="r">{f.alicuota === null ? "—" : pct(Number(f.alicuota))}</td>
-                        <td className="r">{soles(f.comun)}</td>
-                        {conAgua && (
-                          <>
-                            <td className="r">{Number(f.m3).toLocaleString("en-US")}</td>
-                            <td className="r">{sumaM3 ? pct(Number(f.m3) / sumaM3) : "—"}</td>
-                            <td className="r">{soles(f.agua)}</td>
-                          </>
-                        )}
-                        <td className="r font-semibold">{soles(f.total)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="font-bold">
-                    <td>Total</td>
-                    <td className="r">{sumaArea.toLocaleString("en-US")}</td>
-                    {areaComun > 0 && <td className="r">{(sumaArea + areaComun).toLocaleString("en-US")}</td>}
-                    <td className="r">{sumaArea ? "100.00 %" : "—"}</td>
-                    <td className="r">{soles(total("comun"))}</td>
-                    {conAgua && (
-                      <>
-                        <td className="r">{sumaM3.toLocaleString("en-US")}</td>
-                        <td className="r">{sumaM3 ? "100.00 %" : "—"}</td>
-                        <td className="r">{soles(total("agua"))}</td>
-                      </>
-                    )}
-                    <td className="r">{soles(total("total"))}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+            <TablaReparto filas={filas} areaComun={areaComun} conAgua={conAgua} />
           </>
         )}
       </section>
