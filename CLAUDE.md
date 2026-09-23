@@ -40,7 +40,7 @@ docs/                     especificación, etapas y prototipo
 1. **El dinero se calcula en la base de datos.** Usa las funciones SQL (`calcular_cuotas`, `abrir_periodo`, `validar_pago`, `resumen_periodo`, etc.). No repliques fórmulas en TypeScript.
 2. **Nunca edites una migración ya aplicada.** Para cambios crea `supabase/migrations/000N_descripcion.sql`.
 3. **RLS siempre activa.** Toda tabla nueva lleva políticas. La `service_role` solo se usa dentro de Edge Functions, nunca en código que llegue al navegador ni en variables `NEXT_PUBLIC_*`.
-4. **Tipos generados.** Tras cada migración: `npx supabase gen types typescript --local > lib/supabase/types.ts`.
+4. **Tipos generados.** Tras cada migración: `npm run db:tipos` (genera `lib/supabase/types.ts` desde el proyecto vinculado).
 5. **Formato peruano.** Soles como `S/ 1,234.56`; fechas "22 set 2026"; el mes 9 es "setiembre"; zona horaria `America/Lima`.
 6. **Textos de interfaz en español**, en tono claro y directo, tomados del prototipo cuando existan. Los botones dicen la acción ("Validar pago", "Abrir octubre").
 7. **Móvil primero.** Revisa cada pantalla a 360 px de ancho.
@@ -71,7 +71,7 @@ npx supabase db push             # aplica migraciones al proyecto en la nube
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=       # solo Edge Functions / servidor
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # clave publishable (sb_publishable_...)
+SUPABASE_SERVICE_ROLE_KEY=       # clave secreta (sb_secret_...): solo Edge Functions y scripts locales
 RESEND_API_KEY=
 ```

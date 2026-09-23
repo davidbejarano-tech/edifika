@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "supabase/functions/**",
+      "lib/supabase/types.ts",
     ],
   },
 ];

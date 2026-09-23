@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
+/* Paleta y componentes tomados de docs/prototipo.html */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #eef1ef; --surface: #ffffff; --surface2: #f5f7f6; --ink: #1e2b33; --muted: #5b6970; --line: #d5dcda;
+  --brand: #1f5c63; --brand-ink: #ffffff; --brand-soft: #dcebec; --brass: #9c6b1f;
+  --ok: #2e7d4f; --ok-bg: #e2f1e7; --warn: #8f5c0e; --warn-bg: #fbeed5; --bad: #b23a30; --bad-bg: #f8e0dc;
+  --info: #2f5f99; --info-bg: #e0e9f5; --locked: #9aa3a7;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --bg: #12191c; --surface: #1a2327; --surface2: #1f2a2f; --ink: #e4eae8; --muted: #9ba8ad; --line: #2e3b41;
+    --brand: #5dafb5; --brand-ink: #0e1a1c; --brand-soft: #1f3a3d; --brass: #d6a24e;
+    --ok: #6cc08e; --ok-bg: #183326; --warn: #e3ae55; --warn-bg: #3a2c12; --bad: #ee8277; --bad-bg: #3d1c19;
+    --info: #86aee3; --info-bg: #1b2a3e; --locked: #56616a;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --font-sans: var(--font-public-sans), system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-public-sans), system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-brass: var(--brass);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-bad: var(--bad);
+  --color-bad-bg: var(--bad-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+}
+
+@layer base {
+  body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-sans); }
+  h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; font-weight: 700; }
+  h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); letter-spacing: -0.01em; }
+  h2 { font-size: 1.35rem; }
+  h3 { font-size: 1.05rem; }
+  :focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+}
+
+@layer components {
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    border: 1px solid var(--brand); background: var(--brand); color: var(--brand-ink);
+    padding: 0.55rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; text-decoration: none;
+  }
+  .btn:hover { filter: brightness(1.07); }
+  .btn.ghost { background: transparent; color: var(--brand); }
+  .btn.quiet { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn.sm { padding: 0.3rem 0.65rem; font-size: 0.85rem; border-radius: 6px; }
+  .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; filter: none; }
+  .field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.85rem; }
+  .field label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+  .field input, .field select {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.55rem 0.7rem; width: 100%;
+  }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.1rem 1.2rem; margin-bottom: 1.1rem; }
+  .chip { display: inline-block; font-size: 0.78rem; font-weight: 600; padding: 0.12rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+  .chip.tag { background: var(--surface2); color: var(--muted); border: 1px solid var(--line); }
+  .chip.activo { background: var(--ok-bg); color: var(--ok); }
+  .err { color: var(--bad); font-size: 0.88rem; margin-bottom: 0.6rem; }
+  .aviso { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.88rem; margin-bottom: 0.8rem; }
+  .hint { background: var(--surface2); border: 1px dashed var(--line); border-radius: 8px; padding: 0.65rem 0.8rem; font-size: 0.86rem; color: var(--muted); }
 }

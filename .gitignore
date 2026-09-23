@@ -6,3 +6,7 @@ supabase/.temp/
 supabase/.branches/
 *.log
 .vercel/
+
+# Nunca versionar contraseñas ni artefactos de compilación
+password*.txt
+*.tsbuildinfo

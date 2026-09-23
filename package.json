@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "demo:usuarios": "tsx --env-file=.env.local scripts/crear-usuarios-demo.ts",
+    "db:tipos": "supabase gen types typescript --linked --schema public > lib/supabase/types.ts",
+    "probar:rutas": "tsx --env-file=.env.local scripts/probar-rutas.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
