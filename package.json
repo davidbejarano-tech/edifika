@@ -10,7 +10,8 @@
     "demo:usuarios": "tsx --env-file=.env.local scripts/crear-usuarios-demo.ts",
     "db:tipos": "supabase gen types typescript --linked --schema public > lib/supabase/types.ts",
     "probar:rutas": "tsx --env-file=.env.local scripts/probar-rutas.ts",
-    "probar:cuotas": "tsx --env-file=.env.local scripts/probar-cuotas.ts"
+    "probar:cuotas": "tsx --env-file=.env.local scripts/probar-cuotas.ts",
+    "probar:permisos": "tsx --env-file=.env.local scripts/probar-permisos.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

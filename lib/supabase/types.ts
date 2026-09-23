@@ -1427,6 +1427,10 @@ export type Database = {
         Args: { p_edificio: string; p_modulo: string }
         Returns: string
       }
+      actualizar_departamentos: {
+        Args: { p_edificio: string; p_filas: Json }
+        Returns: number
+      }
       agregar_coadministrador: {
         Args: { p_edificio: string; p_perfil: string }
         Returns: string
@@ -1448,6 +1452,10 @@ export type Database = {
           numero: string
           total: number
         }[]
+      }
+      cambiar_acceso: {
+        Args: { p_activo: boolean; p_departamento: string }
+        Returns: undefined
       }
       cancelar_reserva: {
         Args: { p_motivo?: string; p_reserva: string }
@@ -1481,6 +1489,31 @@ export type Database = {
           numero: string
           pendiente: number
           vencido: number
+        }[]
+      }
+      departamentos_admin: {
+        Args: { p_edificio: string }
+        Returns: {
+          acceso: string
+          alicuota: number
+          area_m2: number
+          departamento_id: string
+          inquilino: string
+          inquilino_email: string
+          inquilino_id: string
+          inquilino_telefono: string
+          medidor_desde: string
+          medidor_id: string
+          medidor_lectura_inicial: number
+          medidor_serie: string
+          numero: string
+          piso: number
+          propietario: string
+          propietario_email: string
+          propietario_id: string
+          propietario_telefono: string
+          responsable: string
+          responsable_tiene_correo: boolean
         }[]
       }
       depto_del_titular: { Args: { p_edificio: string }; Returns: string }
@@ -1533,6 +1566,7 @@ export type Database = {
       es_plataforma: { Args: never; Returns: boolean }
       es_titular: { Args: { p_edificio: string }; Returns: boolean }
       es_validador_designado: { Args: { p_edificio: string }; Returns: boolean }
+      estado_acceso: { Args: { p_departamento: string }; Returns: string }
       estado_configuracion: {
         Args: { p_edificio: string }
         Returns: {
@@ -1606,6 +1640,16 @@ export type Database = {
         }[]
       }
       hay_operador: { Args: { p_edificio: string }; Returns: boolean }
+      historial_ocupantes: {
+        Args: { p_edificio: string }
+        Returns: {
+          desde: string
+          hasta: string
+          nombre: string
+          numero: string
+          tipo: Database["public"]["Enums"]["tipo_ocupacion"]
+        }[]
+      }
       hoy_lima: { Args: never; Returns: string }
       importar_departamentos: {
         Args: { p_edificio: string; p_filas: Json }
@@ -1719,6 +1763,7 @@ export type Database = {
         Args: { p_compromiso: string }
         Returns: string
       }
+      responsable_de: { Args: { p_departamento: string }; Returns: string }
       resumen_mis_edificios: {
         Args: never
         Returns: {

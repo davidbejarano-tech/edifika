@@ -78,6 +78,24 @@ async function main() {
   // Contenido: el asistente ya no pide área ni método; Inicio muestra el avance de la configuración.
   const html = async (ruta: string, cookie: string) =>
     (await fetch(BASE + ruta, { headers: { cookie: `${cookie}` } })).text();
+  // Etapa 2b: Configuración y Departamentos
+  await caso("Configuración (titular)", "/configuracion", titular, "/configuracion (200)");
+  await caso("Departamentos (coadministrador)", "/departamentos", coadmin, "/departamentos (200)");
+  await caso("Vecino 302 escribe /configuracion", "/configuracion", v302, "/cuentas");
+  await caso("Vecino 302 escribe /departamentos", "/departamentos", v302, "/cuentas");
+  const contiene = async (nombre: string, ruta: string, cookie: string, si: string[], no: string[] = []) => {
+    const h = await html(ruta, cookie);
+    const falta = si.filter((t) => !h.includes(t));
+    const sobra = no.filter((t) => h.includes(t));
+    const bien = !falta.length && !sobra.length;
+    if (!bien) fallas++;
+    console.log(`${bien ? "✔" : "✖"} ${nombre}${falta.length ? ` · falta: ${falta.join(", ")}` : ""}${sobra.length ? ` · sobra: ${sobra.join(", ")}` : ""}`);
+  };
+  await contiene("Titular: configuración editable con vista previa", "/configuracion", titular, ["Vista previa del reparto", "Guardar cobranza", "Cuota del mes"]);
+  await contiene("Coadministrador: configuración solo lectura", "/configuracion", coadmin, ["Solo el administrador titular puede cambiarla"], ["Guardar cobranza"]);
+  await contiene("Titular: departamentos con acciones", "/departamentos", titular, ["Cambio de ocupante", "Agregar departamento", "302"]);
+  await contiene("Coadministrador: departamentos sin acciones", "/departamentos", coadmin, ["302"], ["Cambio de ocupante", "Agregar departamento"]);
+
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
   console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);

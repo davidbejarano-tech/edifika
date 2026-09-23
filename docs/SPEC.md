@@ -302,7 +302,7 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 | Función | Qué hace |
 |---|---|
 | `login-departamento` | Login por código de edificio y número de departamento |
-| `invitar-habitante` | Solo titular. Crea la cuenta y la membresía y envía la invitación (tras `registrar_cambio_ocupante` o al agregar un departamento) |
+| `invitar-habitante` | Solo titular. Invita al ocupante responsable (inquilino vigente o propietario): crea la cuenta, la membresía y envía la invitación; si la persona ya tiene cuenta, solo le da acceso. También envía el correo para restablecer la contraseña. Los correos los envía Supabase Auth con SMTP de Resend (ver `docs/CONFIGURAR-CORREOS.md`) |
 | `invitar-administrador` | Solo titular. Crea la cuenta del externo si no existe y llama a `agregar_coadministrador` o `transferir_titularidad` |
 | `transferencia-forzada` | Solo plataforma. Recibe el acta, la guarda en `actas/` y llama a `transferencia_forzada` |
 | `depurar-edificios-inactivos` | Diaria, con service role. Envía los avisos del día 60 y 83, borra los archivos de Storage del edificio, llama a `depurar_edificio` y elimina de Auth las cuentas que quedaron sin edificio |

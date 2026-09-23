@@ -14,7 +14,7 @@ export type FilaDepto = {
   error: string | null;
 };
 
-type Campo = "numero" | "piso" | "propietario" | "inquilino" | "email" | "telefono" | "area" | "medidor";
+type Campo = "numero" | "piso" | "propietario" | "inquilino" | "email" | "telefono" | "area" | "medidor" | "lectura";
 
 /** Orden por defecto cuando la tabla no trae encabezados. Área y medidor son opcionales (RN-27). */
 const ORDEN: Campo[] = ["numero", "piso", "propietario", "inquilino", "email", "telefono", "area", "medidor"];
@@ -44,6 +44,7 @@ const normalizar = (t: string) =>
 function campoDeEncabezado(celda: string): Campo | null {
   const t = normalizar(celda);
   if (!t) return null;
+  if (/lectura/.test(t)) return "lectura";
   if (/medidor|serie/.test(t)) return "medidor";
   if (/depto|departamento|dpto|unidad/.test(t) || /^(numero|nro|num|no|n)\b/.test(t)) return "numero";
   if (/piso|nivel/.test(t)) return "piso";
@@ -138,3 +139,54 @@ export const paraImportar = (filas: FilaDepto[]) =>
     telefono: f.telefono,
     medidor: f.medidor,
   }));
+
+// ---------------------------------------------------------------------
+// Actualización de áreas y medidores desde Excel (actualizar_departamentos)
+// Columnas: número, área m², medidor, lectura inicial. Una celda vacía no cambia el dato.
+// ---------------------------------------------------------------------
+export type FilaActualizacion = {
+  fila: number;
+  numero: string;
+  area: number | null;
+  medidor: string;
+  lectura_inicial: number | null;
+  error: string | null;
+};
+
+export const COLUMNAS_ACTUALIZACION = ["Número", "Área m2", "Medidor", "Lectura inicial"];
+const ORDEN_ACTUALIZACION: Campo[] = ["numero", "area", "medidor", "lectura"];
+
+export function leerActualizacion(celdas: string[][], existentes: Set<string>): FilaActualizacion[] {
+  const limpias = celdas.map((c) => c.map((x) => String(x ?? "").trim())).filter((c) => c.some((x) => x !== ""));
+  if (!limpias.length) return [];
+  const primera = limpias[0].map(campoDeEncabezado);
+  const conEncabezado = primera.includes("numero");
+  const columnas = conEncabezado ? primera : ORDEN_ACTUALIZACION;
+  const datos = conEncabezado ? limpias.slice(1) : limpias;
+  const vistos = new Set<string>();
+  const medidores = new Set<string>();
+
+  return datos.map((c, i) => {
+    const v = (campo: Campo) => {
+      const k = columnas.indexOf(campo);
+      return k >= 0 ? (c[k] ?? "") : "";
+    };
+    const numero = v("numero");
+    const areaTxt = v("area").replace(",", ".");
+    const lectTxt = v("lectura").replace(",", ".");
+    const area = areaTxt === "" ? null : Number(areaTxt);
+    const lectura = lectTxt === "" ? null : Number(lectTxt);
+    const medidor = v("medidor").toUpperCase();
+    let error: string | null = null;
+    if (!existentes.has(numero.toLowerCase())) error = `no existe el departamento ${numero || "(vacío)"}`;
+    else if (vistos.has(numero.toLowerCase())) error = `el departamento ${numero} está repetido`;
+    else if (area !== null && !(area > 0)) error = "el área debe ser un número mayor que cero";
+    else if (medidor && !/^[0-9A-Za-z./-]{3,30}$/.test(medidor)) error = "número de medidor no válido";
+    else if (medidor && medidores.has(medidor)) error = `el medidor ${medidor} está repetido`;
+    else if (lectura !== null && !(lectura >= 0)) error = "la lectura inicial debe ser un número mayor o igual a cero";
+    else if (area === null && !medidor) error = "no hay área ni medidor para actualizar";
+    vistos.add(numero.toLowerCase());
+    if (medidor) medidores.add(medidor);
+    return { fila: i + 1, numero, area, medidor, lectura_inicial: lectura, error };
+  });
+}
