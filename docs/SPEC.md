@@ -1,6 +1,6 @@
 # Building Buddy · Especificación funcional y técnica (MVP v1)
 
-Versión 1.2 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37) · Product Owner: David
+Versión 1.3 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida) · Product Owner: David
 
 El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcional. Si este documento y el prototipo difieren, manda este documento.
 
@@ -179,6 +179,13 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 ## 7. Pantallas y criterios de aceptación
 
 ### Registro y edificios
+
+**Página de bienvenida (landing).** Es la página principal (`/`) y es pública.
+- Explica en pocas frases qué es Building Buddy y sus beneficios: cuotas calculadas solas, cobranza con comprobantes y transparencia para los vecinos.
+- Ofrece dos caminos claros: **"Registrar mi edificio"** (lleva a Crear cuenta y al asistente) e **"Ingresar"** (lleva al login).
+- Si el visitante ya tiene sesión, pasa directo a su edificio (selector de RN-25).
+- La tarjeta de login mantiene el enlace "¿Administras un edificio? Crear cuenta y registrar mi edificio".
+- Planes, precios y términos no van aquí en v1; llegan con el dashboard comercial (Etapa 6).
 
 **Crear cuenta.** Nombre, correo y contraseña; verificación del correo antes de continuar.
 
