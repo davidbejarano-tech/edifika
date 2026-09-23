@@ -1,0 +1,1785 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Building Buddy · Administración de edificios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1EF;--surface:#FFFFFF;--surface2:#F5F7F6;--ink:#1E2B33;--muted:#5B6970;--line:#D5DCDA;
+  --brand:#1F5C63;--brand-ink:#FFFFFF;--brand-soft:#DCEBEC;--brass:#9C6B1F;
+  --ok:#2E7D4F;--ok-bg:#E2F1E7;--warn:#8F5C0E;--warn-bg:#FBEED5;--bad:#B23A30;--bad-bg:#F8E0DC;--info:#2F5F99;--info-bg:#E0E9F5;
+  --facade:#D6CFC2;--facade-dark:#BDB4A5;--frame:#7E776A;--locked:#9AA3A7;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12191C;--surface:#1A2327;--surface2:#1F2A2F;--ink:#E4EAE8;--muted:#9BA8AD;--line:#2E3B41;
+  --brand:#5DAFB5;--brand-ink:#0E1A1C;--brand-soft:#1F3A3D;--brass:#D6A24E;
+  --ok:#6CC08E;--ok-bg:#183326;--warn:#E3AE55;--warn-bg:#3A2C12;--bad:#EE8277;--bad-bg:#3D1C19;--info:#86AEE3;--info-bg:#1B2A3E;
+  --facade:#3A3630;--facade-dark:#2C2924;--frame:#8C8475;--locked:#56616A;
+}}
+:root[data-theme="dark"]{
+  --bg:#12191C;--surface:#1A2327;--surface2:#1F2A2F;--ink:#E4EAE8;--muted:#9BA8AD;--line:#2E3B41;
+  --brand:#5DAFB5;--brand-ink:#0E1A1C;--brand-soft:#1F3A3D;--brass:#D6A24E;
+  --ok:#6CC08E;--ok-bg:#183326;--warn:#E3AE55;--warn-bg:#3A2C12;--bad:#EE8277;--bad-bg:#3D1C19;--info:#86AEE3;--info-bg:#1B2A3E;
+  --facade:#3A3630;--facade-dark:#2C2924;--frame:#8C8475;--locked:#56616A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:15px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;line-height:1.15;margin:0;font-weight:700}
+h1{font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.01em}
+h2{font-size:1.35rem}h3{font-size:1.05rem}
+p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}.small{font-size:.85rem}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+img{max-width:100%}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);padding:.55rem 1rem;border-radius:8px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn.quiet{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn.sm{padding:.3rem .65rem;font-size:.85rem;border-radius:6px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.field{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.85rem}
+.field label{font-size:.85rem;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.55rem .7rem;width:100%}
+.field input[disabled]{background:var(--surface2);color:var(--muted)}
+.field textarea{min-height:80px;resize:vertical}
+.cellin{width:6.5rem;border:1px solid var(--line);border-radius:6px;padding:.3rem .45rem;background:var(--surface);text-align:right;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0 .9rem}
+.spacer{flex:1}
+
+.shell{min-height:100%;display:grid;grid-template-columns:240px 1fr;grid-template-rows:auto 1fr;grid-template-areas:"top top" "nav main"}
+.top{grid-area:top;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:1rem;padding:.6rem 1.25rem}
+.brand{display:flex;align-items:center;gap:.55rem;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1.1rem}
+.tenant{font-size:.85rem;border-left:1px solid var(--line);padding-left:1rem;color:var(--muted)}
+.tenant b{color:var(--ink);font-weight:600}
+.simdate{font-size:.82rem;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:.2rem .7rem;color:var(--muted)}
+.simdate b{color:var(--ink);font-weight:600}
+.switch select{border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:.35rem .5rem;max-width:210px}
+.nav{grid-area:nav;padding:1rem .75rem;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:.1rem;background:var(--surface2)}
+.nav .grp{font-size:.76rem;font-weight:700;color:var(--muted);padding:.9rem .8rem .25rem}
+.nav button{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.4rem;padding:.5rem .8rem;border-radius:8px;color:var(--muted);font-weight:500}
+.nav button:hover{background:var(--surface);color:var(--ink)}
+.nav button.on{background:var(--brand-soft);color:var(--ink);font-weight:700}
+.nav button.lock{opacity:.6}
+.nav button:focus-visible{outline:3px solid var(--brass)}
+.badge{background:var(--bad);color:#fff;border-radius:999px;font-size:.72rem;padding:0 .45rem;font-weight:700;min-width:1.3rem;text-align:center}
+.main{grid-area:main;padding:1.5rem clamp(1rem,3vw,2.25rem) 3rem;max-width:1200px;width:100%}
+.pagehead{display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.pagehead p{margin-top:.3rem}
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr;grid-template-areas:"top" "nav" "main"}
+  .top{flex-wrap:wrap;gap:.5rem .75rem;padding:.6rem 1rem}
+  .tenant{border:0;padding:0}
+  .nav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:.4rem .6rem;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,96px));z-index:15}
+  .nav .grp{display:none}
+  .nav button{white-space:nowrap}
+  .main{padding-top:1rem}
+  .top .spacer{display:none}
+}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem;margin-bottom:1.1rem}
+.panel>h3{margin-bottom:.8rem}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.8rem;padding:.5rem .6rem;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:.6rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+tfoot td{font-weight:700;border-top:2px solid var(--line)}
+.chip{display:inline-block;font-size:.78rem;font-weight:600;padding:.12rem .55rem;border-radius:999px;white-space:nowrap}
+.chip.pagado,.chip.validado,.chip.aldia,.chip.activo{background:var(--ok-bg);color:var(--ok)}
+.chip.pendiente{background:var(--warn-bg);color:var(--warn)}
+.chip.revision,.chip.en_revision{background:var(--info-bg);color:var(--info)}
+.chip.vencido,.chip.rechazado,.chip.inactivo{background:var(--bad-bg);color:var(--bad)}
+.chip.tag{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.chip.anulado{background:var(--surface2);color:var(--muted);text-decoration:line-through}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:.55rem;margin:.6rem 0 1rem}
+.slot{all:unset;box-sizing:border-box;cursor:pointer;border:2px solid var(--ok);background:var(--ok-bg);border-radius:10px;padding:.6rem .7rem;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.slot small{display:block;font-weight:500;font-size:.75rem;color:var(--muted)}
+.slot:hover{filter:brightness(.97)}
+.slot:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.slot[disabled]{cursor:not-allowed;border-color:var(--line);background:var(--surface2);color:var(--muted)}
+.wiz{max-width:820px;margin:0 auto;padding:1.5rem clamp(1rem,3vw,2rem) 3rem}
+.dias{display:flex;gap:.4rem;flex-wrap:wrap}
+.dias label{display:flex;gap:.3rem;align-items:center;border:1px solid var(--line);border-radius:8px;padding:.3rem .55rem;font-size:.85rem;cursor:pointer}
+.dias label:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+.errlist{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:.6rem .9rem;font-size:.86rem;margin:.6rem 0}
+.errlist p+p{margin-top:.2rem}
+.tabs{display:flex;gap:.3rem;border-bottom:1px solid var(--line);margin-bottom:1rem;overflow-x:auto}
+.tabs button{all:unset;cursor:pointer;padding:.55rem .9rem;color:var(--muted);font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--ink);border-color:var(--brand)}
+.empty{padding:1.5rem;text-align:center;color:var(--muted)}
+.hint{background:var(--surface2);border:1px dashed var(--line);border-radius:8px;padding:.65rem .8rem;font-size:.86rem;color:var(--muted)}
+.warnbox{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:.65rem .8rem;font-size:.86rem}
+.note{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:.45rem .7rem;font-size:.85rem;margin-top:.35rem}
+
+/* Dashboard de módulos */
+.mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}
+.mod{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:.55rem;padding:1.2rem 1.2rem 1.1rem;border-radius:14px;background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--c);min-height:200px;transition:transform .15s,box-shadow .15s}
+.mod:hover{transform:translateY(-3px);box-shadow:0 14px 28px -18px var(--c)}
+.mod:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+.mod .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--c);color:#fff;margin-bottom:.2rem}
+.mod p{color:var(--muted);font-size:.9rem}
+.mod .metric{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.mod .cta{margin-top:auto;font-weight:700;color:var(--c)}
+.mod .flag{position:absolute;top:1rem;right:1rem}
+.mod.locked{background:var(--surface2);border-top-color:var(--locked)}
+.mod.locked .ico{background:var(--locked)}
+.mod.locked h3,.mod.locked .metric{color:var(--muted)}
+.mod.locked .cta{color:var(--muted)}
+.mod.locked:hover{box-shadow:0 14px 28px -20px rgba(0,0,0,.4)}
+.flag-trial{background:var(--c);color:#fff}
+
+/* Onboarding */
+.stepper{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1.2rem;list-style:none;padding:0}
+.stepper button{all:unset;cursor:pointer;display:flex;gap:.5rem;align-items:center;padding:.4rem .85rem .4rem .45rem;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:.88rem;font-weight:600}
+.stepper button:focus-visible{outline:3px solid var(--brass)}
+.stepper .n{width:1.6rem;height:1.6rem;border-radius:50%;display:grid;place-items:center;font-size:.8rem;background:var(--surface2);border:1px solid var(--line)}
+.stepper .done .n{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.8rem;margin-bottom:1rem}
+.opt{display:flex;gap:.75rem;padding:1rem;border:2px solid var(--line);border-radius:12px;cursor:pointer;align-items:flex-start;background:var(--surface)}
+.opt input{margin-top:.25rem;accent-color:var(--brand)}
+.opt:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+.opt b{display:block}
+.meter{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--line);margin:.35rem 0 .2rem}
+.meter div{height:100%;background:var(--ok)}
+.meter.warn div{background:var(--brass)}
+
+/* Fachada */
+.hero{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:1.5rem;margin-bottom:1.25rem;align-items:start}
+@media (max-width:860px){.hero{grid-template-columns:1fr}}
+.facade{background:var(--facade);border:2px solid var(--frame);border-radius:10px 10px 0 0;padding:0 .9rem}
+.roof{margin:0 -.9rem;padding:.55rem .9rem;background:var(--frame);color:#F4F1EA;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;display:flex;justify-content:space-between;border-radius:7px 7px 0 0;font-size:.95rem}
+.floor{display:grid;gap:.6rem;padding:.6rem 0;border-bottom:3px solid var(--facade-dark)}
+.win{all:unset;cursor:pointer;border:3px solid var(--frame);border-radius:4px;padding:.45rem .5rem;min-height:74px;display:flex;flex-direction:column;justify-content:space-between;background:var(--surface);transition:transform .12s;min-width:0}
+.win:hover{transform:translateY(-2px)}
+.win:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.win b{font-family:"Bricolage Grotesque",sans-serif;font-size:1.15rem}
+.win span{font-size:.72rem;color:var(--muted);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.win em{font-style:normal;font-size:.75rem;font-weight:700}
+.win.s-aldia{background:var(--ok-bg)}.win.s-aldia em{color:var(--ok)}
+.win.s-pendiente{background:var(--warn-bg)}.win.s-pendiente em{color:var(--warn)}
+.win.s-revision{background:var(--info-bg)}.win.s-revision em{color:var(--info)}
+.win.s-vencido{background:var(--bad-bg)}.win.s-vencido em{color:var(--bad)}
+.ground{height:54px;display:flex;justify-content:center;align-items:flex-end}
+.door{width:70px;height:44px;border:3px solid var(--frame);border-bottom:0;border-radius:4px 4px 0 0;background:var(--surface2)}
+.base{height:10px;background:var(--frame);border-radius:0 0 4px 4px;margin:0 -2px}
+.legend{display:flex;gap:.9rem;flex-wrap:wrap;margin-top:.7rem;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:.8rem;height:.8rem;border-radius:3px;margin-right:.3rem;vertical-align:-1px;border:1px solid var(--frame)}
+
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--line);margin:1rem 0}
+.fig{background:var(--surface);padding:.85rem 1rem}
+.fig small{display:block;color:var(--muted);font-size:.8rem}
+.fig strong{display:block;font-size:1.3rem;font-family:"Bricolage Grotesque",sans-serif;font-variant-numeric:tabular-nums}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:2rem 1fr auto;gap:.75rem;align-items:center;padding:.75rem 0;border-bottom:1px solid var(--line)}
+.steps li:last-child{border-bottom:0}
+.steps li::before{content:counter(s);width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;font-weight:700;border:2px solid var(--line);color:var(--muted)}
+.steps li.done::before{content:"✓";background:var(--ok);border-color:var(--ok);color:#fff}
+
+.statement{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:clamp(1rem,3vw,2rem);max-width:860px}
+.st-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:1rem;margin-bottom:1rem}
+.stamp{border:2px solid currentColor;border-radius:6px;padding:.25rem .7rem;font-weight:700;transform:rotate(-3deg);font-family:"Bricolage Grotesque",sans-serif;white-space:nowrap}
+.stamp.oficial{color:var(--ok)}.stamp.borrador{color:var(--warn)}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.6rem;margin:0 0 .5rem}
+.meta dt{font-size:.78rem;color:var(--muted)}.meta dd{margin:0;font-weight:600}
+.statement h3{margin:1.4rem 0 .5rem}
+
+/* Recibo: papel siempre claro, formal */
+.recibo{background:#fff;color:#1B2328;border:1px solid #D5DCDA;border-radius:10px;padding:clamp(1rem,3vw,1.8rem);font-size:.9rem}
+.recibo h2{font-size:1.3rem}
+.recibo .mut{color:#5B6970}
+.recibo th{color:#5B6970;border-color:#E1E6E4}
+.recibo td{border-color:#E1E6E4;padding:.45rem .5rem}
+.recibo th{padding:.4rem .5rem}
+.recibo .rh{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-bottom:2px solid #1B2328;padding-bottom:.8rem;margin-bottom:1rem}
+.recibo .rmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem 1rem;margin-bottom:1rem}
+.recibo .rmeta dt{font-size:.74rem;color:#5B6970}.recibo .rmeta dd{margin:0;font-weight:600}
+.recibo h4{font-family:"Bricolage Grotesque",sans-serif;font-size:.95rem;margin:1.1rem 0 .35rem}
+.recibo .total{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;background:#E3EFEF;border-radius:8px;padding:.85rem 1rem;margin-top:1rem}
+.recibo .total strong{font-size:1.6rem;font-family:"Bricolage Grotesque",sans-serif;font-variant-numeric:tabular-nums}
+.recibo .rstamp{border:2px solid currentColor;border-radius:6px;padding:.2rem .6rem;font-weight:700;font-family:"Bricolage Grotesque",sans-serif;align-self:flex-start}
+.recibo .paid{color:#2E7D4F}.recibo .due{color:#8F5C0E}.recibo .late{color:#B23A30}
+.recibo .foot{margin-top:1.1rem;padding-top:.8rem;border-top:1px dashed #C9D1CF;font-size:.8rem;color:#5B6970;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.recibo tfoot td{border-top:2px solid #1B2328}
+#printarea{display:none}
+
+.bars{display:flex;flex-direction:column;gap:.6rem}
+.bar{display:grid;grid-template-columns:minmax(110px,190px) 1fr auto;gap:.7rem;align-items:center;font-size:.88rem}
+.bar .track{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar .fill{height:100%;background:var(--brand)}
+.cols{display:flex;align-items:flex-end;gap:1rem;height:180px;padding-top:.5rem;overflow-x:auto}
+.col{display:flex;flex-direction:column;align-items:center;gap:.3rem;min-width:70px;flex:1}
+.col .pair{display:flex;gap:4px;align-items:flex-end;height:140px}
+.col .pair div{width:18px;border-radius:4px 4px 0 0}
+
+.balance{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:center;background:var(--brand-soft);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.1rem}
+.balance strong{font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(1.8rem,5vw,2.6rem);display:block;font-variant-numeric:tabular-nums}
+.due-row{display:flex;gap:1rem;align-items:center;padding:.8rem 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.due-row:last-child{border-bottom:0}
+.due-row .what{flex:1;min-width:180px}
+
+.cards3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem;margin-bottom:1rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1rem}
+.trialbar{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem}
+
+.chat{display:flex;flex-direction:column;height:min(70vh,640px);background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.chatlog{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+.msg{max-width:78%;padding:.55rem .8rem;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.msg .who{font-size:.76rem;font-weight:700;color:var(--muted);margin-bottom:.15rem}
+.msg.me{align-self:flex-end;background:var(--brand-soft);border-color:transparent}
+.msg.adm .who{color:var(--brass)}
+.chatin{display:flex;gap:.5rem;padding:.6rem;border-top:1px solid var(--line)}
+.chatin input{flex:1;border:1px solid var(--line);border-radius:8px;padding:.55rem .7rem;background:var(--surface2)}
+
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:1.5rem}
+.login-card{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.75rem}
+.login-card h1{margin:.8rem 0 .3rem}
+.demo{display:grid;gap:.5rem;margin-top:1rem}
+.err{color:var(--bad);font-size:.88rem;margin-bottom:.6rem}
+
+.overlay{position:fixed;inset:0;background:rgba(20,28,32,.45);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:50}
+.overlay[hidden]{display:none}
+.sheet{background:var(--surface);border-radius:14px;width:min(620px,100%);max-height:calc(100% - 2rem);overflow-y:auto;padding:1.3rem 1.4rem;border:1px solid var(--line)}
+.sheet.wide{width:min(880px,100%)}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem}
+.x{all:unset;cursor:pointer;font-size:1.4rem;line-height:1;padding:.2rem .45rem;border-radius:6px;color:var(--muted)}
+.x:focus-visible{outline:3px solid var(--brass)}
+.toast{position:fixed;left:50%;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:.7rem 1.1rem;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:calc(100% - 2rem);font-weight:500}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.preview{border:1px solid var(--line);border-radius:10px;padding:.5rem;background:var(--surface2);text-align:center}
+.preview img{max-height:420px;border-radius:6px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  @page{margin:14mm}
+  .top,.nav,.noprint,.overlay,.toast{display:none!important}
+  .shell{display:block}.main{padding:0}
+  .statement{border:0;max-width:none}
+  body{background:#fff;color:#000}
+  body.print-recibo>*:not(#printarea){display:none!important}
+  body.print-recibo #printarea{display:block}
+  .recibo{border:0;padding:0}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" class="overlay" hidden><div class="sheet" role="dialog" aria-modal="true" id="sheet"></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="printarea"></div>
+
+<script>
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+const KEY='building-buddy-v3';
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+const pad=n=>String(n).padStart(2,'0');
+const uid=(p='id')=>p+'_'+Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'S/ '+Number(n||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+const nf=(n,d=0)=>Number(n||0).toLocaleString('es-PE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=n=>nf(n*100,2)+' %';
+const r2=n=>Math.round(n*100)/100;
+const plabel=p=>{const[y,m]=p.split('-');return MESES[+m-1]+' '+y};
+const Plabel=p=>{const s=plabel(p);return s[0].toUpperCase()+s.slice(1)};
+const nextP=p=>{let[y,m]=p.split('-').map(Number);m++;if(m>12){m=1;y++}return y+'-'+pad(m)};
+const lastDay=p=>{const[y,m]=p.split('-').map(Number);return p+'-'+pad(new Date(y,m,0).getDate())};
+const fdate=d=>{if(!d)return'';const[y,m,dd]=d.slice(0,10).split('-');return `${+dd} ${MESES[+m-1].slice(0,3)} ${y}`};
+const addDays=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate())};
+const sum=(a,f=x=>x.monto)=>a.reduce((t,x)=>t+Number(f(x)||0),0);
+const shortName=n=>{if(!n)return'';const p=n.split(' ');return p[0]+(p[1]?' '+p[1][0]+'.':'')};
+const mkEmail=n=>{const p=n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(' ');return p[0]+'.'+(p[1]||'vecino')+'@correo.pe'};
+
+/* =========================================================
+   CÁLCULO DE CUOTAS
+   Opción 1 · Fija por alícuota: todos los gastos × (área depto / área total)
+   Opción 2 · Mixta con agua: el recibo de agua se separa; el riego de áreas
+   comunes vuelve a gastos comunes (por alícuota) y el resto del agua se
+   reparte según la lectura de cada departamento.
+   ========================================================= */
+function calcular(p,st){
+  st=st||S;
+  const cfg=st.config,deps=st.departamentos,gas=st.gastos.filter(g=>g.periodo===p);
+  const total=sum(gas),a=st.agua[p];
+  const mixta=cfg.tipoCalculo==='mixta'&&!!a&&a.monto>0;
+  let comun=total,aguaDep=0,riegoCosto=0,sumL=0;
+  if(mixta){
+    riegoCosto=a.consumo>0?a.monto*Math.min(a.riego,a.consumo)/a.consumo:0;
+    aguaDep=a.monto-riegoCosto;
+    comun=total-a.monto+riegoCosto;
+    sumL=deps.reduce((t,d)=>t+Number(a.lecturas?.[d.id]||0),0);
+  }
+  const at=Number(cfg.areaTotal)||deps.reduce((t,d)=>t+d.area,0);
+  const filas=deps.map(d=>{
+    const alic=d.area/at,m3=mixta?Number(a.lecturas?.[d.id]||0):0;
+    const cc=r2(comun*alic),ag=mixta?r2(sumL>0?aguaDep*m3/sumL:aguaDep*alic):0;
+    return{id:d.id,area:d.area,alic,comun:cc,m3,agua:ag,total:r2(cc+ag)};
+  });
+  return{p,total,comun,aguaDep,riegoCosto,sumL,mixta,filas,at,sumAlic:filas.reduce((t,f)=>t+f.alic,0)};
+}
+
+/* =========================================================
+   DATOS DE PRUEBA
+   ========================================================= */
+function receiptSVG(monto,op,nombre,metodo){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="360" height="500" viewBox="0 0 360 500"><rect width="360" height="500" rx="18" fill="#1F5C63"/><rect x="18" y="80" width="324" height="400" rx="14" fill="#fff"/><text x="180" y="50" font-family="Arial" font-size="20" fill="#fff" text-anchor="middle" font-weight="bold">Constancia de pago</text><text x="180" y="150" font-family="Arial" font-size="38" fill="#1E2B33" text-anchor="middle" font-weight="bold">${money(monto)}</text><text x="180" y="190" font-family="Arial" font-size="15" fill="#555" text-anchor="middle">${nombre}</text><text x="180" y="212" font-family="Arial" font-size="13" fill="#777" text-anchor="middle">Para: Edificio Los Ficus, mantenimiento</text><line x1="40" y1="245" x2="320" y2="245" stroke="#ddd"/><text x="40" y="285" font-family="Arial" font-size="14" fill="#777">Medio</text><text x="320" y="285" font-family="Arial" font-size="14" fill="#222" text-anchor="end">${metodo}</text><text x="40" y="320" font-family="Arial" font-size="14" fill="#777">Fecha</text><text x="320" y="320" font-family="Arial" font-size="14" fill="#222" text-anchor="end">14 set 2026, 09:42</text><text x="40" y="355" font-family="Arial" font-size="14" fill="#777">N.° de operación</text><text x="320" y="355" font-family="Arial" font-size="14" fill="#222" text-anchor="end">${op}</text><text x="180" y="450" font-family="Arial" font-size="12" fill="#999" text-anchor="middle">Constancia simulada para la demo</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+
+function seed(){
+  const config={codigo:'los-ficus',edificio:'Edificio Los Ficus',direccion:'Calle Los Ficus 245, San Isidro, Lima',admin:'Carmen Rojas Salazar',totalDeptos:12,areaTotal:1108,tipoCalculo:'mixta',mora:20,diaCorte:15,saldoInicial:6500,fechaSim:'2026-09-22',publicarDesglose:true,banco:'BCP Soles 191-2345678-0-12 (CCI 002-191-002345678012-55)',yape:'987 654 321'};
+  const areas=[72,95,110],departamentos=[];
+  for(let f=1;f<=4;f++)for(let u=1;u<=3;u++)departamentos.push({id:`${f}0${u}`,piso:f,area:areas[u-1]});
+  const personas=[],ocupaciones=[];
+  const usuarios=[{id:'u_admin',login:'admin',pass:'admin',email:'carmen.rojas@correo.pe',rol:'admin',deptoId:null,personaId:null,estado:'activo'}];
+  let k=0;
+  const P=nombre=>{k++;const id='per_'+k;personas.push({id,nombre,dni:String(40000000+k*731197).slice(0,8),telefono:'9'+String(87000000+k*1234567).slice(0,8),email:mkEmail(nombre)});return id};
+  const rows=[
+    ['101','Rosa Huamán Quispe',null],['102','Luis Alberto Paredes',null],['103','Mariela Chávez Torres','Jorge Salinas Vega'],
+    ['201','Ricardo Benavides Luna','Ana Lucía Ferrer'],['202','Patricia Gonzales Rivera',null],['203','Fernando Del Solar',null],
+    ['301','Gabriela Montoya Ríos',null],['302','Héctor Ramírez Lozano',null],['303','Sofía Castañeda Prado','Diego Valdivia Ramos'],
+    ['401','Carlos Mendoza Aguirre',null],['402','Elena Vargas Pinto',null],['403','Miguel Ángel Ortiz','Valeria Núñez Soto']
+  ];
+  rows.forEach(([d,prop,inq])=>{
+    const pid=P(prop);
+    ocupaciones.push({id:uid('oc'),deptoId:d,personaId:pid,tipo:'propietario',desde:'2019-03-01',hasta:null,activo:true});
+    let resp=pid;
+    if(d==='403'){
+      const old=P('Renzo Palacios Gil');
+      ocupaciones.push({id:uid('oc'),deptoId:d,personaId:old,tipo:'inquilino',desde:'2024-02-01',hasta:'2026-07-31',activo:false});
+      usuarios.push({id:uid('usr'),login:d,pass:'1234',rol:'hab',deptoId:d,personaId:old,estado:'inactivo',baja:'2026-07-31'});
+    }
+    if(inq){const iid=P(inq);ocupaciones.push({id:uid('oc'),deptoId:d,personaId:iid,tipo:'inquilino',desde:d==='403'?'2026-08-01':'2025-04-01',hasta:null,activo:true});resp=iid}
+    usuarios.push({id:d==='302'?'u_302':uid('usr'),login:d,pass:'1234',rol:'hab',deptoId:d,personaId:resp,estado:'activo'});
+  });
+  const periodos=[{id:'2026-07',estado:'cerrado',gastosConfirmados:true},{id:'2026-08',estado:'cerrado',gastosConfirmados:true},{id:'2026-09',estado:'abierto',gastosConfirmados:false}];
+  // gastos y agua
+  const gastos=[],agua={};
+  const g=(periodo,tipo,categoria,descripcion,monto,dia,extra)=>gastos.push({id:uid('gas'),periodo,tipo,categoria,descripcion,monto,fecha:periodo+'-'+dia,...(extra||{})});
+  const energia={'2026-07':598.40,'2026-08':634.10,'2026-09':612.70};
+  periodos.forEach(p=>{
+    g(p.id,'recurrente','Energía eléctrica','Luz de áreas comunes y bomba',energia[p.id],'05');
+    g(p.id,'recurrente','Internet y cámaras','Plan de internet y monitoreo',179.90,'05');
+    g(p.id,'recurrente','Sueldos','Conserje y personal de limpieza',2400,'05');
+    g(p.id,'recurrente','Mantenimiento de ascensor','Contrato mensual de mantenimiento',450,'05');
+  });
+  [['2026-07',1450,30],['2026-08',1510,34],['2026-09',1480,36]].forEach(([p,monto,riego],j)=>{
+    const lect={};departamentos.forEach((d,i)=>{lect[d.id]=Math.round(d.area/5)+((i+j)%4)});
+    const s=Object.values(lect).reduce((a,b)=>a+b,0);
+    agua[p]={monto,consumo:s+riego+5,riego,lecturas:lect};
+    g(p,'recurrente','Agua','Recibo de agua del edificio',monto,'10',{auto:'agua'});
+  });
+  g('2026-07','extraordinario','Seguridad','Recarga de extintores',320,'18');
+  g('2026-08','extraordinario','Reparaciones','Cambio de bomba de agua',1250,'12');
+  g('2026-09','extraordinario','Reparaciones','Reparación de intercomunicador',280,'17');
+  // compromisos: julio fijo; agosto y setiembre = gastos del mes anterior repartidos
+  const st={config,departamentos,gastos,agua};
+  const calc={'2026-08':calcular('2026-07',st),'2026-09':calcular('2026-08',st)};
+  const compromisos=[],pagos=[];
+  const unpaid={'2026-08':['203','401'],'2026-09':['202','203','302','303','401','403']};
+  const review={'2026-09':['102']};
+  const metodos=['Transferencia BCP','Yape','Plin','Depósito BBVA'];
+  periodos.forEach(p=>departamentos.forEach((d,i)=>{
+    const f=calc[p.id]?.filas.find(x=>x.id===d.id);
+    const c={id:uid('cmp'),deptoId:d.id,periodo:p.id,tipo:'cuota',concepto:'Cuota de mantenimiento, '+plabel(p.id),monto:f?f.total:d.area*5,emitido:p.id+'-01',vence:p.id+'-15',estado:'pendiente',
+      detalle:f?{base:calc[p.id].p,alic:f.alic,comun:f.comun,agua:f.agua,m3:f.m3}:null};
+    compromisos.push(c);
+    if((unpaid[p.id]||[]).includes(d.id))return;
+    const rev=(review[p.id]||[]).includes(d.id);
+    const op=String(482000+i*7919+(+p.id.slice(5))*31);
+    const per=personas.find(x=>x.id===usuarios.find(u=>u.deptoId===d.id&&u.estado==='activo').personaId);
+    pagos.push({id:uid('pag'),compromisoId:c.id,deptoId:d.id,monto:c.monto,metodo:metodos[i%4],operacion:op,fecha:p.id+'-'+(rev?'14':pad(3+(i*5)%11)),
+      archivo:rev?{nombre:'constancia-102-setiembre.png',tipo:'image/svg+xml',data:receiptSVG(c.monto,op,per.nombre,metodos[i%4])}:{nombre:`voucher-${d.id}-${p.id}.jpg`,tipo:'image/jpeg',data:null},
+      estado:rev?'en_revision':'validado',nota:''});
+    c.estado=rev?'en_revision':'pagado';
+  }));
+  const chat=[
+    {id:uid('m'),rol:'admin',deptoId:null,nombre:'Carmen Rojas (Administración)',texto:'Buenos días, vecinos. El jueves 24 de setiembre, de 9:00 a 12:00, habrá mantenimiento del ascensor.',fecha:'2026-09-20 08:15'},
+    {id:uid('m'),rol:'hab',deptoId:'201',nombre:'Ana Lucía Ferrer',texto:'Gracias, Carmen. ¿También cortarán el agua ese día?',fecha:'2026-09-20 09:02'},
+    {id:uid('m'),rol:'admin',deptoId:null,nombre:'Carmen Rojas (Administración)',texto:'No, Ana Lucía. Solo el ascensor.',fecha:'2026-09-20 09:10'},
+    {id:uid('m'),rol:'hab',deptoId:'402',nombre:'Elena Vargas Pinto',texto:'Recordatorio: el reciclaje se deja los martes en el sótano.',fecha:'2026-09-21 19:30'}
+  ];
+  const recibos=departamentos.filter(d=>d.id<'300').map(d=>({deptoId:d.id,periodo:'2026-09',enviado:'2026-09-02',canal:'correo'}));
+  const zonas=[
+    {id:'z_parrilla',nombre:'Parrilla de la azotea',descripcion:'Parrilla a carbón, mesa para 12 y vista al parque.',aforo:15,reglamento:'Dejar la zona limpia y el carbón apagado. Música a volumen moderado hasta las 22:00. Los invitados se registran en portería.',activa:true,dias:[0,1,2,3,4,5,6],apertura:'10:00',cierre:'22:00',turno:240,antMin:1,antMax:30,maxMes:2,aprobacion:false,tarifa:50,garantia:100,morosos:false,plazoDias:2},
+    {id:'z_sum',nombre:'Sala de usos múltiples',descripcion:'Salón para 30 personas con TV y kitchenette.',aforo:30,reglamento:'Eventos hasta las 21:00. Prohibido fumar. Se entrega con inventario y se revisa al final.',activa:true,dias:[1,2,3,4,5,6],apertura:'09:00',cierre:'21:00',turno:240,antMin:3,antMax:45,maxMes:1,aprobacion:true,tarifa:80,garantia:200,morosos:false,plazoDias:2},
+    {id:'z_gym',nombre:'Gimnasio',descripcion:'Máquinas de cardio y pesas libres.',aforo:6,reglamento:'Usar toalla. Devolver las pesas a su lugar. Menores solo con un adulto.',activa:true,dias:[0,1,2,3,4,5,6],apertura:'06:00',cierre:'22:00',turno:60,antMin:0,antMax:7,maxMes:30,aprobacion:false,tarifa:0,garantia:0,morosos:true,plazoDias:1}
+  ];
+  const mkRes=(zonaId,deptoId,fecha,ini,fin,estado,pagadoEl)=>{const z=zonas.find(x=>x.id===zonaId);
+    const r={id:uid('rs'),zonaId,deptoId,fecha,ini,fin,estado,cTarifa:null,cGarantia:null,gMonto:0,gEstado:'sin_garantia',gRetenida:0,gCerrada:null,vencePago:null,nota:'',creada:'2026-09-15'};
+    if(pagadoEl)[['reserva',z.tarifa,'Reserva: '],['garantia',z.garantia,'Garantía reembolsable: ']].forEach(([tipo,m,pre])=>{if(!m)return;
+      const c={id:uid('cmp'),deptoId,periodo:'2026-09',tipo,concepto:pre+z.nombre+', '+fdate(fecha)+' '+ini,monto:m,emitido:'2026-09-15',vence:'2026-09-17',estado:'pagado'};compromisos.push(c);
+      pagos.push({id:uid('pag'),compromisoId:c.id,deptoId,monto:m,metodo:'Yape',operacion:String(710000+compromisos.length),fecha:pagadoEl,archivo:{nombre:'voucher-reserva.jpg',tipo:'image/jpeg',data:null},estado:'validado',nota:''});
+      if(tipo==='reserva')r.cTarifa=c.id;else{r.cGarantia=c.id;r.gMonto=m;r.gEstado='en_custodia'}});
+    return r};
+  const reservas=[
+    mkRes('z_parrilla','102','2026-09-20','10:00','14:00','confirmada','2026-09-16'),
+    mkRes('z_parrilla','201','2026-09-26','14:00','18:00','confirmada','2026-09-17'),
+    mkRes('z_sum','303','2026-09-27','17:00','21:00','solicitada',null),
+    mkRes('z_gym','402','2026-09-23','07:00','08:00','confirmada',null)
+  ];
+  const bloqueos=[{id:uid('bl'),zonaId:'z_parrilla',fecha:'2026-10-03',motivo:'Fumigación de la azotea'}];
+  const tickets=[
+    {id:uid('tk'),titulo:'Fuga en el baño de visitas del lobby',prioridad:'Alta',estado:'En proceso',fecha:'2026-09-19',reporta:'Conserje'},
+    {id:uid('tk'),titulo:'Luminaria quemada en escalera del piso 3',prioridad:'Media',estado:'Abierto',fecha:'2026-09-21',reporta:'Depto 302'},
+    {id:uid('tk'),titulo:'Revisión anual de pozo a tierra',prioridad:'Baja',estado:'Resuelto',fecha:'2026-09-02',reporta:'Administración'}
+  ];
+  return {config,departamentos,personas,ocupaciones,usuarios,periodos,compromisos,pagos,gastos,agua,chat,cortes:{},recibos,modulos:{},zonas,bloqueos,reservas,tickets,solicitudes:[],ultimaActividad:'2026-09-22',suscripcionPagada:false};
+}
+
+/* =========================================================
+   ESTADO Y PERSISTENCIA
+   ========================================================= */
+// Varios edificios: DB.edificios[codigo] = estado completo de cada edificio; S = edificio activo
+let DB=null;
+try{DB=JSON.parse(localStorage.getItem(KEY))}catch(e){DB=null}
+if(!DB||!DB.edificios)DB={edificios:{'los-ficus':seed()},activo:'los-ficus'};
+let S=DB.edificios[DB.activo]||Object.values(DB.edificios)[0]||null;
+function setActivo(cod){DB.activo=cod;S=DB.edificios[cod]||null}
+let sess={codigo:null,userId:null};
+try{sess=JSON.parse(localStorage.getItem(KEY+'-sess'))||sess}catch(e){}
+if(sess.codigo&&DB.edificios[sess.codigo])setActivo(sess.codigo);
+let view=null;
+const ui={gp:null,ep:null,cobTab:'validar',cp:null,desglose:true,rp:null,calcTab:'calculo',kp:null,rcp:null,wiz:null,zonaSel:null,fechaRes:null,arTab:'reservas'};
+let pendingFile=null,confirmCb=null;
+
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){toast('No se pudo guardar localmente (archivo muy grande). Los cambios siguen activos en esta sesión.')}
+  try{localStorage.setItem(KEY+'-sess',JSON.stringify(sess))}catch(e){}
+}
+// noAct = true para acciones de la demo que no cuentan como movimiento (RN-28)
+function commit(noAct){if(S){if(!noAct)S.ultimaActividad=hoy();aplicarCorte();aplicarExpiraciones()}save();render()}
+const diasEntre=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+const diasSinMov=s=>Math.max(0,diasEntre(s.ultimaActividad||s.config.fechaSim,s.config.fechaSim));
+// RN-29: 90 días sin movimiento y sin plan pagado → se elimina todo
+function depurarInactivos(){
+  const out=[];
+  Object.entries(DB.edificios).forEach(([cod,s])=>{if(!s.suscripcionPagada&&diasSinMov(s)>=90){out.push(s.config.edificio);delete DB.edificios[cod]}});
+  if(out.length){if(!DB.edificios[DB.activo]){const k=Object.keys(DB.edificios)[0];DB.activo=k||null;S=k?DB.edificios[k]:null;sess={codigo:null,userId:null};view=null}else S=DB.edificios[DB.activo];save()}
+  return out;
+}
+
+/* =========================================================
+   REGLAS DE NEGOCIO
+   ========================================================= */
+const hoy=()=>S.config.fechaSim;
+const pActual=()=>{const ab=S.periodos.filter(p=>p.estado==='abierto');return(ab.length?ab[ab.length-1]:S.periodos[S.periodos.length-1]).id};
+const periodoObj=id=>S.periodos.find(p=>p.id===id);
+const persona=id=>S.personas.find(p=>p.id===id);
+const depto=id=>S.departamentos.find(d=>d.id===id);
+const userDe=dep=>S.usuarios.find(u=>u.deptoId===dep&&u.estado==='activo');
+const residente=dep=>{const u=userDe(dep);return u?persona(u.personaId)?.nombre:'Sin ocupante activo'};
+const ocupActiva=(dep,tipo)=>S.ocupaciones.find(o=>o.deptoId===dep&&o.tipo===tipo&&o.activo);
+const sessionUser=()=>S&&sess.codigo===S.config.codigo?S.usuarios.find(u=>u.id===sess.userId&&u.estado==='activo'):null;
+const areaSum=()=>sum(S.departamentos,d=>d.area);
+const alic=d=>d.area/(Number(S.config.areaTotal)||areaSum()||1);
+
+const estadoC=c=>c.estado==='pagado'?'pagado':c.estado==='anulado'?'anulado':c.estado==='en_revision'?'revision':c.vence<hoy()?'vencido':'pendiente';
+const LBL={pagado:'Pagado',revision:'En revisión',vencido:'Vencido',pendiente:'Pendiente',validado:'Validado',en_revision:'En revisión',rechazado:'Rechazado',aldia:'Al día',activo:'Activo',inactivo:'Inactivo',anulado:'Anulado'};
+const chip=s=>`<span class="chip ${s}">${LBL[s]||s}</span>`;
+const porCobrar=dep=>S.compromisos.filter(c=>(!dep||c.deptoId===dep)&&c.estado!=='pagado'&&c.estado!=='anulado'&&!(c.tipo==='adelanto'&&c.vence>=hoy()));
+const vencidos=dep=>porCobrar(dep).filter(c=>estadoC(c)==='vencido');
+function estadoDepto(dep){
+  const p=porCobrar(dep);
+  if(p.some(c=>estadoC(c)==='vencido'))return'vencido';
+  if(p.some(c=>c.estado==='en_revision'))return'revision';
+  if(p.length)return'pendiente';
+  return'aldia';
+}
+const tipoC=id=>S.compromisos.find(c=>c.id===id)?.tipo||'cuota';
+
+function aplicarCorte(){
+  S.periodos.forEach(p=>{
+    const vence=p.id+'-'+pad(S.config.diaCorte);
+    if(hoy()<=vence||S.cortes[p.id])return;
+    const morosos=[];
+    S.compromisos.filter(c=>c.periodo===p.id&&c.tipo==='cuota'&&c.estado==='pendiente').forEach(c=>{
+      c.moroso=true;if(!morosos.includes(c.deptoId))morosos.push(c.deptoId);
+      if(S.config.mora>0)S.compromisos.push({id:uid('cmp'),deptoId:c.deptoId,periodo:p.id,tipo:'mora',concepto:'Mora por pago fuera de plazo, '+plabel(p.id),monto:Number(S.config.mora),emitido:p.id+'-'+pad(S.config.diaCorte+1),vence:lastDay(p.id),estado:'pendiente'});
+    });
+    S.cortes[p.id]={fecha:p.id+'-'+pad(S.config.diaCorte+1),deptos:morosos};
+  });
+}
+
+// Mantiene el gasto "Agua" sincronizado con el recibo de agua registrado
+function syncAgua(p){
+  const a=S.agua[p];let g=S.gastos.find(x=>x.periodo===p&&x.auto==='agua');
+  if(!a||!(a.monto>0)){if(g)S.gastos=S.gastos.filter(x=>x!==g);return}
+  if(g)g.monto=a.monto;else S.gastos.push({id:uid('gas'),periodo:p,tipo:'recurrente',categoria:'Agua',descripcion:'Recibo de agua del edificio',monto:a.monto,fecha:p+'-10',auto:'agua'});
+}
+
+// RN-36: la garantía no es ingreso; solo la parte retenida por daños, en el mes en que se retiene
+function resumen(p){
+  const val=S.pagos.filter(x=>x.estado==='validado'&&tipoC(x.compromisoId)!=='garantia');
+  const ret=(S.reservas||[]).filter(r=>r.gEstado==='retenida'&&r.gCerrada);
+  const ing=val.filter(x=>x.fecha.slice(0,7)===p);
+  const retP=ret.filter(r=>r.gCerrada.slice(0,7)===p);
+  const gas=S.gastos.filter(g=>g.periodo===p);
+  const ids=[...new Set([...S.periodos.map(x=>x.id),...val.map(x=>x.fecha.slice(0,7)),...S.gastos.map(g=>g.periodo),...ret.map(r=>r.gCerrada.slice(0,7))])].sort();
+  let ant=Number(S.config.saldoInicial);
+  ids.filter(x=>x<p).forEach(x=>{ant+=sum(val.filter(y=>y.fecha.slice(0,7)===x))+sum(ret.filter(r=>r.gCerrada.slice(0,7)===x),r=>r.gRetenida)-sum(S.gastos.filter(g=>g.periodo===x))});
+  const ti=sum(ing)+sum(retP,r=>r.gRetenida),tg=sum(gas);
+  return{ing,retP,gas,ti,tg,ant,acum:ant+ti-tg};
+}
+const custodia=()=>sum((S.reservas||[]).filter(x=>['en_custodia','por_devolver'].includes(x.gEstado)),x=>x.gMonto);
+
+/* =========================================================
+   MÓDULOS (estrategia Product-Led Growth)
+   ========================================================= */
+const ICONS={
+  gestion:'<path d="M5 21V4h10v17M15 9h4v12M8 8h2M8 12h2M8 16h2M3 21h18"/>',
+  finanzas:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/>',
+  comunicacion:'<path d="M4 5h16v11H9l-5 4z"/>',
+  areas:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  mantenimiento:'<path d="M14.7 6.3a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.7-7.7a4 4 0 0 1-2-2z"/>',
+  marketplace:'<path d="M4 10v10h16V10M3 10l2-6h14l2 6zM9 20v-5h6v5"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
+};
+const ico=(id,s=24)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[id]}</svg>`;
+const MODS=[
+  {id:'gestion',t:'Gestión del edificio',d:'Datos del edificio, departamentos, ocupantes y alícuotas.',c:'#1F6FB2',v:'config',base:true},
+  {id:'finanzas',t:'Finanzas y cuotas',d:'Cálculo de cuotas, cobranza, gastos y recibos.',c:'#1E8A5A',v:'calculo',base:true},
+  {id:'comunicacion',t:'Comunicación',d:'Chat del edificio y avisos para los vecinos.',c:'#7A4FD0',v:'chat',base:true},
+  {id:'areas',t:'Áreas comunes',d:'Reservas de parrilla, SUM y gimnasio con calendario compartido.',c:'#C77D12',v:'areas',plan:'Pro',precio:249},
+  {id:'mantenimiento',t:'Mantenimiento',d:'Tickets de incidencias y plan preventivo de equipos.',c:'#C2453A',v:'mantenimiento',plan:'Pro',precio:249},
+  {id:'marketplace',t:'Marketplace de servicios',d:'Gasfiteros, electricistas y limpieza verificados cerca de tu edificio.',c:'#11899A',v:'marketplace',plan:'Premium',precio:349}
+];
+const PLANES=[{n:'Básico',p:149,inc:'Gestión del edificio, Finanzas y cuotas, Comunicación. Hasta 20 departamentos.'},{n:'Pro',p:249,inc:'Todo lo del Básico, más Áreas comunes y Mantenimiento. Hasta 60 departamentos.'},{n:'Premium',p:349,inc:'Todo lo del Pro, más Marketplace de servicios y reportes avanzados. Departamentos ilimitados.'}];
+const diasRest=h=>Math.round((new Date(h+'T12:00:00')-new Date(hoy()+'T12:00:00'))/864e5);
+function modEstado(id){
+  const m=MODS.find(x=>x.id===id);if(m.base)return'activo';
+  const s=S.modulos[id];
+  if(s&&s.estado==='prueba'&&diasRest(s.hasta)>=0)return'prueba';
+  return'bloqueado';
+}
+const modByView=v=>MODS.find(m=>m.v===v&&!m.base);
+
+/* =========================================================
+   RENDER PRINCIPAL
+   ========================================================= */
+const app=document.getElementById('app');
+function navAdm(){
+  return[
+    {g:null,items:[{id:'inicio',t:'Inicio'},{id:'edificios',t:'Mis edificios'}]},
+    {g:'Gestión del edificio',items:[{id:'config',t:'Configuración'},{id:'deptos',t:'Departamentos y ocupantes'}]},
+    {g:'Finanzas y cuotas',items:[{id:'panel',t:'Resumen'},{id:'calculo',t:'Cálculo y recibos'},{id:'cobranza',t:'Cobranza'},{id:'gastos',t:'Gastos'},{id:'mes',t:'Ciclo mensual'},{id:'estado',t:'Estado de cuenta'}]},
+    {g:'Comunicación',items:[{id:'chat',t:'Chat del edificio'}]},
+    {g:'Módulos adicionales',items:MODS.filter(m=>!m.base).map(m=>({id:m.v,t:m.t,mod:m.id}))}
+  ];
+}
+function navHab(){
+  const it=[{id:'cuentas',t:'Mis cuentas'}];
+  if(modEstado('areas')!=='bloqueado')it.push({id:'reservas',t:'Áreas comunes'});
+  return[{g:null,items:it.concat([{id:'estado',t:'Estado de cuenta'},{id:'reportes',t:'Reportes'},{id:'chat',t:'Chat del edificio'},{id:'perfil',t:'Mi perfil'}])}];
+}
+function inactividadBanner(){
+  if(!S||S.suscripcionPagada)return'';const d=diasSinMov(S);if(d<60)return'';
+  return `<p class="warnbox" style="margin-bottom:1rem"><b>Este edificio lleva ${d} días sin movimiento.</b> Si llega a 90 días, se eliminará con todos sus datos (quedan ${90-d} días). Cualquier registro, como un gasto o un pago, reinicia el contador. Los edificios con plan pagado no se eliminan.</p>`;
+}
+
+function render(){
+  if(ui.wiz){app.innerHTML=viewWizard();return}
+  const u=sessionUser();
+  if(!u){app.innerHTML=viewLogin();return}
+  const groups=u.rol==='admin'?navAdm():navHab();
+  const flat=groups.flatMap(g=>g.items);
+  const cur=flat.find(n=>n.id===view);
+  if(!cur||(cur.mod&&modEstado(cur.mod)==='bloqueado'))view=flat[0].id;
+  const pend=S.pagos.filter(p=>p.estado==='en_revision').length;
+  app.innerHTML=`<div class="shell">
+    ${header(u)}
+    <nav class="nav" aria-label="Secciones">${groups.map(g=>(g.g?`<div class="grp">${g.g}</div>`:'')+g.items.map(n=>{
+      const st=n.mod?modEstado(n.mod):null;
+      return `<button class="${n.id===view?'on':''} ${st==='bloqueado'?'lock':''}" data-act="go" data-v="${n.id}">${n.t}${n.id==='cobranza'&&pend?`<span class="badge">${pend}</span>`:''}${st==='bloqueado'?ico('lock',15):''}${st==='prueba'?'<span class="chip tag">Prueba</span>':''}</button>`}).join('')).join('')}</nav>
+    <main class="main">${u.rol==='admin'?inactividadBanner():''}${VIEWS[view](u)}</main>
+  </div>`;
+  const top=document.querySelector('.top');if(top)document.documentElement.style.setProperty('--toph',top.offsetHeight+'px');
+  const log=document.getElementById('chatlog');if(log)log.scrollTop=log.scrollHeight;
+}
+
+const logo=s=>`<svg width="${s}" height="${s}" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="8" fill="var(--brand)"/><rect x="9" y="8.5" width="5" height="5" rx="1.3" fill="var(--surface)"/><rect x="18" y="8.5" width="5" height="5" rx="1.3" fill="var(--surface)"/><path d="M10 19.5c3 3.6 9 3.6 12 0" stroke="var(--surface)" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>`;
+function header(u){
+  const opts=[`<option value="u_admin" ${u.id==='u_admin'?'selected':''}>Administración</option>`]
+    .concat(S.usuarios.filter(x=>x.rol==='hab'&&x.estado==='activo').sort((a,b)=>a.deptoId.localeCompare(b.deptoId)).map(x=>`<option value="${x.id}" ${x.id===u.id?'selected':''}>Depto ${x.deptoId}, ${esc(shortName(persona(x.personaId)?.nombre))}</option>`));
+  return `<header class="top">
+    <div class="brand">${logo(28)}<span>Building Buddy</span></div>
+    <span class="tenant">${u.rol==='admin'?`<button class="btn ghost sm" data-act="go" data-v="edificios" title="Cambiar de edificio">${esc(S.config.edificio)}</button>`:`<b>${esc(S.config.edificio)}</b>`}</span>
+    <span class="simdate">Hoy (simulado): <b>${fdate(hoy())}</b></span>
+    <span class="spacer"></span>
+    <label class="switch small muted">Ver como <select data-change="switchUser" aria-label="Cambiar de rol para la demo">${opts.join('')}</select></label>
+    <button class="btn quiet sm" data-act="logout">Salir</button>
+  </header>`;
+}
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+let loginErr='';
+function viewLogin(){
+  const hayFicus=!!DB.edificios['los-ficus'];
+  return `<div class="login"><div class="login-card">
+    <div class="brand">${logo(40)}<span>Building Buddy</span></div>
+    <h1>Ingresa a tu edificio</h1>
+    <p class="muted">Vecinos: código del edificio y número de departamento. Administración: tu correo.</p>
+    <form data-form="login" style="margin-top:1.2rem">
+      ${loginErr?`<p class="err" role="alert">${esc(loginErr)}</p>`:''}
+      <div class="field"><label for="lg-c">Código del edificio</label><input id="lg-c" name="codigo" value="${esc(sess.codigo||(hayFicus?'los-ficus':''))}" autocomplete="organization" placeholder="Ej. los-ficus"></div>
+      <div class="field"><label for="lg-u">N.° de departamento o correo</label><input id="lg-u" name="login" autocomplete="username" placeholder="Ej. 302" required></div>
+      <div class="field"><label for="lg-p">Contraseña</label><input id="lg-p" name="pass" type="password" autocomplete="current-password" required></div>
+      <button class="btn" style="width:100%">Ingresar</button>
+    </form>
+    ${hayFicus?`<div class="demo">
+      <p class="small muted">Accesos de prueba en <b>los-ficus</b>: <b>admin / admin</b> (o carmen.rojas@correo.pe / admin) y cualquier departamento con <b>1234</b>.</p>
+      <button class="btn ghost" data-act="demo" data-u="u_admin">Entrar como administración</button>
+      <button class="btn ghost" data-act="demo" data-u="u_302">Entrar como Depto 302 (habitante)</button>
+    </div>`:`<p class="hint" style="margin-top:1rem">No hay edificios registrados en esta demo.</p>`}
+    <div style="border-top:1px solid var(--line);margin-top:1.2rem;padding-top:1rem">
+      <p class="small muted" style="margin-bottom:.5rem">¿Administras un edificio?</p>
+      <button class="btn quiet" style="width:100%" data-act="registro">Crear cuenta y registrar mi edificio</button>
+    </div>
+  </div></div>`;
+}
+
+/* =========================================================
+   ALTA DE EDIFICIOS · asistente (RN-26, RN-27)
+   ========================================================= */
+const EJEMPLO_DEPTOS=`Número\tPiso\tÁrea m2\tPropietario\tInquilino\tCorreo\tTeléfono
+101\t1\t85\tJulia Campos Ríos\t\tjulia.campos@correo.pe\t987111222
+102\t1\t85\tMarco Villanueva\tLucía Ortega\tlucia.ortega@correo.pe\t987111333
+201\t2\t85\tTeresa Aguilar\t\tteresa.aguilar@correo.pe\t987111444
+202\t2\t85\tPedro Salas Quiroz\t\tpedro.salas@correo.pe\t987111555
+301\t3\t95\tRaúl Medina\tSandra Luna\tsandra.luna@correo.pe\t987111666
+302\t3\t95\tCecilia Torres\t\tcecilia.torres@correo.pe\t987111777`;
+const slug=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/^(edificio|residencial|condominio)\s+/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,30);
+function parseDeptos(txt){
+  const filas=[],errores=[],vistos=new Set();
+  String(txt||'').split(/\r?\n/).map(l=>l.replace(/\s+$/,'')).filter(l=>l.trim()).forEach((l,i)=>{
+    const sep=l.includes('\t')?'\t':l.includes(';')?';':',';
+    const c=l.split(sep).map(x=>x.trim().replace(/^"|"$/g,''));
+    if(i===0&&/n[uú]mero|depto|departamento/i.test(c[0]))return;
+    const [numero='',piso='',area='',prop='',inq='',email='',tel='']=c;const n=i+1;
+    const a=parseFloat(String(area).replace(',','.'));let e=null;
+    if(!/^[0-9A-Za-z-]{1,8}$/.test(numero))e='número de departamento no válido';
+    else if(vistos.has(numero))e=`el departamento ${numero} está repetido`;
+    else if(!(a>0))e='el área debe ser un número mayor que cero';
+    else if(!prop)e='falta el propietario';
+    else if(email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))e='correo no válido';
+    if(e)errores.push(`Fila ${n}${numero?` (depto ${esc(numero)})`:''}: ${e}`);
+    vistos.add(numero);
+    filas.push({numero,piso:parseInt(piso)||Math.floor((parseInt(numero)||0)/100),area:a,prop,inq,email,tel});
+  });
+  return{filas,errores};
+}
+function wizNuevo(origen,cuenta){
+  ui.wiz={paso:origen==='registro'?1:2,origen,cuenta:cuenta||{nombre:'',email:'',pass:''},
+    ed:{nombre:'',direccion:'',codigo:'',total:'',area:'',mes:(S?hoy():'2026-09-22').slice(0,7)},texto:'',filas:[],errores:[],revisado:false,tipo:'alicuota',err:''};
+  render();window.scrollTo(0,0);
+}
+function viewWizard(){
+  const w=ui.wiz,reg=w.origen==='registro';
+  const pasos=reg?['Tu cuenta','Edificio','Departamentos','Cálculo de cuota']:['Edificio','Departamentos','Cálculo de cuota'];
+  const idx=reg?w.paso-1:w.paso-2;
+  const nav=`<ol class="stepper">${pasos.map((t,i)=>`<li class="${i<idx?'done':''}"><button type="button" tabindex="-1" aria-current="${i===idx?'step':'false'}"><span class="n">${i<idx?'✓':i+1}</span>${t}</button></li>`).join('')}</ol>`;
+  const err=w.err?`<p class="err" role="alert">${esc(w.err)}</p>`:'';
+  const pie=(sig,txt)=>`<div class="row" style="margin-top:1rem"><button type="button" class="btn quiet" data-act="wizCancelar">Cancelar</button><span class="spacer"></span>${w.paso>(reg?1:2)?'<button type="button" class="btn quiet" data-act="wizAtras">Atrás</button>':''}${sig}</div>`;
+  let body='';
+  if(w.paso===1)body=`<form class="panel" data-form="wizCuenta"><h3>Crea tu cuenta de administrador</h3>${err}
+    <div class="field"><label for="wc-n">Nombre completo</label><input id="wc-n" name="nombre" value="${esc(w.cuenta.nombre)}" required autocomplete="name"></div>
+    <div class="field"><label for="wc-e">Correo</label><input id="wc-e" name="email" type="email" value="${esc(w.cuenta.email)}" required autocomplete="email"></div>
+    <div class="field"><label for="wc-p">Contraseña (mínimo 6 caracteres)</label><input id="wc-p" name="pass" type="password" minlength="6" required autocomplete="new-password"></div>
+    <p class="small muted">Te enviaremos un correo para verificar tu cuenta antes de continuar (en la demo se omite).</p>
+    ${pie('<button class="btn">Continuar</button>')}</form>`;
+  if(w.paso===2)body=`<form class="panel" data-form="wizEdificio"><h3>Datos del edificio</h3>${err}
+    <div class="grid2">
+      <div class="field"><label for="we-n">Nombre del edificio</label><input id="we-n" name="nombre" value="${esc(w.ed.nombre)}" required placeholder="Ej. Residencial Las Palmeras"></div>
+      <div class="field"><label for="we-d">Dirección</label><input id="we-d" name="direccion" value="${esc(w.ed.direccion)}" required></div>
+      <div class="field"><label for="we-c">Código de acceso</label><input id="we-c" name="codigo" value="${esc(w.ed.codigo)}" placeholder="Se genera del nombre si lo dejas vacío" pattern="[a-z0-9-]{3,30}"></div>
+      <div class="field"><label for="we-t">Cantidad de departamentos</label><input id="we-t" name="total" type="number" min="1" step="1" value="${esc(w.ed.total)}" required></div>
+      <div class="field"><label for="we-a">Área total de departamentos (m²)</label><input id="we-a" name="area" type="number" min="1" step="0.01" value="${esc(w.ed.area)}" required></div>
+      <div class="field"><label for="we-m">Mes de inicio</label><input id="we-m" name="mes" type="month" value="${esc(w.ed.mes)}" required></div>
+    </div>
+    <p class="small muted">Los vecinos usarán el código para ingresar (minúsculas, números y guiones).</p>
+    ${pie('<button class="btn">Continuar</button>')}</form>`;
+  if(w.paso===3){
+    const sa=sum(w.filas,f=>f.area)||0;
+    body=`<div class="panel"><h3>Departamentos</h3>
+    <p class="small muted" style="margin-bottom:.8rem">Sube un Excel o pega la tabla con estas columnas, en este orden: <b>número, piso, área m², propietario, inquilino, correo, teléfono</b>. El inquilino, el correo y el teléfono son opcionales. Si una fila tiene un error, no se guarda ninguna hasta corregirla.</p>
+    <div class="row" style="margin-bottom:.6rem"><label class="btn quiet sm" for="wz-f">Subir Excel o CSV</label><input id="wz-f" type="file" accept=".xlsx,.xls,.csv,.txt" data-change="wizFile" style="position:absolute;opacity:0;width:1px;height:1px"><button type="button" class="btn quiet sm" data-act="wizEjemplo">Usar datos de ejemplo</button></div>
+    <div class="field"><label for="wz-t">O pega aquí la tabla copiada de Excel</label><textarea id="wz-t" data-input="wizTexto" rows="7" style="font-family:ui-monospace,monospace;font-size:.82rem">${esc(w.texto)}</textarea></div>
+    <button type="button" class="btn quiet" data-act="wizRevisar">Revisar datos</button>
+    ${w.revisado?(w.errores.length?`<div class="errlist" role="alert"><p><b>${w.errores.length} ${w.errores.length>1?'filas con error':'fila con error'}. Corrige y vuelve a revisar.</b></p>${w.errores.slice(0,12).map(e=>`<p>${e}</p>`).join('')}</div>`
+      :w.filas.length?`<p class="small" style="margin:.8rem 0 .4rem"><b>${w.filas.length} departamentos listos.</b> Suman ${nf(sa,2)} m²${Math.abs(sa-(+w.ed.area))>0.01?` y el área total declarada es ${nf(+w.ed.area,2)} m²: podrás corregirlo después.`:', igual al área total.'}${w.filas.length!==+w.ed.total?` Indicaste ${w.ed.total} departamentos.`:''}</p>
+        <div class="tbl"><table><thead><tr><th>Depto</th><th>Piso</th><th class="r">Área</th><th>Propietario</th><th>Inquilino</th><th>Correo</th></tr></thead><tbody>${w.filas.slice(0,50).map(f=>`<tr><td>${esc(f.numero)}</td><td>${f.piso}</td><td class="r num">${nf(f.area,2)}</td><td>${esc(f.prop)}</td><td>${esc(f.inq||'—')}</td><td>${esc(f.email||'—')}</td></tr>`).join('')}</tbody></table></div>`:''):''}
+    ${pie(`<button type="button" class="btn quiet" data-act="wizOmitir">Omitir por ahora</button><button type="button" class="btn" data-act="wizDeptosOk" ${w.revisado&&w.filas.length&&!w.errores.length?'':'disabled'}>Continuar</button>`)}</div>`;
+  }
+  if(w.paso===4)body=`<div class="panel"><h3>¿Cómo se calcula la cuota?</h3>${err}
+    <div class="opts">
+      <label class="opt"><input type="radio" name="wtipo" value="alicuota" data-change="wizTipo" ${w.tipo==='alicuota'?'checked':''}><span><b>Fija por área / alícuota</b><span class="small muted">Todos los gastos se reparten según el área de cada departamento.</span></span></label>
+      <label class="opt"><input type="radio" name="wtipo" value="mixta" data-change="wizTipo" ${w.tipo==='mixta'?'checked':''}><span><b>Mixta con consumo de agua</b><span class="small muted">Gastos comunes por alícuota y agua según la lectura de cada departamento.</span></span></label>
+    </div>
+    <p class="hint">Se creará <b>${esc(w.ed.nombre)}</b> (código <b>${esc(w.ed.codigo)}</b>) con ${w.filas.length} departamentos y ${plabel(w.ed.mes)} como primer mes. Quedarás como administrador titular. Los vecinos importados reciben su invitación (en la demo, entran con su número de departamento y la clave 1234).</p>
+    <p class="small muted" style="margin-top:.6rem">Si el edificio pasa 90 días sin movimiento y sin plan pagado, se elimina con todos sus datos. Te avisaremos a los 60 y a los 83 días.</p>
+    ${pie('<button type="button" class="btn" data-act="wizCrear">Crear edificio</button>')}</div>`;
+  return `<div class="wiz"><div class="brand" style="margin-bottom:1rem">${logo(32)}<span>Building Buddy</span></div>
+    <h1 style="margin-bottom:.3rem">${reg?'Registra tu edificio':'Registrar otro edificio'}</h1><p class="muted" style="margin-bottom:1.2rem">En pocos minutos tendrás el edificio listo para calcular cuotas.</p>${nav}${body}</div>`;
+}
+function nuevoEdificio(w){
+  const h=S?hoy():'2026-09-22';
+  const s={config:{codigo:w.ed.codigo,edificio:w.ed.nombre,direccion:w.ed.direccion,admin:w.cuenta.nombre,totalDeptos:+w.ed.total,areaTotal:+w.ed.area,tipoCalculo:w.tipo,mora:20,diaCorte:15,saldoInicial:0,fechaSim:h,publicarDesglose:true,banco:'',yape:''},
+    departamentos:[],personas:[],ocupaciones:[],usuarios:[{id:'u_admin',login:'admin',pass:w.cuenta.pass,email:w.cuenta.email.toLowerCase(),rol:'admin',deptoId:null,personaId:null,estado:'activo'}],
+    periodos:[{id:w.ed.mes,estado:'abierto',gastosConfirmados:false}],compromisos:[],pagos:[],gastos:[],agua:{},chat:[],cortes:{},recibos:[],modulos:{},zonas:[],bloqueos:[],reservas:[],tickets:[],solicitudes:[],
+    ultimaActividad:h,suscripcionPagada:false};
+  w.filas.forEach(f=>{
+    s.departamentos.push({id:f.numero,piso:f.piso,area:r2(f.area)});
+    const pid=uid('per');s.personas.push({id:pid,nombre:f.prop,dni:'',telefono:f.inq?'':f.tel,email:f.inq?'':f.email});
+    s.ocupaciones.push({id:uid('oc'),deptoId:f.numero,personaId:pid,tipo:'propietario',desde:h,hasta:null,activo:true});let resp=pid;
+    if(f.inq){const iid=uid('per');s.personas.push({id:iid,nombre:f.inq,dni:'',telefono:f.tel,email:f.email});s.ocupaciones.push({id:uid('oc'),deptoId:f.numero,personaId:iid,tipo:'inquilino',desde:h,hasta:null,activo:true});resp=iid}
+    s.usuarios.push({id:uid('usr'),login:f.numero.toLowerCase(),pass:'1234',rol:'hab',deptoId:f.numero,personaId:resp,estado:'activo'});
+  });
+  return s;
+}
+const edificiosDe=email=>Object.values(DB.edificios).filter(s=>s.usuarios.some(x=>x.rol==='admin'&&x.estado==='activo'&&(x.email||'').toLowerCase()===String(email||'').toLowerCase()));
+
+const VIEWS={};
+
+/* =========================================================
+   INICIO · DASHBOARD DE MÓDULOS
+   ========================================================= */
+function onboardingSteps(){
+  const c=S.config,p=pActual(),n=S.departamentos.length,sa=areaSum();
+  return[
+    {t:'Datos del edificio',ok:!!(c.edificio&&c.direccion&&c.totalDeptos>0&&c.areaTotal>0),a:'sec-edificio'},
+    {t:'Departamentos',ok:n===Number(c.totalDeptos)&&Math.abs(sa-c.areaTotal)<0.01,a:'sec-deptos'},
+    {t:'Cálculo de cuota',ok:c.tipoCalculo==='alicuota'||(S.agua[p]?.monto>0),a:'sec-calculo'},
+    {t:'Cobranza',ok:!!(c.banco&&c.diaCorte),a:'sec-cobranza'}
+  ];
+}
+VIEWS.inicio=u=>{
+  const p=pActual(),r=resumen(p),steps=onboardingSteps(),done=steps.filter(s=>s.ok).length;
+  const act=MODS.filter(m=>modEstado(m.id)!=='bloqueado').length;
+  const metric={
+    gestion:`${S.departamentos.length} departamentos, ${nf(areaSum(),2)} m²`,
+    finanzas:`${money(sum(porCobrar()))} por cobrar`,
+    comunicacion:`${S.chat.length} mensajes en el chat`,
+    areas:`${S.reservas.filter(r=>r.fecha>=hoy()&&RES_ACTIVAS.includes(r.estado)).length} reservas próximas`,
+    mantenimiento:`${S.tickets.filter(t=>t.estado!=='Resuelto').length} tickets abiertos`,
+    marketplace:'32 proveedores en San Isidro'
+  };
+  return `<div class="pagehead"><div><h1>Hola, ${esc(S.config.admin.split(' ')[0])}</h1><p class="muted">Plan Básico: ${act} de ${MODS.length} módulos activos en ${esc(S.config.edificio)}.</p></div><span class="spacer"></span><button class="btn quiet" data-act="planes">Ver planes</button></div>
+  <div class="mods">${MODS.map(m=>{
+    const st=modEstado(m.id),lk=st==='bloqueado';
+    const flag=st==='prueba'?`<span class="chip flag flag-trial flag">Prueba: ${diasRest(S.modulos[m.id].hasta)} días</span>`:lk?`<span class="chip tag flag">${m.id==='marketplace'?'Upgrade':'Prueba gratis'}</span>`:'';
+    return `<button class="mod ${lk?'locked':''}" style="--c:${m.c}" data-act="mod" data-id="${m.id}" aria-label="${m.t}${lk?', bloqueado':''}">
+      ${flag}<span class="ico">${ico(lk?'lock':m.id)}</span><h3>${m.t}</h3><p>${m.d}</p>
+      <span class="metric small">${lk?`Incluido en el plan ${m.plan}`:metric[m.id]}</span>
+      <span class="cta">${lk?(m.id==='marketplace'?'Mejorar plan':'Probar 14 días gratis'):'Abrir módulo'}</span></button>`}).join('')}</div>
+  ${done<steps.length?`<div class="panel" style="margin-top:1.2rem"><div class="row"><h3>Termina de configurar tu edificio</h3><span class="spacer"></span><span class="small muted">${done} de ${steps.length} pasos</span></div>
+    <div class="meter"><div style="width:${done/steps.length*100}%"></div></div>
+    <div class="row" style="margin-top:.6rem">${steps.filter(s=>!s.ok).map(s=>`<button class="btn quiet sm" data-act="go" data-v="${s.a==='sec-deptos'?'deptos':'config'}">${s.t}</button>`).join('')}</div></div>`:''}
+  <h2 style="margin:1.8rem 0 0">${Plabel(p)}</h2>
+  <div class="figs">
+    <div class="fig"><small>Ingresos del mes</small><strong>${money(r.ti)}</strong></div>
+    <div class="fig"><small>Gastos del mes</small><strong>${money(r.tg)}</strong></div>
+    <div class="fig"><small>Monto acumulado</small><strong class="${r.acum>=0?'pos':'neg'}">${money(r.acum)}</strong></div>
+    <div class="fig"><small>Pagos por validar</small><strong>${S.pagos.filter(x=>x.estado==='en_revision').length}</strong></div>
+  </div>`;
+};
+
+/* =========================================================
+   MIS EDIFICIOS (RN-25, RN-29)
+   ========================================================= */
+const conS=(s,f)=>{const o=S;S=s;try{return f()}finally{S=o}};
+VIEWS.edificios=u=>{
+  const mios=edificiosDe(u.email);
+  return `<div class="pagehead"><div><h1>Mis edificios</h1><p class="muted">${mios.length} ${mios.length===1?'edificio':'edificios'} con tu cuenta ${esc(u.email||'')}.</p></div><span class="spacer"></span><button class="btn" data-act="nuevoEdificio">Registrar otro edificio</button></div>
+  <div class="cards3">${mios.map(s=>conS(s,()=>{
+    const d=diasSinMov(s),act=s===DB.edificios[DB.activo],n=s.departamentos.length;
+    const morosos=s.departamentos.filter(x=>vencidos(x.id).length).length,rev=s.pagos.filter(p=>p.estado==='en_revision').length;
+    const inact=!s.suscripcionPagada&&d>=60;
+    return `<div class="card" style="${act?'border-color:var(--brand);border-width:2px':''}">
+      <div class="row"><h3>${esc(s.config.edificio)}</h3><span class="spacer"></span><span class="chip activo">Titular</span></div>
+      <p class="small muted" style="margin:.2rem 0 .6rem">${esc(s.config.direccion)} · código <b>${esc(s.config.codigo)}</b></p>
+      <p class="small">${n} departamentos · ${n?Math.round(morosos/n*100):0} % con deuda vencida · ${rev} ${rev===1?'pago':'pagos'} por validar</p>
+      <p class="small" style="margin-top:.3rem">${s.suscripcionPagada?'<span class="chip pagado">Plan pagado</span>':'<span class="chip tag">Plan de prueba</span>'} ${inact?`<span class="chip vencido">Se elimina en ${90-d} días</span>`:`<span class="small muted">Último movimiento hace ${d} ${d===1?'día':'días'}</span>`}</p>
+      <div class="row" style="margin-top:.8rem">${act?'<span class="small muted">Estás en este edificio</span>':`<button class="btn sm" data-act="cambiarEdificio" data-c="${esc(s.config.codigo)}">Abrir</button>`}</div></div>`})).join('')}</div>
+  <p class="hint" style="margin-top:1rem">Los edificios sin plan pagado que pasan 90 días sin movimiento se eliminan con todos sus datos. Te avisamos a los 60 y a los 83 días. Puedes registrar hasta 3 edificios en plan de prueba.</p>`;
+};
+
+/* =========================================================
+   GESTIÓN · CONFIGURACIÓN (onboarding)
+   ========================================================= */
+VIEWS.config=()=>{
+  const c=S.config,p=pActual(),po=periodoObj(p),steps=onboardingSteps(),a=S.agua[p]||{monto:'',consumo:'',riego:''};
+  const n=S.departamentos.length,sa=areaSum(),lockA=po.gastosConfirmados;
+  return `<div class="pagehead"><div><h1>Configuración del edificio</h1><p class="muted">Estos datos definen alícuotas, cuotas y recibos.</p></div></div>
+  <ol class="stepper">${steps.map((s,i)=>`<li class="${s.ok?'done':''}"><button data-act="${s.a==='sec-deptos'?'go':'scrollTo'}" data-v="deptos" data-a="${s.a}"><span class="n">${s.ok?'✓':i+1}</span>${s.t}</button></li>`).join('')}</ol>
+  <form data-form="config">
+  <section class="panel" id="sec-edificio"><h3>Datos del edificio</h3>
+    <div class="grid2">
+      <div class="field"><label for="c-n">Nombre del edificio</label><input id="c-n" name="edificio" value="${esc(c.edificio)}" required></div>
+      <div class="field"><label for="c-d">Dirección</label><input id="c-d" name="direccion" value="${esc(c.direccion)}" required></div>
+      <div class="field"><label for="c-a">Administrador a cargo</label><input id="c-a" name="admin" value="${esc(c.admin)}" required></div>
+      <div class="field"><label for="c-t">Cantidad total de departamentos</label><input id="c-t" name="totalDeptos" type="number" min="1" step="1" value="${c.totalDeptos}" required></div>
+      <div class="field"><label for="c-ar">Área total de departamentos (m²)</label><input id="c-ar" name="areaTotal" type="number" min="1" step="0.01" value="${c.areaTotal}" required></div>
+    </div>
+    <div class="grid2" id="sec-deptos">
+      <div><p class="small"><b>${n} de ${c.totalDeptos}</b> departamentos registrados</p><div class="meter ${n===+c.totalDeptos?'':'warn'}"><div style="width:${Math.min(100,n/c.totalDeptos*100)}%"></div></div></div>
+      <div><p class="small"><b>${nf(sa,2)} de ${nf(c.areaTotal,2)} m²</b> asignados (alícuotas suman ${pct(sa/c.areaTotal)})</p><div class="meter ${Math.abs(sa-c.areaTotal)<0.01?'':'warn'}"><div style="width:${Math.min(100,sa/c.areaTotal*100)}%"></div></div></div>
+    </div>
+    <p class="small muted" style="margin-top:.4rem">La alícuota de cada departamento es su área dividida entre el área total. Edita las áreas en <button type="button" class="btn ghost sm" data-act="go" data-v="deptos">Departamentos y ocupantes</button></p>
+  </section>
+  <section class="panel" id="sec-calculo"><h3>Tipo de cálculo de cuota</h3>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="tipoCalculo" value="alicuota" data-change="tipoCalc" ${c.tipoCalculo==='alicuota'?'checked':''}><span><b>Opción 1: Fija por área / alícuota</b><span class="small muted">Todos los gastos del mes, incluida el agua, se reparten según la alícuota de cada departamento.</span></span></label>
+      <label class="opt"><input type="radio" name="tipoCalculo" value="mixta" data-change="tipoCalc" ${c.tipoCalculo==='mixta'?'checked':''}><span><b>Opción 2: Mixta con consumo de agua</b><span class="small muted">Los gastos comunes van por alícuota. El agua se cobra según la lectura de cada departamento, descontando el riego de áreas comunes.</span></span></label>
+    </div>
+    <fieldset id="aguaBox" style="border:1px solid var(--line);border-radius:10px;padding:1rem;margin:0" ${c.tipoCalculo==='mixta'?'':'hidden'}>
+      <legend class="small" style="font-weight:700;padding:0 .4rem">Recibo de agua de ${plabel(p)}</legend>
+      ${lockA?`<p class="hint" style="margin-bottom:.8rem">Los gastos de ${plabel(p)} ya están confirmados; el recibo de agua no se puede editar.</p>`:''}
+      <div class="grid2">
+        <div class="field"><label for="aw-m">Monto del recibo general (S/)</label><input id="aw-m" name="aguaMonto" type="number" step="0.01" min="0" value="${a.monto}" data-input="aguaPrev" ${lockA?'disabled':''}></div>
+        <div class="field"><label for="aw-c">Consumo general (m³)</label><input id="aw-c" name="aguaConsumo" type="number" step="0.01" min="0" value="${a.consumo}" data-input="aguaPrev" ${lockA?'disabled':''}></div>
+        <div class="field"><label for="aw-r">Riego de áreas comunes (m³)</label><input id="aw-r" name="aguaRiego" type="number" step="0.01" min="0" value="${a.riego}" data-input="aguaPrev" ${lockA?'disabled':''}></div>
+      </div>
+      <p class="small" id="aw-prev">${aguaPreview(a.monto,a.consumo,a.riego)}</p>
+      <p class="small muted" style="margin-top:.4rem">Las lecturas de cada departamento se registran en Finanzas, Cálculo y recibos.</p>
+    </fieldset>
+  </section>
+  <section class="panel" id="sec-cobranza"><h3>Cobranza y recibos</h3>
+    <div class="grid2">
+      <div class="field"><label for="c-c">Día de vencimiento (corte)</label><input id="c-c" name="diaCorte" type="number" min="1" max="27" value="${c.diaCorte}"></div>
+      <div class="field"><label for="c-m">Mora por pago tardío (S/)</label><input id="c-m" name="mora" type="number" step="0.01" min="0" value="${c.mora}"></div>
+      <div class="field"><label for="c-s">Saldo inicial de caja (S/)</label><input id="c-s" name="saldoInicial" type="number" step="0.01" value="${c.saldoInicial}"></div>
+      <div class="field"><label for="c-b">Cuenta bancaria para recibos</label><input id="c-b" name="banco" value="${esc(c.banco)}"></div>
+      <div class="field"><label for="c-y">Yape / Plin</label><input id="c-y" name="yape" value="${esc(c.yape)}"></div>
+    </div>
+    <label class="row small"><input type="checkbox" name="publicarDesglose" ${c.publicarDesglose?'checked':''}> Mostrar a los habitantes el desglose de cuentas por cobrar por departamento</label>
+  </section>
+  <div class="row" style="margin-bottom:1.5rem"><span class="spacer"></span><button class="btn">Guardar configuración</button></div>
+  </form>
+  <div class="panel"><h3>Herramientas de la demo</h3>
+    <p class="small muted" style="margin-bottom:.8rem">Mueve la fecha simulada para ver el corte automático del día ${c.diaCorte}, o restaura los datos iniciales.</p>
+    <div class="row"><button class="btn quiet sm" data-act="setDia" data-d="${p}-10">Ir al 10 de ${MESES[+p.slice(5)-1]}</button><button class="btn quiet sm" data-act="setDia" data-d="${p}-${pad(c.diaCorte+1)}">Ir al ${c.diaCorte+1} de ${MESES[+p.slice(5)-1]}</button><button class="btn quiet sm" data-act="setDia" data-d="${lastDay(p)}">Ir a fin de mes</button><span class="spacer"></span><button class="btn danger sm" data-act="resetDemo">Restaurar datos de prueba</button></div>
+    <h3 style="margin:1.1rem 0 .3rem">Inactividad (RN-29)</h3>
+    <p class="small muted" style="margin-bottom:.6rem">Días sin movimiento: <b>${diasSinMov(S)}</b>. Plan: <b>${S.suscripcionPagada?'pagado (no se elimina)':'de prueba'}</b>.</p>
+    <div class="row"><button class="btn quiet sm" data-act="simInactivo" data-d="65">Simular 65 días sin movimiento</button><button class="btn quiet sm" data-act="simInactivo" data-d="90">Simular 90 días</button><button class="btn quiet sm" data-act="togglePlan">${S.suscripcionPagada?'Volver a plan de prueba':'Simular plan pagado'}</button></div>
+  </div>`;
+};
+function aguaPreview(m,c,r){
+  m=+m||0;c=+c||0;r=+r||0;
+  if(!m||!c)return'<span class="muted">Ingresa el monto y el consumo general para ver el reparto.</span>';
+  if(r>c)return'<span class="neg">El riego no puede superar el consumo general.</span>';
+  const rc=m*r/c;
+  return `Costo por m³: <b>${money(m/c)}</b>. Riego de áreas comunes: <b>${money(rc)}</b>, se reparte por alícuota. Agua de departamentos: <b>${money(m-rc)}</b>, se reparte según lecturas.`;
+}
+
+/* =========================================================
+   GESTIÓN · DEPARTAMENTOS Y OCUPANTES
+   ========================================================= */
+VIEWS.deptos=()=>{
+  const c=S.config,at=+c.areaTotal,sa=areaSum(),n=S.departamentos.length;
+  const inact=S.usuarios.filter(u=>u.rol==='hab'&&u.estado==='inactivo');
+  const deps=[...S.departamentos].sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
+  return `<div class="pagehead"><div><h1>Departamentos y ocupantes</h1><p class="muted">El número de departamento es el usuario de acceso. Edita el área y la alícuota se recalcula al instante.</p></div><span class="spacer"></span><button class="btn" data-act="nuevoDepto">Agregar departamento</button></div>
+  ${n!==+c.totalDeptos?`<p class="warnbox" style="margin-bottom:1rem">Hay ${n} departamentos registrados y la configuración indica ${c.totalDeptos}. Agrega los que faltan o corrige la cantidad en Configuración.</p>`:''}
+  ${Math.abs(sa-at)>0.01?`<p class="warnbox" style="margin-bottom:1rem">Las áreas suman ${nf(sa,2)} m² y el área total declarada es ${nf(at,2)} m²: las alícuotas suman ${pct(sa/at)}. Corrige un área o actualiza el área total para que la cuota cubra el 100 % de los gastos.</p>`:''}
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Depto</th><th>Propietario</th><th>Inquilino actual</th><th class="r">Área (m²)</th><th class="r">Alícuota</th><th>Acceso</th><th class="r">Acciones</th></tr></thead><tbody>
+  ${deps.map(d=>{const u=S.usuarios.filter(x=>x.deptoId===d.id).sort((a,b)=>a.estado==='activo'?-1:1)[0];const prop=ocupActiva(d.id,'propietario');const inq=ocupActiva(d.id,'inquilino');const act=u&&u.estado==='activo';
+    return `<tr><td><b>${d.id}</b><div class="small muted">Piso ${d.piso}</div></td>
+    <td>${esc(prop?persona(prop.personaId)?.nombre:'—')}</td>
+    <td>${inq?esc(persona(inq.personaId)?.nombre):'<span class="muted">No aplica</span>'}</td>
+    <td class="r"><input class="cellin" type="number" min="1" step="0.01" value="${d.area}" data-change="area" data-id="${d.id}" aria-label="Área del departamento ${d.id}"></td>
+    <td class="r num"><b>${pct(alic(d))}</b></td>
+    <td>${u?`<button class="btn quiet sm" data-act="toggleUser" data-id="${u.id}" aria-label="Cambiar estado del acceso">${chip(u.estado)}</button>`:'—'}</td>
+    <td class="r"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn quiet sm" data-act="editDepto" data-id="${d.id}">Editar</button><button class="btn quiet sm" data-act="cambioOcupante" data-id="${d.id}">Cambio de ocupante</button>${act?`<button class="btn quiet sm" data-act="resetPass" data-id="${u.id}">Clave</button>`:''}</div></td></tr>`}).join('')}
+  </tbody><tfoot><tr><td colspan="3">${n} departamentos</td><td class="r num">${nf(sa,2)}</td><td class="r num">${pct(sa/at)}</td><td colspan="2"></td></tr></tfoot></table></div></div>
+  <div class="panel"><h3>Historial de ocupantes dados de baja</h3>
+  ${inact.length?`<div class="tbl"><table><thead><tr><th>Depto</th><th>Nombre</th><th>Baja</th><th>Estado</th></tr></thead><tbody>${inact.map(u=>`<tr><td>${u.deptoId}</td><td>${esc(persona(u.personaId)?.nombre)}</td><td>${fdate(u.baja)||'—'}</td><td>${chip('inactivo')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted small">Sin registros.</p>'}</div>`;
+};
+
+/* =========================================================
+   FINANZAS · RESUMEN (fachada)
+   ========================================================= */
+function facade(){
+  const floors=[...new Set(S.departamentos.map(d=>d.piso))].sort((a,b)=>b-a);
+  const maxU=Math.max(...floors.map(f=>S.departamentos.filter(d=>d.piso===f).length));
+  return `<div class="facade">
+    <div class="roof"><span>${esc(S.config.edificio)}</span><span>${S.departamentos.length} dptos.</span></div>
+    ${floors.map(f=>`<div class="floor" style="grid-template-columns:repeat(${maxU},1fr)">${S.departamentos.filter(d=>d.piso===f).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})).map(d=>{
+      const st=estadoDepto(d.id),deuda=sum(porCobrar(d.id));
+      return `<button class="win s-${st}" data-act="depto" data-id="${d.id}" aria-label="Departamento ${d.id}, ${LBL[st]}"><b>${d.id}</b><span>${esc(shortName(residente(d.id)))}</span><em class="num">${deuda>0?money(deuda):'Al día'}</em></button>`}).join('')}</div>`).join('')}
+    <div class="ground"><div class="door"></div></div>
+  </div><div class="base"></div>
+  <div class="legend"><span><i style="background:var(--ok-bg)"></i>Al día</span><span><i style="background:var(--warn-bg)"></i>Pendiente</span><span><i style="background:var(--info-bg)"></i>Pago en revisión</span><span><i style="background:var(--bad-bg)"></i>Vencido</span></div>`;
+}
+VIEWS.panel=()=>{
+  const p=pActual(),r=resumen(p),cxc=sum(porCobrar()),venc=sum(vencidos());
+  const pend=S.pagos.filter(x=>x.estado==='en_revision').length,corte=S.cortes[p];
+  const al=S.departamentos.filter(d=>estadoDepto(d.id)==='aldia').length;
+  return `<section class="hero">
+    <div>${facade()}<p class="small muted" style="margin-top:.5rem">Toca un departamento para ver su cuenta corriente y su recibo.</p></div>
+    <div>
+      <h1>${Plabel(p)}</h1>
+      <p class="muted" style="margin-top:.35rem">${corte?`Corte del día ${S.config.diaCorte} aplicado el ${fdate(corte.fecha)}: ${corte.deptos.length} departamentos pasaron a deuda vencida.`:`El corte automático se aplicará el ${fdate(p+'-'+pad(S.config.diaCorte+1))}.`} ${al} de ${S.departamentos.length} departamentos están al día.</p>
+      <div class="figs">
+        <div class="fig"><small>Ingresos del mes</small><strong>${money(r.ti)}</strong></div>
+        <div class="fig"><small>Gastos del mes</small><strong>${money(r.tg)}</strong></div>
+        <div class="fig"><small>Monto acumulado</small><strong class="${r.acum>=0?'pos':'neg'}">${money(r.acum)}</strong></div>
+        <div class="fig"><small>Por cobrar</small><strong>${money(cxc)}</strong><small class="neg">${money(venc)} vencido</small></div>
+      </div>
+      <div class="row">
+        <button class="btn" data-act="go" data-v="cobranza">Validar pagos${pend?` (${pend})`:''}</button>
+        <button class="btn quiet" data-act="go" data-v="calculo">Cálculo y recibos</button>
+        <button class="btn quiet" data-act="go" data-v="estado">Estado de cuenta</button>
+      </div>
+      ${!periodoObj(p).gastosConfirmados?`<p class="hint" style="margin-top:1rem">Los gastos de ${plabel(p)} aún no están confirmados; el estado de cuenta figura como borrador.</p>`:''}
+    </div>
+  </section>`;
+};
+
+/* =========================================================
+   FINANZAS · CÁLCULO MENSUAL Y RECIBOS
+   ========================================================= */
+VIEWS.calculo=()=>{
+  const t=ui.calcTab;
+  return `<div class="pagehead"><div><h1>Cálculo y recibos</h1><p class="muted">Los gastos de un mes se reparten entre los departamentos y se cobran en el mes siguiente.</p></div></div>
+  <div class="tabs" role="tablist"><button class="${t==='calculo'?'on':''}" data-act="calcTab" data-t="calculo">Cálculo mensual</button><button class="${t==='recibos'?'on':''}" data-act="calcTab" data-t="recibos">Recibos</button></div>
+  ${t==='calculo'?calcView():recibosView()}`;
+};
+function calcView(){
+  const p=ui.kp||pActual(),po=periodoObj(p),n=nextP(p),k=calcular(p),mixCfg=S.config.tipoCalculo==='mixta';
+  const a=S.agua[p]||{monto:0,consumo:0,riego:0,lecturas:{}},lock=po.gastosConfirmados;
+  const emitido=!!S.periodos.find(x=>x.id===n);
+  return `<div class="row" style="margin-bottom:.8rem"><label class="small muted">Gastos de <select data-change="setKP" class="btn quiet sm">${S.periodos.map(x=>`<option value="${x.id}" ${x.id===p?'selected':''}>${Plabel(x.id)}</option>`).join('')}</select></label>
+    <span class="small muted">→ cuotas de ${plabel(n)}</span><span class="spacer"></span>${lock?chip('validado').replace('Validado','Gastos confirmados'):chip('pendiente').replace('Pendiente','Gastos sin confirmar')}</div>
+  <div class="figs">
+    <div class="fig"><small>Gastos del mes</small><strong>${money(k.total)}</strong></div>
+    <div class="fig"><small>Gastos comunes por alícuota</small><strong>${money(k.comun)}</strong></div>
+    ${k.mixta?`<div class="fig"><small>Agua por lectura (${nf(k.sumL)} m³)</small><strong>${money(k.aguaDep)}</strong></div><div class="fig"><small>Riego descontado</small><strong>${money(k.riegoCosto)}</strong></div>`:`<div class="fig"><small>Método</small><strong style="font-size:1.05rem">Fija por alícuota</strong></div>`}
+  </div>
+  ${Math.abs(k.sumAlic-1)>0.0001?`<p class="warnbox" style="margin-bottom:1rem">Las alícuotas suman ${pct(k.sumAlic)}, así que las cuotas no cubren exactamente los gastos. Revisa las áreas en Departamentos y ocupantes.</p>`:''}
+  ${mixCfg?`<div class="panel"><h3>Recibo de agua y lecturas de ${plabel(p)}</h3>
+    ${lock?`<p class="hint" style="margin-bottom:.8rem">Gastos confirmados: los datos de agua están bloqueados.</p>`:''}
+    <form data-form="agua"><input type="hidden" name="periodo" value="${p}">
+      <div class="grid2">
+        <div class="field"><label for="k-m">Monto del recibo (S/)</label><input id="k-m" name="monto" type="number" step="0.01" min="0" value="${a.monto||''}" ${lock?'disabled':''} required></div>
+        <div class="field"><label for="k-c">Consumo general (m³)</label><input id="k-c" name="consumo" type="number" step="0.01" min="0" value="${a.consumo||''}" ${lock?'disabled':''} required></div>
+        <div class="field"><label for="k-r">Riego de áreas comunes (m³)</label><input id="k-r" name="riego" type="number" step="0.01" min="0" value="${a.riego||0}" ${lock?'disabled':''}></div>
+      </div>
+      <details ${a.monto?'':'open'}><summary class="small" style="cursor:pointer;margin-bottom:.6rem">Lecturas por departamento (m³)</summary>
+      <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">${S.departamentos.map(d=>`<div class="field"><label for="l${d.id}">Depto ${d.id}</label><input id="l${d.id}" name="lect_${d.id}" type="number" step="0.01" min="0" value="${a.lecturas?.[d.id]??''}" ${lock?'disabled':''}></div>`).join('')}</div></details>
+      ${lock?'':'<button class="btn quiet">Guardar agua y lecturas</button>'}
+    </form></div>`:''}
+  <div class="panel"><div class="row" style="margin-bottom:.6rem"><h3>Cuota por departamento para ${plabel(n)}</h3><span class="spacer"></span>
+    ${p===pActual()&&!emitido?`<button class="btn" data-act="go" data-v="mes">Emitir cuotas de ${plabel(n)}</button>`:emitido?`<span class="small muted">Cuotas de ${plabel(n)} ya emitidas</span>`:''}</div>
+  <div class="tbl"><table><thead><tr><th>Depto</th><th class="r">Área</th><th class="r">Alícuota</th><th class="r">Gastos comunes</th>${k.mixta?'<th class="r">m³</th><th class="r">Agua</th>':''}<th class="r">Cuota</th><th></th></tr></thead><tbody>
+  ${k.filas.map(f=>`<tr><td><b>${f.id}</b></td><td class="r num">${nf(f.area,2)}</td><td class="r num">${pct(f.alic)}</td><td class="r num">${money(f.comun)}</td>${k.mixta?`<td class="r num">${nf(f.m3,2)}</td><td class="r num">${money(f.agua)}</td>`:''}<td class="r num"><b>${money(f.total)}</b></td>
+    <td class="r">${emitido?`<button class="btn quiet sm" data-act="recibo" data-id="${f.id}" data-p="${n}">Recibo</button>`:''}</td></tr>`).join('')}
+  </tbody><tfoot><tr><td>Total</td><td class="r num">${nf(sum(k.filas,f=>f.area),2)}</td><td class="r num">${pct(k.sumAlic)}</td><td class="r num">${money(sum(k.filas,f=>f.comun))}</td>${k.mixta?`<td class="r num">${nf(k.sumL,2)}</td><td class="r num">${money(sum(k.filas,f=>f.agua))}</td>`:''}<td class="r num">${money(sum(k.filas,f=>f.total))}</td><td></td></tr></tfoot></table></div>
+  <p class="small muted" style="margin-top:.6rem">${k.mixta?'Gastos comunes = gastos del mes − recibo de agua + costo del riego, repartidos por alícuota. Agua = (recibo − riego) × lectura del depto ÷ suma de lecturas.':'Cuota = gastos del mes × alícuota del departamento.'}</p></div>`;
+}
+function recibosView(){
+  const per=[...new Set(S.compromisos.filter(c=>c.tipo!=='adelanto'||c.vence<hoy()).map(c=>c.periodo))].filter(x=>x<=pActual()).sort();
+  if(!per.length)return '<p class="empty">Aún no hay cargos emitidos. Los recibos aparecen cuando abras el primer mes con cuotas.</p>';
+  const p=ui.rcp&&per.includes(ui.rcp)?ui.rcp:per[per.length-1];
+  const env=S.recibos.filter(r=>r.periodo===p).length;
+  return `<div class="row" style="margin-bottom:.8rem"><label class="small muted">Recibos de <select data-change="setRCP" class="btn quiet sm">${per.map(x=>`<option value="${x}" ${x===p?'selected':''}>${Plabel(x)}</option>`).join('')}</select></label><span class="small muted">${env} de ${S.departamentos.length} enviados</span><span class="spacer"></span><button class="btn" data-act="enviarTodos" data-p="${p}">Generar y enviar todos</button></div>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Depto</th><th>Responsable</th><th class="r">Total a pagar</th><th>Estado</th><th>Envío</th><th class="r"></th></tr></thead><tbody>
+  ${S.departamentos.map(d=>{const r=reciboData(d.id,p),e=S.recibos.find(x=>x.deptoId===d.id&&x.periodo===p);
+    return `<tr><td><b>${d.id}</b></td><td>${esc(residente(d.id))}</td><td class="r num">${money(r.total)}</td><td>${chip(r.total<=0?'pagado':r.vencido?'vencido':'pendiente')}</td><td>${e?`<span class="chip tag">Enviado ${fdate(e.enviado)}</span>`:'<span class="small muted">No enviado</span>'}</td>
+    <td class="r"><button class="btn sm" data-act="recibo" data-id="${d.id}" data-p="${p}">Generar y enviar recibo</button></td></tr>`}).join('')}
+  </tbody></table></div></div>`;
+}
+
+function reciboData(id,p){
+  const mes=S.compromisos.filter(c=>c.deptoId===id&&c.periodo===p&&c.estado!=='anulado');
+  const prev=S.compromisos.filter(c=>c.deptoId===id&&c.periodo<p&&c.estado!=='pagado'&&c.estado!=='anulado');
+  const subtotal=sum(mes),pagado=sum(mes.filter(c=>c.estado==='pagado'));
+  const anterior=sum(prev),total=r2(subtotal-pagado+anterior);
+  const cuota=mes.find(c=>c.tipo==='cuota'||c.tipo==='adelanto');
+  const vencido=[...mes,...prev].some(c=>estadoC(c)==='vencido');
+  return{mes,prev,subtotal,pagado,anterior,total,cuota,vencido,vence:cuota?.vence||p+'-'+pad(S.config.diaCorte)};
+}
+function reciboHTML(id,p){
+  const d=depto(id),c=S.config,r=reciboData(id,p);
+  const prop=ocupActiva(id,'propietario'),inq=ocupActiva(id,'inquilino');
+  const base=r.cuota?.detalle?.base;
+  const lines=r.mes.flatMap(m=>{
+    const tag=m.estado==='pagado'?' <span class="mut">(pagado)</span>':'';
+    if(m.detalle){const L=[`<tr><td>Gastos comunes de ${plabel(m.detalle.base)}<div class="mut" style="font-size:.8rem">Alícuota ${pct(m.detalle.alic)}</div></td><td class="r num">${money(m.detalle.comun)}</td></tr>`];
+      if(m.detalle.agua)L.push(`<tr><td>Consumo de agua<div class="mut" style="font-size:.8rem">${nf(m.detalle.m3,2)} m³ según lectura</div></td><td class="r num">${money(m.detalle.agua)}</td></tr>`);
+      if(tag)L.push(`<tr><td colspan="2" class="mut" style="font-size:.8rem">Cuota de ${plabel(p)} pagada</td></tr>`);return L}
+    return[`<tr><td>${esc(m.concepto)}${tag}</td><td class="r num">${money(m.monto)}</td></tr>`];
+  }).join('');
+  const gb=base?S.gastos.filter(g=>g.periodo===base):[];
+  const byCat={};gb.forEach(g=>byCat[g.categoria]=(byCat[g.categoria]||0)+g.monto);
+  const cls=r.total<=0?'paid':r.vencido?'late':'due',stTxt=r.total<=0?'Pagado':r.vencido?'Vencido':'Por pagar';
+  return `<div class="recibo">
+    <div class="rh"><div><h2>${esc(c.edificio)}</h2><p class="mut">${esc(c.direccion)}</p><p class="mut">Administración: ${esc(c.admin)}</p></div>
+      <div style="text-align:right"><p style="font-weight:700">Recibo de mantenimiento</p><p class="mut">N.° ${p.replace('-','')}-${id}</p><p class="mut">Emitido el ${fdate(hoy())}</p></div></div>
+    <div class="row" style="align-items:flex-start;margin-bottom:.4rem"><dl class="rmeta" style="flex:1;margin:0">
+      <div><dt>Departamento</dt><dd>${id}, piso ${d.piso}</dd></div>
+      <div><dt>Periodo</dt><dd>${Plabel(p)}</dd></div>
+      <div><dt>Propietario</dt><dd>${esc(prop?persona(prop.personaId)?.nombre:'—')}</dd></div>
+      <div><dt>Inquilino</dt><dd>${inq?esc(persona(inq.personaId)?.nombre):'No aplica'}</dd></div>
+      <div><dt>Área</dt><dd>${nf(d.area,2)} m²</dd></div>
+      <div><dt>Alícuota</dt><dd>${pct(alic(d))}</dd></div>
+    </dl><span class="rstamp ${cls}">${stTxt}</span></div>
+    <h4>Detalle del mes</h4>
+    <table><tbody>${lines||'<tr><td class="mut">Sin cargos en este periodo</td><td></td></tr>'}</tbody>
+    <tfoot><tr><td>Cargos de ${plabel(p)}</td><td class="r num">${money(r.subtotal)}</td></tr></tfoot></table>
+    <table style="margin-top:.6rem"><tbody>
+      ${r.pagado?`<tr><td>Pagos aplicados</td><td class="r num">− ${money(r.pagado)}</td></tr>`:''}
+      <tr><td>Deuda de meses anteriores${r.prev.length?` <span class="mut">(${r.prev.length} ${r.prev.length>1?'conceptos':'concepto'})</span>`:''}</td><td class="r num">${money(r.anterior)}</td></tr>
+    </tbody></table>
+    <div class="total"><div><p class="mut">Total a pagar</p><p class="mut" style="font-size:.82rem">Vence el ${fdate(r.vence)}${S.config.mora>0?`. Después se aplica una mora de ${money(S.config.mora)}.`:''}</p></div><strong>${money(Math.max(0,r.total))}</strong></div>
+    ${base?`<h4>Gastos del edificio en ${plabel(base)}</h4><table><tbody>${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="r num">${money(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total de gastos</td><td class="r num">${money(sum(gb))}</td></tr></tfoot></table>`:''}
+    <div class="foot"><span>Paga a: ${esc(c.banco)}. Yape o Plin: ${esc(c.yape)}. Sube tu constancia en Building Buddy.</span><span>Generado con Building Buddy</span></div>
+  </div>`;
+}
+const reciboTexto=(id,p)=>{const r=reciboData(id,p);return `${S.config.edificio}\nRecibo de mantenimiento ${Plabel(p)}, depto ${id}\nTotal a pagar: ${money(Math.max(0,r.total))}\nVence: ${fdate(r.vence)}\nPaga a: ${S.config.banco}. Yape o Plin: ${S.config.yape}`};
+
+/* =========================================================
+   FINANZAS · CICLO, GASTOS, COBRANZA
+   ========================================================= */
+VIEWS.mes=()=>{
+  const p=pActual(),po=periodoObj(p),n=nextP(p),k=calcular(p);
+  const cuotas=S.compromisos.filter(c=>c.periodo===p&&(c.tipo==='cuota'||c.tipo==='adelanto'));
+  const recs=S.gastos.filter(g=>g.periodo===p&&g.tipo==='recurrente');
+  const ext=S.gastos.filter(g=>g.periodo===p&&g.tipo==='extraordinario');
+  const corte=S.cortes[p];
+  const base=recs.filter(g=>!g.auto);
+  const cats=base.length?base.map(g=>({cat:g.categoria,monto:g.monto})):['Energía eléctrica','Internet y cámaras','Sueldos','Mantenimiento de ascensor'].map(c=>({cat:c,monto:''}));
+  return `<div class="pagehead"><div><h1>Ciclo mensual</h1><p class="muted">Periodo abierto: ${plabel(p)}. Cada paso alimenta el estado de cuenta oficial.</p></div></div>
+  <div class="panel"><h3>${Plabel(p)}</h3>
+    <ol class="steps">
+      <li class="${cuotas.length?'done':''}"><div><b>Emitir compromisos de pago</b><p class="small muted">${cuotas.length} compromisos emitidos el ${fdate(p+'-01')}, cada uno registrado como cuenta por cobrar.</p></div><span></span></li>
+      <li class="${recs.length?'done':''}"><div><b>Registrar pagos recurrentes</b><p class="small muted">${recs.length} conceptos por ${money(sum(recs))}.</p></div><button class="btn quiet sm" data-act="go" data-v="gastos">Ver</button></li>
+      <li class="${ext.length?'done':''}"><div><b>Gastos extraordinarios</b> <span class="small muted">(opcional)</span><p class="small muted">${ext.length?`${ext.length} registrados por ${money(sum(ext))}.`:'Ninguno registrado.'}</p></div><button class="btn quiet sm" data-act="go" data-v="gastos">Agregar</button></li>
+      <li class="${corte?'done':''}"><div><b>Corte automático del día ${S.config.diaCorte}</b><p class="small muted">${corte?`Aplicado el ${fdate(corte.fecha)}. Departamentos sin pago: ${corte.deptos.join(', ')||'ninguno'}.`:`Se aplicará solo el ${fdate(p+'-'+pad(S.config.diaCorte+1))}.`}</p></div><span></span></li>
+      <li class="${po.gastosConfirmados?'done':''}"><div><b>Confirmar gastos del mes</b><p class="small muted">${po.gastosConfirmados?'Confirmados. Los gastos quedan bloqueados.':'Bloquea los gastos y vuelve oficial el estado de cuenta.'}</p></div>${po.gastosConfirmados?'':`<button class="btn sm" data-act="confirmarGastos" data-p="${p}">Confirmar</button>`}</li>
+      <li class="${po.gastosConfirmados?'done':''}"><div><b>Calcular cuotas de ${plabel(n)}</b><p class="small muted">Total a repartir: ${money(k.total)} (${S.config.tipoCalculo==='mixta'?'mixta con agua':'fija por alícuota'}).</p></div><button class="btn quiet sm" data-act="go" data-v="calculo">Ver cálculo</button></li>
+    </ol>
+  </div>
+  <div class="panel"><h3>Abrir ${plabel(n)}</h3>
+    <p class="muted small" style="margin-bottom:1rem">Cierra ${plabel(p)}, emite a cada departamento la cuota calculada con los gastos de ${plabel(p)} y registra los pagos recurrentes de ${plabel(n)}. La fecha simulada pasa al 1 de ${MESES[+n.slice(5)-1]}.${S.config.tipoCalculo==='mixta'?' El recibo de agua del nuevo mes se registra cuando llegue, en Cálculo y recibos.':''}</p>
+    ${po.gastosConfirmados?'':`<p class="hint" style="margin-bottom:1rem">Primero confirma los gastos de ${plabel(p)}.</p>`}
+    <form data-form="abrirMes">
+      <div class="grid2">${cats.map((c,i)=>`<div class="field"><label for="rc${i}">${esc(c.cat)} (S/)</label><input id="rc${i}" name="rec_${i}" type="number" step="0.01" min="0" value="${c.monto}" required><input type="hidden" name="cat_${i}" value="${esc(c.cat)}"></div>`).join('')}</div>
+      <details style="margin-bottom:1rem"><summary class="small" style="cursor:pointer">Ver cuotas que se emitirán (${money(sum(k.filas,f=>f.total))})</summary>
+        <div class="tbl" style="margin-top:.6rem"><table><thead><tr><th>Depto</th><th>Responsable</th><th class="r">Cuota</th><th></th></tr></thead><tbody>
+        ${k.filas.map(f=>{const ad=S.compromisos.find(c=>c.deptoId===f.id&&c.tipo==='adelanto'&&c.periodo===n);return `<tr><td>${f.id}</td><td>${esc(residente(f.id))}</td><td class="r num">${money(f.total)}</td><td>${ad?'<span class="chip tag">Adelanto registrado</span>':''}</td></tr>`}).join('')}
+        </tbody></table></div></details>
+      <button class="btn" ${po.gastosConfirmados?'':'disabled'}>Abrir ${plabel(n)} y emitir cuotas</button>
+    </form>
+  </div>`;
+};
+
+VIEWS.gastos=()=>{
+  const p=ui.gp||pActual(),po=periodoObj(p);
+  const list=S.gastos.filter(g=>g.periodo===p);
+  const sec=(tipo,titulo)=>{const l=list.filter(g=>g.tipo===tipo);return `<h3 style="margin:1rem 0 .4rem">${titulo}</h3>${l.length?`<div class="tbl"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Detalle</th><th class="r">Monto</th><th></th></tr></thead><tbody>
+    ${l.map(g=>`<tr><td>${fdate(g.fecha)}</td><td>${esc(g.categoria)}</td><td>${esc(g.descripcion)}</td><td class="r num">${money(g.monto)}</td><td class="r">${po.gastosConfirmados?'':g.auto?'<span class="small muted">Se edita en Cálculo</span>':`<button class="btn danger sm" data-act="delGasto" data-id="${g.id}">Eliminar</button>`}</td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="3">Subtotal</td><td class="r num">${money(sum(l))}</td><td></td></tr></tfoot></table></div>`:`<p class="muted small">Sin registros.</p>`}`};
+  return `<div class="pagehead"><div><h1>Gastos</h1><p class="muted">Pagos recurrentes y extraordinarios del edificio.</p></div><span class="spacer"></span>
+    <label class="small muted">Periodo <select data-change="setGP" class="btn quiet sm">${S.periodos.map(x=>`<option value="${x.id}" ${x.id===p?'selected':''}>${Plabel(x.id)}</option>`).join('')}</select></label></div>
+  <div class="panel">
+    <div class="row"><h3>${Plabel(p)}</h3>${po.gastosConfirmados?'<span class="chip validado">Confirmado</span>':'<span class="chip pendiente">Sin confirmar</span>'}<span class="spacer"></span><b class="num">Total ${money(sum(list))}</b></div>
+    ${sec('recurrente','Recurrentes')}${sec('extraordinario','Extraordinarios')}
+    ${po.gastosConfirmados?'':`<div class="row" style="margin-top:1rem"><span class="spacer"></span><button class="btn" data-act="confirmarGastos" data-p="${p}">Confirmar gastos de ${plabel(p)}</button></div>`}
+  </div>
+  ${po.gastosConfirmados?'':`<div class="panel"><h3>Registrar gasto</h3>
+    <form data-form="gasto"><input type="hidden" name="periodo" value="${p}">
+      <div class="grid2">
+        <div class="field"><label for="g-t">Tipo</label><select id="g-t" name="tipo"><option value="extraordinario">Extraordinario</option><option value="recurrente">Recurrente</option></select></div>
+        <div class="field"><label for="g-c">Categoría</label><input id="g-c" name="categoria" list="cats" required placeholder="Ej. Reparaciones"><datalist id="cats">${[...new Set(S.gastos.filter(g=>!g.auto).map(g=>g.categoria))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+        <div class="field"><label for="g-d">Detalle</label><input id="g-d" name="descripcion" required placeholder="Ej. Cambio de luminarias del hall"></div>
+        <div class="field"><label for="g-m">Monto (S/)</label><input id="g-m" name="monto" type="number" step="0.01" min="0.01" required></div>
+        <div class="field"><label for="g-f">Fecha</label><input id="g-f" name="fecha" type="date" value="${hoy().slice(0,7)===p?hoy():p+'-01'}" min="${p}-01" max="${lastDay(p)}" required></div>
+      </div>
+      <button class="btn">Registrar gasto</button>
+    </form></div>`}`;
+};
+
+VIEWS.cobranza=()=>{
+  const t=ui.cobTab,rev=S.pagos.filter(p=>p.estado==='en_revision');
+  let body='';
+  if(t==='validar'){
+    body=rev.length?rev.map(pg=>{const c=S.compromisos.find(x=>x.id===pg.compromisoId);return `<div class="due-row">
+      <div class="what"><b>Depto ${pg.deptoId}</b> <span class="muted">${esc(residente(pg.deptoId))}</span><p class="small">${esc(c?.concepto)}</p><p class="small muted">${esc(pg.metodo)}, op. ${esc(pg.operacion)}, enviado el ${fdate(pg.fecha)}</p></div>
+      <b class="num">${money(pg.monto)}</b>
+      <div class="row"><button class="btn quiet sm" data-act="verComp" data-id="${pg.id}">Ver comprobante</button><button class="btn danger sm" data-act="rechazar" data-id="${pg.id}">Rechazar</button><button class="btn ok sm" data-act="validar" data-id="${pg.id}">Validar pago</button></div>
+    </div>`}).join(''):`<p class="empty">No hay comprobantes por validar. Cuando un habitante suba uno, aparecerá aquí.</p>`;
+  }else if(t==='cxc'){
+    const rows=S.departamentos.map(d=>({d,pend:sum(porCobrar(d.id)),venc:sum(vencidos(d.id)),st:estadoDepto(d.id)})).sort((a,b)=>b.pend-a.pend);
+    body=`<p class="hint" style="margin-bottom:1rem">Todo compromiso emitido es una cuenta por cobrar. Si no hay pago registrado al día ${S.config.diaCorte}, pasa a vencida${S.config.mora>0?` y se genera una mora de ${money(S.config.mora)}`:''}.</p>
+    <div class="tbl"><table><thead><tr><th>Depto</th><th>Responsable</th><th class="r">Por cobrar</th><th class="r">Vencido</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td><b>${r.d.id}</b></td><td>${esc(residente(r.d.id))}</td><td class="r num">${money(r.pend)}</td><td class="r num ${r.venc?'neg':''}">${money(r.venc)}</td><td>${chip(r.st)}</td><td class="r"><button class="btn quiet sm" data-act="depto" data-id="${r.d.id}">Ver cuenta</button></td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="2">Total</td><td class="r num">${money(sum(rows,r=>r.pend))}</td><td class="r num">${money(sum(rows,r=>r.venc))}</td><td colspan="2"></td></tr></tfoot></table></div>`;
+  }else{
+    const p=ui.cp||pActual();
+    const l=S.compromisos.filter(c=>c.periodo===p).sort((a,b)=>a.deptoId.localeCompare(b.deptoId));
+    body=`<div class="row" style="margin-bottom:.8rem"><label class="small muted">Periodo <select data-change="setCP" class="btn quiet sm">${[...new Set(S.compromisos.map(c=>c.periodo))].sort().map(x=>`<option value="${x}" ${x===p?'selected':''}>${Plabel(x)}</option>`).join('')}</select></label></div>
+    <div class="tbl"><table><thead><tr><th>Depto</th><th>Concepto</th><th>Tipo</th><th>Vence</th><th class="r">Monto</th><th>Estado</th></tr></thead><tbody>
+    ${l.map(c=>`<tr><td>${c.deptoId}</td><td>${esc(c.concepto)}</td><td><span class="chip tag">${{cuota:'Cuota',mora:'Mora',extraordinario:'Extraordinario',adelanto:'Adelanto',reserva:'Reserva',garantia:'Garantía'}[c.tipo]}</span></td><td>${fdate(c.vence)}</td><td class="r num">${money(c.monto)}</td><td>${chip(estadoC(c))}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">Sin compromisos.</td></tr>'}
+    </tbody></table></div>`;
+  }
+  return `<div class="pagehead"><div><h1>Cobranza</h1><p class="muted">Validación de comprobantes y cuentas por cobrar.</p></div><span class="spacer"></span><button class="btn" data-act="nuevoCompromiso">Nuevo compromiso extraordinario</button></div>
+  <div class="panel"><div class="tabs" role="tablist">
+    <button class="${t==='validar'?'on':''}" data-act="cobTab" data-t="validar">Por validar (${rev.length})</button>
+    <button class="${t==='cxc'?'on':''}" data-act="cobTab" data-t="cxc">Cuentas por cobrar</button>
+    <button class="${t==='comp'?'on':''}" data-act="cobTab" data-t="comp">Compromisos emitidos</button>
+  </div>${body}</div>`;
+};
+
+/* =========================================================
+   MÓDULOS ADICIONALES (en prueba)
+   ========================================================= */
+function trialBar(id){
+  const m=MODS.find(x=>x.id===id),d=diasRest(S.modulos[id].hasta);
+  return `<div class="trialbar" style="--c:${m.c}"><span><b>Prueba gratis:</b> ${d} ${d===1?'día':'días'} restantes. Incluido en el plan ${m.plan} (S/ ${m.precio} al mes).</span><span class="spacer"></span><button class="btn sm" data-act="upgrade" data-id="${id}">Activar plan ${m.plan}</button></div>`;
+}
+/* =========================================================
+   MÓDULO ÁREAS COMUNES (RN-30 a RN-37)
+   ========================================================= */
+const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const zona=id=>(S.zonas||[]).find(z=>z.id===id);
+const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
+const toHM=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+const RES_ACTIVAS=['solicitada','pendiente_pago','confirmada'];
+const LBLR={solicitada:'Por aprobar',pendiente_pago:'Pendiente de pago',confirmada:'Confirmada',usada:'Usada',cancelada:'Cancelada',rechazada:'Rechazada',expirada:'Expirada'};
+const CHR={solicitada:'revision',pendiente_pago:'pendiente',confirmada:'pagado',usada:'tag',cancelada:'tag',rechazada:'vencido',expirada:'vencido'};
+const chipR=e=>`<span class="chip ${CHR[e]}">${LBLR[e]}</span>`;
+const LBLG={sin_garantia:'Sin garantía',por_cobrar:'Garantía por cobrar',en_custodia:'Garantía en custodia',por_devolver:'Garantía por devolver',devuelta:'Garantía devuelta',retenida:'Garantía retenida'};
+const diasTxt=d=>d.length===7?'Todos los días':d.slice().sort().map(x=>DIAS[x]).join(', ');
+function turnos(z,fecha){
+  const dow=new Date(fecha+'T12:00:00').getDay(),out=[];
+  for(let m=toMin(z.apertura);m+z.turno<=toMin(z.cierre);m+=z.turno){
+    const ini=toHM(m),fin=toHM(m+z.turno);let libre=true,motivo='';
+    const bl=(S.bloqueos||[]).find(b=>b.zonaId===z.id&&b.fecha===fecha);
+    if(!z.activa){libre=false;motivo='No disponible'}
+    else if(!z.dias.includes(dow)){libre=false;motivo='No abre este día'}
+    else if(bl){libre=false;motivo=bl.motivo}
+    else if(S.reservas.some(r=>r.zonaId===z.id&&r.fecha===fecha&&RES_ACTIVAS.includes(r.estado)&&toMin(r.ini)<m+z.turno&&toMin(r.fin)>m)){libre=false;motivo='Reservado'}
+    out.push({ini,fin,libre,motivo});
+  }
+  return out;
+}
+function emitirCargosReserva(r){
+  const z=zona(r.zonaId),txt=`${z.nombre}, ${fdate(r.fecha)} ${r.ini}`,vence=addDays(hoy(),z.plazoDias);
+  if(z.tarifa>0){const c={id:uid('cmp'),deptoId:r.deptoId,periodo:pActual(),tipo:'reserva',concepto:'Reserva: '+txt,monto:z.tarifa,emitido:hoy(),vence,estado:'pendiente'};S.compromisos.push(c);r.cTarifa=c.id}
+  if(z.garantia>0){const c={id:uid('cmp'),deptoId:r.deptoId,periodo:pActual(),tipo:'garantia',concepto:'Garantía reembolsable: '+txt,monto:z.garantia,emitido:hoy(),vence,estado:'pendiente'};S.compromisos.push(c);r.cGarantia=c.id;r.gMonto=z.garantia;r.gEstado='por_cobrar'}
+  r.estado='pendiente_pago';r.vencePago=vence;
+}
+function onCompromisoPagado(c){
+  if(!c||!['reserva','garantia'].includes(c.tipo))return;
+  const r=(S.reservas||[]).find(x=>x.cTarifa===c.id||x.cGarantia===c.id);if(!r)return;
+  if(c.tipo==='garantia')r.gEstado=['cancelada','expirada'].includes(r.estado)?'por_devolver':'en_custodia';
+  if(r.estado==='pendiente_pago'&&[r.cTarifa,r.cGarantia].filter(Boolean).every(id=>S.compromisos.find(x=>x.id===id)?.estado==='pagado'))r.estado='confirmada';
+}
+function aplicarExpiraciones(){
+  (S.reservas||[]).filter(r=>r.estado==='pendiente_pago'&&r.vencePago<hoy()).forEach(r=>{
+    const cs=[r.cTarifa,r.cGarantia].filter(Boolean).map(id=>S.compromisos.find(x=>x.id===id));
+    if(cs.some(c=>c&&c.estado==='en_revision'))return;
+    cs.forEach(c=>{if(c&&c.estado==='pendiente')c.estado='anulado'});
+    r.estado='expirada';r.gEstado=r.gEstado==='en_custodia'?'por_devolver':'sin_garantia';
+  });
+}
+const esMiaReserva=r=>{const u=sessionUser();return u&&u.deptoId===r.deptoId};
+function filaReserva(r,acciones){
+  const z=zona(r.zonaId);
+  return `<div class="due-row"><div class="what"><b>${esc(z?.nombre||'Zona eliminada')}</b> <span class="muted">${fdate(r.fecha)}, ${r.ini} a ${r.fin}</span>
+    <p class="small muted">Depto ${r.deptoId}, ${esc(residente(r.deptoId))}${r.gMonto?`. ${LBLG[r.gEstado]} (${money(r.gMonto)})`:''}${r.gRetenida?`, retenido ${money(r.gRetenida)}`:''}</p>
+    ${r.nota?`<p class="small">${esc(r.nota)}</p>`:''}</div>${chipR(r.estado)}<div class="row">${acciones||''}</div></div>`;
+}
+VIEWS.areas=()=>{
+  const t=ui.arTab,trial=modEstado('areas')==='prueba'?trialBar('areas'):'';
+  const R=S.reservas.slice().sort((a,b)=>(a.fecha+a.ini).localeCompare(b.fecha+b.ini));
+  const sec=(tit,l,fn,vacio)=>`<div class="panel"><h3>${tit} <span class="muted small">(${l.length})</span></h3>${l.length?l.map(r=>filaReserva(r,fn(r))).join(''):`<p class="small muted">${vacio}</p>`}</div>`;
+  let body='';
+  if(t==='reservas'){
+    body=sec('Por aprobar',R.filter(r=>r.estado==='solicitada'),r=>`<button class="btn danger sm" data-act="rechazarRes" data-id="${r.id}">Rechazar</button><button class="btn ok sm" data-act="aprobarRes" data-id="${r.id}">Aprobar</button>`,'No hay solicitudes pendientes.')
+     +sec('Pendientes de pago',R.filter(r=>r.estado==='pendiente_pago'),r=>`<span class="small muted">Vence el ${fdate(r.vencePago)}</span><button class="btn quiet sm" data-act="cancelarRes" data-id="${r.id}">Cancelar</button>`,'Ninguna.')
+     +sec('Próximas confirmadas',R.filter(r=>r.estado==='confirmada'&&r.fecha>=hoy()),r=>`<button class="btn quiet sm" data-act="cancelarRes" data-id="${r.id}">Cancelar</button>`,'Ninguna.')
+     +sec('Por cerrar (ya se usaron)',R.filter(r=>r.estado==='confirmada'&&r.fecha<hoy()),r=>`<button class="btn sm" data-act="cerrarRes" data-id="${r.id}">Cerrar${r.gEstado==='en_custodia'?' y resolver garantía':''}</button>`,'Ninguna.')
+     +sec('Garantías por devolver',R.filter(r=>r.gEstado==='por_devolver'),r=>`<button class="btn sm" data-act="devolverG" data-id="${r.id}">Registrar devolución</button>`,'Ninguna.');
+  }else if(t==='zonas'){
+    body=`<div class="row" style="margin-bottom:1rem"><span class="spacer"></span><button class="btn" data-act="zonaForm">Nueva zona</button></div>
+    <div class="cards3">${S.zonas.map(z=>`<div class="card"><div class="row"><h3>${esc(z.nombre)}</h3><span class="spacer"></span>${z.activa?'<span class="chip activo">Activa</span>':'<span class="chip inactivo">Inactiva</span>'}</div>
+      <p class="small muted" style="margin:.3rem 0 .5rem">${esc(z.descripcion||'')}</p>
+      <p class="small">${diasTxt(z.dias)}, ${z.apertura} a ${z.cierre}. Turnos de ${z.turno>=60?nf(z.turno/60,z.turno%60?1:0)+' h':z.turno+' min'}.</p>
+      <p class="small">${z.tarifa?money(z.tarifa):'Sin costo'}${z.garantia?` + garantía ${money(z.garantia)}`:''}. Aforo ${z.aforo}.</p>
+      <p class="small muted">Reserva de ${z.antMin} a ${z.antMax} días antes; máximo ${z.maxMes} al mes por departamento.${z.aprobacion?' Requiere aprobación.':''}${z.morosos?'':' No para departamentos con deuda vencida.'}</p>
+      ${(S.bloqueos||[]).filter(b=>b.zonaId===z.id&&b.fecha>=hoy()).map(b=>`<p class="small" style="margin-top:.3rem">Bloqueado el ${fdate(b.fecha)}: ${esc(b.motivo)} <button class="btn ghost sm" data-act="quitarBloqueo" data-id="${b.id}">Quitar</button></p>`).join('')}
+      <div class="row" style="margin-top:.7rem"><button class="btn quiet sm" data-act="zonaForm" data-id="${z.id}">Editar</button><button class="btn quiet sm" data-act="bloqueoForm" data-id="${z.id}">Bloquear una fecha</button></div></div>`).join('')||'<p class="empty">Aún no hay zonas. Crea la primera.</p>'}</div>`;
+  }else{
+    const enC=R.filter(r=>r.gEstado==='en_custodia'),porD=R.filter(r=>r.gEstado==='por_devolver'),ret=R.filter(r=>r.gEstado==='retenida');
+    body=`<div class="figs"><div class="fig"><small>En custodia</small><strong>${money(sum(enC,r=>r.gMonto))}</strong></div><div class="fig"><small>Por devolver</small><strong>${money(sum(porD,r=>r.gMonto))}</strong></div><div class="fig"><small>Retenido por daños (ingreso)</small><strong>${money(sum(ret,r=>r.gRetenida))}</strong></div></div>
+    <p class="hint" style="margin-bottom:1rem">La garantía es dinero de los vecinos: no se suma al saldo del edificio. Solo la parte retenida por daños pasa a ser ingreso, en el mes en que se retiene.</p>
+    ${sec('En custodia',enC,()=>'','Ninguna.')}${sec('Por devolver',porD,r=>`<button class="btn sm" data-act="devolverG" data-id="${r.id}">Registrar devolución</button>`,'Ninguna.')}${sec('Retenidas',ret,()=>'','Ninguna.')}`;
+  }
+  return `<div class="pagehead"><div><h1>Áreas comunes</h1><p class="muted">Configura las zonas y gestiona las reservas del edificio.</p></div></div>${trial}
+  <div class="tabs" role="tablist"><button class="${t==='reservas'?'on':''}" data-act="arTab" data-t="reservas">Reservas</button><button class="${t==='zonas'?'on':''}" data-act="arTab" data-t="zonas">Zonas</button><button class="${t==='garantias'?'on':''}" data-act="arTab" data-t="garantias">Garantías</button></div>${body}`;
+};
+VIEWS.reservas=u=>{
+  const z=ui.zonaSel?zona(ui.zonaSel):null;
+  const mias=S.reservas.filter(r=>r.deptoId===u.deptoId).sort((a,b)=>(b.fecha+b.ini).localeCompare(a.fecha+a.ini));
+  const misRes=`<div class="panel"><h3>Mis reservas</h3>${mias.length?mias.map(r=>filaReserva(r,
+      (r.estado==='pendiente_pago'?`<button class="btn sm" data-act="go" data-v="cuentas">Pagar cargos</button>`:'')
+     +(RES_ACTIVAS.includes(r.estado)&&r.fecha>hoy()?`<button class="btn quiet sm" data-act="cancelarRes" data-id="${r.id}">Cancelar</button>`:''))).join(''):'<p class="small muted">Aún no tienes reservas.</p>'}</div>`;
+  if(!z)return `<div class="pagehead"><div><h1>Áreas comunes</h1><p class="muted">Elige una zona para ver los turnos libres.</p></div></div>
+    <div class="cards3">${S.zonas.filter(x=>x.activa).map(x=>`<div class="card"><h3>${esc(x.nombre)}</h3><p class="small muted" style="margin:.3rem 0 .5rem">${esc(x.descripcion||'')}</p>
+      <p class="small"><b>${x.tarifa?money(x.tarifa):'Sin costo'}</b>${x.garantia?` + garantía reembolsable ${money(x.garantia)}`:''}</p><p class="small muted">${diasTxt(x.dias)}, ${x.apertura} a ${x.cierre}</p>
+      <button class="btn sm" style="margin-top:.7rem" data-act="verZona" data-id="${x.id}">Ver turnos</button></div>`).join('')||'<p class="empty">La administración aún no configuró zonas.</p>'}</div>${misRes}`;
+  const f=ui.fechaRes&&ui.fechaRes>=addDays(hoy(),z.antMin)&&ui.fechaRes<=addDays(hoy(),z.antMax)?ui.fechaRes:addDays(hoy(),z.antMin);
+  const ts=turnos(z,f);
+  return `<div class="pagehead"><div><button class="btn ghost sm" data-act="verZona" data-id="">Volver a las zonas</button><h1 style="margin-top:.4rem">${esc(z.nombre)}</h1><p class="muted">${esc(z.descripcion||'')}</p></div></div>
+  <div class="panel"><div class="row"><label class="small muted" for="fr">Fecha</label><input id="fr" type="date" class="cellin" style="width:auto;text-align:left" value="${f}" min="${addDays(hoy(),z.antMin)}" max="${addDays(hoy(),z.antMax)}" data-change="fechaRes"><span class="small muted">${DIAS[new Date(f+'T12:00:00').getDay()]} ${fdate(f)}</span></div>
+    <div class="slots">${ts.map(t=>`<button class="slot" ${t.libre?`data-act="elegirTurno" data-ini="${t.ini}" data-f="${f}"`:'disabled'} aria-label="${t.ini} a ${t.fin}, ${t.libre?'libre':t.motivo}">${t.ini} a ${t.fin}<small>${t.libre?'Libre':esc(t.motivo)}</small></button>`).join('')}</div>
+    <p class="small muted">${z.tarifa?money(z.tarifa):'Sin costo'}${z.garantia?` + garantía reembolsable ${money(z.garantia)}`:''}. Reserva de ${z.antMin} a ${z.antMax} días antes, máximo ${z.maxMes} al mes.${z.aprobacion?' La administración debe aprobar la solicitud.':''}</p></div>${misRes}`;
+};
+VIEWS.mantenimiento=()=>`<div class="pagehead"><div><h1>Mantenimiento</h1><p class="muted">Incidencias del edificio y su seguimiento.</p></div></div>${trialBar('mantenimiento')}
+  <div class="panel"><h3>Tickets</h3><div class="tbl"><table><thead><tr><th>Fecha</th><th>Incidencia</th><th>Reporta</th><th>Prioridad</th><th>Estado</th><th></th></tr></thead><tbody>
+  ${[...S.tickets].sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(t=>`<tr><td>${fdate(t.fecha)}</td><td>${esc(t.titulo)}</td><td>${esc(t.reporta)}</td><td>${chip(t.prioridad==='Alta'?'vencido':t.prioridad==='Media'?'pendiente':'tag').replace(/>[^<]+</,'>'+t.prioridad+'<')}</td><td>${chip(t.estado==='Resuelto'?'pagado':t.estado==='En proceso'?'revision':'pendiente').replace(/>[^<]+</,'>'+t.estado+'<')}</td><td class="r">${t.estado!=='Resuelto'?`<button class="btn quiet sm" data-act="avanzarTicket" data-id="${t.id}">${t.estado==='Abierto'?'Iniciar':'Marcar resuelto'}</button>`:''}</td></tr>`).join('')}
+  </tbody></table></div></div>
+  <div class="panel"><h3>Nuevo ticket</h3><form data-form="ticket"><div class="grid2">
+    <div class="field"><label for="tk-t">Incidencia</label><input id="tk-t" name="titulo" required placeholder="Ej. Puerta del sótano no cierra"></div>
+    <div class="field"><label for="tk-p">Prioridad</label><select id="tk-p" name="prioridad"><option>Media</option><option>Alta</option><option>Baja</option></select></div>
+  </div><button class="btn">Crear ticket</button></form></div>`;
+const PROVS=[{n:'Gasfitería Rímac Express',s:'Gasfitería',r:4.8,t:'Atiende en 2 horas'},{n:'Electro Service Lima',s:'Electricidad',r:4.6,t:'Técnicos certificados'},{n:'Brillo Total',s:'Limpieza profunda',r:4.9,t:'Personal con seguro'},{n:'Cerrajería San Isidro',s:'Cerrajería',r:4.5,t:'Servicio 24 horas'}];
+VIEWS.marketplace=()=>`<div class="pagehead"><div><h1>Marketplace de servicios</h1><p class="muted">Proveedores verificados cerca de ${esc(S.config.edificio)}.</p></div></div>${trialBar('marketplace')}
+  <div class="cards3">${PROVS.map(p=>`<div class="card"><h3>${p.n}</h3><p class="small muted">${p.s}, ${nf(p.r,1)} de 5</p><p class="small" style="margin:.4rem 0 .7rem">${p.t}</p><button class="btn quiet sm" data-act="cotizar" data-n="${esc(p.n)}">Solicitar cotización</button></div>`).join('')}</div>
+  ${S.solicitudes.length?`<div class="panel"><h3>Cotizaciones solicitadas</h3>${S.solicitudes.map(s=>`<p class="small">${fdate(s.fecha)}: ${esc(s.n)}, esperando respuesta</p>`).join('')}</div>`:''}`;
+
+/* =========================================================
+   VISTAS COMPARTIDAS
+   ========================================================= */
+VIEWS.estado=u=>{
+  const p=ui.ep||pActual(),po=periodoObj(p),r=resumen(p);
+  const canDes=u.rol==='admin'||S.config.publicarDesglose;
+  const ingBy={};r.ing.forEach(x=>{const t=tipoC(x.compromisoId);ingBy[t]=(ingBy[t]||0)+x.monto});
+  if(r.retP.length)ingBy.garantia_retenida=sum(r.retP,x=>x.gRetenida);
+  const cust=custodia();
+  const TL={cuota:'Cuotas de mantenimiento',mora:'Moras cobradas',extraordinario:'Cuotas extraordinarias',adelanto:'Pagos adelantados',ajuste:'Ajustes de cuota',reserva:'Reservas de áreas comunes',garantia_retenida:'Garantías retenidas por daños'};
+  const gtab=tipo=>{const l=r.gas.filter(g=>g.tipo===tipo);return l.map(g=>`<tr><td>${esc(g.categoria)}</td><td class="muted">${esc(g.descripcion)}</td><td class="r num">${money(g.monto)}</td></tr>`).join('')||`<tr><td colspan="3" class="muted">Sin registros</td></tr>`};
+  return `<div class="pagehead noprint"><div><h1>Estado de cuenta</h1><p class="muted">Documento mensual del edificio.</p></div><span class="spacer"></span>
+    <label class="small muted">Periodo <select data-change="setEP" class="btn quiet sm">${S.periodos.map(x=>`<option value="${x.id}" ${x.id===p?'selected':''}>${Plabel(x.id)}</option>`).join('')}</select></label>
+    <button class="btn quiet sm" data-act="print">Imprimir o guardar PDF</button></div>
+  <article class="statement">
+    <div class="st-head"><div><h2>Estado de cuenta mensual</h2><p class="muted small">${esc(S.config.edificio)}, ${esc(S.config.direccion)}</p></div><span class="stamp ${po?.gastosConfirmados?'oficial':'borrador'}">${po?.gastosConfirmados?'Oficial':'Borrador'}</span></div>
+    <dl class="meta">
+      <div><dt>Periodo</dt><dd>${Plabel(p)}</dd></div>
+      <div><dt>Administrador a cargo</dt><dd>${esc(S.config.admin)}</dd></div>
+      <div><dt>Fecha de emisión</dt><dd>${fdate(hoy())}</dd></div>
+    </dl>
+    <div class="figs">
+      <div class="fig"><small>Saldo anterior</small><strong>${money(r.ant)}</strong></div>
+      <div class="fig"><small>Total de ingresos</small><strong class="pos">+ ${money(r.ti)}</strong></div>
+      <div class="fig"><small>Total de gastos</small><strong class="neg">− ${money(r.tg)}</strong></div>
+      <div class="fig"><small>Monto acumulado</small><strong class="${r.acum>=0?'pos':'neg'}">${money(r.acum)}</strong><small>${r.acum>=0?'Saldo positivo':'Saldo negativo'}</small></div>
+    </div>
+    ${cust?`<p class="hint">Garantías de reservas en custodia: <b>${money(cust)}</b>. Es dinero de los vecinos y no forma parte del saldo del edificio.</p>`:''}
+    <h3>Ingresos</h3>
+    <div class="tbl"><table><tbody>${Object.keys(ingBy).length?Object.entries(ingBy).map(([t,m])=>`<tr><td>${TL[t]}</td><td class="r num">${money(m)}</td></tr>`).join(''):'<tr><td class="muted">Sin ingresos validados</td></tr>'}</tbody><tfoot><tr><td>Total de ingresos (${r.ing.length} pagos validados)</td><td class="r num">${money(r.ti)}</td></tr></tfoot></table></div>
+    <h3>Gastos recurrentes</h3><div class="tbl"><table><tbody>${gtab('recurrente')}</tbody></table></div>
+    <h3>Gastos extraordinarios</h3>
+    <div class="tbl"><table><tbody>${gtab('extraordinario')}</tbody><tfoot><tr><td colspan="2">Total de gastos</td><td class="r num">${money(r.tg)}</td></tr></tfoot></table></div>
+    ${canDes?`<label class="row small noprint" style="margin-top:1.2rem"><input type="checkbox" data-change="toggleDes" ${ui.desglose?'checked':''}> Mostrar cuentas por cobrar por departamento</label>
+    ${ui.desglose?`<h3>Cuentas por cobrar por departamento</h3><div class="tbl"><table><thead><tr><th>Depto</th><th class="r">Pendiente</th><th class="r">Vencido</th></tr></thead><tbody>
+      ${S.departamentos.map(d=>{const pe=sum(porCobrar(d.id)),ve=sum(vencidos(d.id));return pe?`<tr><td>${d.id}</td><td class="r num">${money(pe)}</td><td class="r num ${ve?'neg':''}">${money(ve)}</td></tr>`:''}).join('')||'<tr><td colspan="3" class="muted">Todos los departamentos están al día</td></tr>'}
+      </tbody><tfoot><tr><td>Total por cobrar</td><td class="r num">${money(sum(porCobrar()))}</td><td class="r num">${money(sum(vencidos()))}</td></tr></tfoot></table></div>`:''}`:''}
+    <p class="small muted" style="margin-top:1.5rem">Monto acumulado = saldo anterior + ingresos validados del mes − gastos del mes. ${po?.gastosConfirmados?'Gastos confirmados por la administración.':'Documento preliminar: los gastos del mes aún no han sido confirmados.'}</p>
+  </article>`;
+};
+VIEWS.chat=u=>`<div class="pagehead"><div><h1>Chat del edificio</h1><p class="muted">Canal común para vecinos y administración (simulado).</p></div></div>
+  <div class="chat"><div class="chatlog" id="chatlog">
+    ${S.chat.map(m=>{const me=(u.rol==='admin'&&m.rol==='admin')||(u.rol==='hab'&&m.deptoId===u.deptoId);return `<div class="msg ${me?'me':''} ${m.rol==='admin'?'adm':''}"><div class="who">${esc(m.nombre)}${m.deptoId?`, depto ${m.deptoId}`:''} <span style="font-weight:400">${fdate(m.fecha)} ${m.fecha.slice(11)}</span></div>${esc(m.texto)}</div>`}).join('')}
+  </div>
+  <form class="chatin" data-form="chat"><input name="texto" placeholder="Escribe un mensaje" aria-label="Mensaje" autocomplete="off" required><button class="btn">Enviar</button></form></div>`;
+
+/* =========================================================
+   VISTAS · HABITANTE
+   ========================================================= */
+VIEWS.cuentas=u=>{
+  const d=u.deptoId,pend=porCobrar(d),venc=sum(vencidos(d));
+  const adel=S.compromisos.filter(c=>c.deptoId===d&&c.tipo==='adelanto'&&c.estado!=='pagado'&&c.vence>=hoy());
+  const items=[...pend,...adel].sort((a,b)=>a.vence.localeCompare(b.vence));
+  const pags=S.pagos.filter(p=>p.deptoId===d).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  return `<div class="pagehead"><div><h1>Depto ${d}</h1><p class="muted">${esc(persona(u.personaId)?.nombre)}</p></div></div>
+  <div class="balance"><div><small class="muted">Total por pagar</small><strong>${money(sum(pend))}</strong>${venc?`<span class="chip vencido">${money(venc)} vencido</span>`:sum(pend)?'':'<span class="chip aldia">Estás al día</span>'}</div>
+    <div class="row"><button class="btn quiet" data-act="recibo" data-id="${d}" data-p="${pActual()}">Ver mi recibo de ${MESES[+pActual().slice(5)-1]}</button><button class="btn quiet" data-act="depto" data-id="${d}">Mi cuenta corriente</button><button class="btn" data-act="adelanto">Pagar meses por adelantado</button></div></div>
+  <div class="panel"><h3>Por pagar</h3>
+  ${items.length?items.map(c=>{const st=estadoC(c);const rech=S.pagos.filter(p=>p.compromisoId===c.id&&p.estado==='rechazado').pop();return `<div class="due-row">
+    <div class="what"><b>${esc(c.concepto)}</b><p class="small muted">Vence el ${fdate(c.vence)} ${c.tipo==='adelanto'?'<span class="chip tag">Adelanto</span>':''}</p>${rech&&c.estado==='pendiente'?`<p class="note">Comprobante rechazado: ${esc(rech.nota||'sin motivo')}. Vuelve a enviarlo.</p>`:''}</div>
+    ${chip(st)}<b class="num">${money(c.monto)}</b>
+    ${c.estado==='en_revision'?'<span class="small muted">Esperando validación</span>':`<button class="btn sm" data-act="pagar" data-id="${c.id}">Pagar y subir comprobante</button>`}
+  </div>`}).join(''):'<p class="empty">No tienes pagos pendientes.</p>'}
+  </div>
+  <div class="panel"><h3>Mis pagos</h3>
+  ${pags.length?`<div class="tbl"><table><thead><tr><th>Fecha</th><th>Concepto</th><th>Medio</th><th class="r">Monto</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${pags.map(p=>`<tr><td>${fdate(p.fecha)}</td><td>${esc(S.compromisos.find(c=>c.id===p.compromisoId)?.concepto)}</td><td>${esc(p.metodo)}</td><td class="r num">${money(p.monto)}</td><td>${chip(p.estado)}</td><td class="r">${p.archivo?`<button class="btn quiet sm" data-act="verComp" data-id="${p.id}">Comprobante</button>`:''}</td></tr>`).join('')}
+  </tbody></table></div>`:'<p class="muted small">Aún no registras pagos.</p>'}</div>`;
+};
+VIEWS.reportes=()=>{
+  const p=ui.rp||pActual(),r=resumen(p);
+  const byCat={};r.gas.forEach(g=>byCat[g.categoria]=(byCat[g.categoria]||0)+g.monto);
+  const max=Math.max(1,...Object.values(byCat));
+  const ps=S.periodos.slice(-6).map(x=>({id:x.id,...resumen(x.id)}));
+  const mx=Math.max(1,...ps.map(x=>Math.max(x.ti,x.tg)));
+  const al=S.departamentos.filter(d=>!vencidos(d.id).length).length;
+  return `<div class="pagehead"><div><h1>Reportes</h1><p class="muted">Cómo se usa el dinero del edificio.</p></div><span class="spacer"></span>
+    <label class="small muted">Periodo <select data-change="setRP" class="btn quiet sm">${S.periodos.map(x=>`<option value="${x.id}" ${x.id===p?'selected':''}>${Plabel(x.id)}</option>`).join('')}</select></label></div>
+  <div class="figs"><div class="fig"><small>Ingresos de ${plabel(p)}</small><strong>${money(r.ti)}</strong></div><div class="fig"><small>Gastos de ${plabel(p)}</small><strong>${money(r.tg)}</strong></div><div class="fig"><small>Monto acumulado</small><strong class="${r.acum>=0?'pos':'neg'}">${money(r.acum)}</strong></div><div class="fig"><small>Departamentos sin deuda vencida</small><strong>${al} de ${S.departamentos.length}</strong></div></div>
+  <div class="panel"><h3>Gastos por categoría, ${plabel(p)}</h3><div class="bars">
+    ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([c,m])=>`<div class="bar"><span>${esc(c)}</span><div class="track"><div class="fill" style="width:${m/max*100}%"></div></div><span class="num">${money(m)}</span></div>`).join('')||'<p class="muted small">Sin gastos registrados.</p>'}
+  </div></div>
+  <div class="panel"><h3>Ingresos y gastos por mes</h3>
+    <div class="legend" style="margin:0 0 .5rem"><span><i style="background:var(--brand)"></i>Ingresos</span><span><i style="background:var(--brass)"></i>Gastos</span></div>
+    <div class="cols">${ps.map(x=>`<div class="col"><div class="pair"><div style="height:${x.ti/mx*100}%;background:var(--brand)" title="Ingresos ${money(x.ti)}"></div><div style="height:${x.tg/mx*100}%;background:var(--brass)" title="Gastos ${money(x.tg)}"></div></div><span class="small">${MESES[+x.id.slice(5)-1].slice(0,3)}</span></div>`).join('')}</div>
+  </div>`;
+};
+VIEWS.perfil=u=>{
+  const pe=persona(u.personaId),inq=ocupActiva(u.deptoId,'inquilino'),prop=ocupActiva(u.deptoId,'propietario'),d=depto(u.deptoId);
+  return `<div class="pagehead"><div><h1>Mi perfil</h1></div></div>
+  <div class="panel"><dl class="meta">
+    <div><dt>Departamento</dt><dd>${u.deptoId}</dd></div><div><dt>Nombre</dt><dd>${esc(pe?.nombre)}</dd></div>
+    <div><dt>Relación</dt><dd>${inq&&inq.personaId===u.personaId?'Inquilino':'Propietario residente'}</dd></div>
+    <div><dt>Propietario</dt><dd>${esc(prop?persona(prop.personaId)?.nombre:'—')}</dd></div>
+    <div><dt>Área y alícuota</dt><dd>${nf(d.area,2)} m², ${pct(alic(d))}</dd></div>
+    <div><dt>Correo para recibos</dt><dd>${esc(pe?.email||'—')}</dd></div>
+  </dl></div>
+  <div class="panel"><h3>Cambiar contraseña</h3><form data-form="pass" style="max-width:360px">
+    <div class="field"><label for="p1">Contraseña actual</label><input id="p1" name="actual" type="password" required></div>
+    <div class="field"><label for="p2">Nueva contraseña</label><input id="p2" name="nueva" type="password" minlength="4" required></div>
+    <div class="field"><label for="p3">Repite la nueva contraseña</label><input id="p3" name="rep" type="password" minlength="4" required></div>
+    <button class="btn">Cambiar contraseña</button></form></div>`;
+};
+
+/* =========================================================
+   MODALES
+   ========================================================= */
+const modal=document.getElementById('modal'),sheet=document.getElementById('sheet');
+let lastFocus=null;
+function openModal(title,html,wide){
+  lastFocus=document.activeElement;
+  sheet.className='sheet'+(wide?' wide':'');
+  sheet.innerHTML=`<div class="sheet-head"><h2>${title}</h2><button class="x" data-act="close" aria-label="Cerrar">×</button></div>${html}`;
+  modal.hidden=false;
+  const f=sheet.querySelector('input:not([type=hidden]),select,textarea,button:not(.x)');(f||sheet.querySelector('.x')).focus();
+}
+function closeModal(){modal.hidden=true;sheet.innerHTML='';pendingFile=null;confirmCb=null;lastFocus?.focus?.()}
+function askConfirm(title,text,yes,cb){openModal(title,`<p>${text}</p><div class="row" style="margin-top:1.2rem;justify-content:flex-end"><button class="btn quiet" data-act="close">Cancelar</button><button class="btn" data-act="doConfirm">${yes}</button></div>`);confirmCb=cb}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),3400)}
+
+function modalDepto(id){
+  const u=sessionUser(),isAdm=u.rol==='admin';
+  const ev=[...S.compromisos.filter(c=>c.deptoId===id&&!(c.tipo==='adelanto'&&c.estado!=='pagado'&&c.vence>=hoy())).map(c=>({f:c.emitido,t:c.concepto,cargo:c.monto,abono:0})),
+    ...S.pagos.filter(p=>p.deptoId===id&&p.estado==='validado').map(p=>({f:p.fecha,t:`Pago ${p.metodo}${p.operacion?', op. '+p.operacion:''}`,cargo:0,abono:p.monto}))].sort((a,b)=>a.f.localeCompare(b.f)||b.cargo-a.cargo);
+  let s=0;
+  const rows=ev.map(e=>{s+=e.cargo-e.abono;return `<tr><td>${fdate(e.f)}</td><td>${esc(e.t)}</td><td class="r num">${e.cargo?money(e.cargo):''}</td><td class="r num">${e.abono?money(e.abono):''}</td><td class="r num">${money(s)}</td></tr>`}).join('');
+  const pend=S.compromisos.filter(c=>c.deptoId===id&&c.estado==='pendiente'&&!(c.tipo==='adelanto'&&c.vence>=hoy()));
+  const prop=ocupActiva(id,'propietario');
+  openModal(`Depto ${id}`,`<p class="muted">${esc(residente(id))}${prop&&userDe(id)?.personaId!==prop.personaId?`, propietario: ${esc(persona(prop.personaId)?.nombre)}`:''}. Alícuota ${pct(alic(depto(id)))}.</p>
+    <div class="row" style="margin:.8rem 0">${chip(estadoDepto(id))}<span class="spacer"></span><b>${s>0.004?'Saldo deudor':s<-0.004?'Saldo a favor':'Saldo'} <span class="num ${s>0.004?'neg':''}">${money(Math.abs(s))}</span></b></div>
+    <h3 style="margin-bottom:.4rem">Cuenta corriente</h3>
+    <div class="tbl"><table><thead><tr><th>Fecha</th><th>Concepto</th><th class="r">Cargo</th><th class="r">Abono</th><th class="r">Saldo</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${isAdm&&pend.length?`<h3 style="margin:1.2rem 0 .4rem">Registrar pago en efectivo</h3>${pend.map(c=>`<div class="due-row"><div class="what small">${esc(c.concepto)}</div><b class="num">${money(c.monto)}</b><button class="btn ok sm" data-act="efectivo" data-id="${c.id}">Registrar pago</button></div>`).join('')}`:''}
+    <div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn" data-act="recibo" data-id="${id}" data-p="${pActual()}">${isAdm?'Generar y enviar recibo':'Ver recibo'}</button></div>`,true);
+}
+
+function modalRecibo(id,p){
+  const isAdm=sessionUser().rol==='admin';
+  const resp=persona(userDe(id)?.personaId);
+  const e=S.recibos.find(x=>x.deptoId===id&&x.periodo===p);
+  const wa=`https://wa.me/51${(resp?.telefono||'').replace(/\D/g,'')}?text=${encodeURIComponent(reciboTexto(id,p))}`;
+  openModal(`Recibo ${Plabel(p)}, depto ${id}`,`${reciboHTML(id,p)}
+    <div class="row" style="margin-top:1rem">
+      ${isAdm?`<span class="small muted">${e?`Enviado el ${fdate(e.enviado)} a ${esc(resp?.email||'—')}`:`Se enviará a ${esc(resp?.email||'sin correo registrado')}`}</span>`:''}<span class="spacer"></span>
+      <button class="btn quiet" data-act="pdf" data-id="${id}" data-p="${p}">Descargar PDF</button>
+      <button class="btn quiet" data-act="compartir" data-id="${id}" data-p="${p}">Compartir</button>
+      ${isAdm?`<a class="btn quiet" href="${wa}" target="_blank" rel="noopener" data-act="waSent" data-id="${id}" data-p="${p}">WhatsApp</a><button class="btn" data-act="enviar" data-id="${id}" data-p="${p}">${e?'Reenviar por correo':'Enviar por correo'}</button>`:''}
+    </div>`,true);
+}
+
+function modalPagar(cid){
+  const c=S.compromisos.find(x=>x.id===cid);
+  openModal('Pagar y subir comprobante',`<p><b>${esc(c.concepto)}</b></p><p class="num" style="font-size:1.6rem;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:.2rem 0 1rem">${money(c.monto)}</p>
+  <div class="hint" style="margin-bottom:1rem">Paga a ${esc(S.config.banco)} o Yape/Plin al ${esc(S.config.yape)}. Luego sube tu constancia. <i>(Datos simulados)</i></div>
+  <form data-form="pago"><input type="hidden" name="cid" value="${cid}">
+    <div class="grid2">
+      <div class="field"><label for="pm">Medio de pago</label><select id="pm" name="metodo"><option>Transferencia BCP</option><option>Yape</option><option>Plin</option><option>Depósito BBVA</option></select></div>
+      <div class="field"><label for="po">N.° de operación</label><input id="po" name="operacion" required inputmode="numeric" placeholder="Ej. 00482731"></div>
+    </div>
+    <div class="field"><label for="pf">Comprobante (imagen o PDF)</label><input id="pf" type="file" accept="image/*,application/pdf" data-change="file" required></div>
+    <div id="fprev"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:1rem"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Enviar comprobante</button></div>
+  </form>`);
+}
+function modalComprobante(pid){
+  const p=S.pagos.find(x=>x.id===pid),a=p.archivo||{};
+  let prev='<p class="muted small">Este comprobante histórico no tiene vista previa en la demo.</p>';
+  if(a.data&&a.tipo?.startsWith('image/'))prev=`<img src="${a.data}" alt="Comprobante de pago del depto ${p.deptoId}">`;
+  else if(a.data&&a.tipo==='application/pdf')prev=`<embed src="${a.data}" type="application/pdf" width="100%" height="420"><p class="small muted">Si el PDF no se muestra, tu navegador no permite la vista previa aquí.</p>`;
+  const isAdm=sessionUser().rol==='admin';
+  openModal('Comprobante',`<p class="small muted" style="margin-bottom:.6rem">Depto ${p.deptoId}, ${esc(p.metodo)}, op. ${esc(p.operacion)}, ${money(p.monto)}, ${fdate(p.fecha)}. Archivo: ${esc(a.nombre||'—')}</p>
+  <div class="preview">${prev}</div>${p.nota?`<p class="note">${esc(p.nota)}</p>`:''}
+  ${isAdm&&p.estado==='en_revision'?`<div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn danger" data-act="rechazar" data-id="${p.id}">Rechazar</button><button class="btn ok" data-act="validar" data-id="${p.id}">Validar pago</button></div>`:''}`);
+}
+function modalUpgrade(id){
+  const m=MODS.find(x=>x.id===id),st=modEstado(id);
+  const val={areas:'Los vecinos reservan la parrilla o el SUM desde su celular, sin choques de horario ni cuadernos en portería. El cobro de la reserva se suma a su cuenta del mes.',
+    mantenimiento:'Cada incidencia queda registrada con responsable, prioridad y fotos. Los vecinos ven el avance y tú programas el mantenimiento preventivo de ascensor, bombas y pozo a tierra.',
+    marketplace:'Tus vecinos contratan gasfiteros, electricistas y limpieza verificados, con precios claros. La administración recibe una comisión por cada servicio.'}[id];
+  openModal(m.t,`<div class="row" style="align-items:flex-start;gap:1rem"><span class="mod" style="all:unset;--c:${m.c}"><span class="ico" style="width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:${m.c};color:#fff">${ico(id)}</span></span><p style="flex:1">${val}</p></div>
+    <div class="panel" style="margin:1rem 0 0;background:var(--surface2)"><p><b>Plan ${m.plan}: S/ ${m.precio} al mes</b></p><p class="small muted">${PLANES.find(x=>x.n===m.plan).inc}</p></div>
+    <div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn quiet" data-act="planes">Comparar planes</button>${st==='bloqueado'?`<button class="btn quiet" data-act="solicitarPlan" data-n="${m.plan}">Solicitar plan ${m.plan}</button><button class="btn" data-act="trial" data-id="${id}">Probar gratis 14 días</button>`:`<button class="btn" data-act="solicitarPlan" data-n="${m.plan}">Activar plan ${m.plan}</button>`}</div>`);
+}
+
+/* =========================================================
+   ACCIONES
+   ========================================================= */
+const A={
+  go:d=>{const m=modByView(d.v);if(m&&modEstado(m.id)==='bloqueado')return modalUpgrade(m.id);view=d.v;render();window.scrollTo(0,0)},
+  mod:d=>{const m=MODS.find(x=>x.id===d.id);if(modEstado(m.id)==='bloqueado')return modalUpgrade(m.id);view=m.v;render();window.scrollTo(0,0)},
+  scrollTo:d=>{document.getElementById(d.a)?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})},
+  trial:d=>{S.modulos[d.id]={estado:'prueba',hasta:addDays(hoy(),14)};const m=MODS.find(x=>x.id===d.id);closeModal();view=m.v;commit();window.scrollTo(0,0);toast(`Prueba de ${m.t} activada por 14 días.`)},
+  upgrade:d=>modalUpgrade(d.id),
+  planes:()=>openModal('Planes de Building Buddy',`<div class="tbl"><table><thead><tr><th>Plan</th><th class="r">Precio</th><th>Incluye</th></tr></thead><tbody>${PLANES.map(p=>`<tr><td><b>${p.n}</b>${p.n==='Básico'?' <span class="chip activo">Tu plan</span>':''}</td><td class="r num">S/ ${p.p}/mes</td><td class="small">${p.inc}</td></tr>`).join('')}</tbody></table></div>
+    <p class="small muted" style="margin-top:.8rem">Precios de ejemplo para la demo.</p><div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn" data-act="solicitarPlan" data-n="Pro">Solicitar plan Pro</button></div>`),
+  solicitarPlan:d=>{closeModal();toast(`Solicitud del plan ${d.n} registrada. Un asesor te contactará (simulado).`)},
+  demo:d=>{setActivo('los-ficus');sess={codigo:'los-ficus',userId:d.u};loginErr='';view=null;save();render()},
+  logout:()=>{sess={codigo:sess.codigo,userId:null};save();render()},
+  registro:()=>{loginErr='';wizNuevo('registro')},
+  nuevoEdificio:()=>{const u=sessionUser();const mios=edificiosDe(u.email).filter(s=>!s.suscripcionPagada);
+    if(mios.length>=3)return toast('Ya tienes 3 edificios sin plan pagado. Activa un plan en alguno para registrar más.');
+    wizNuevo('nuevo',{nombre:S.config.admin,email:u.email||'',pass:u.pass})},
+  cambiarEdificio:d=>{const u=sessionUser(),email=u.email;setActivo(d.c);const a=S.usuarios.find(x=>x.rol==='admin'&&x.estado==='activo'&&(x.email||'').toLowerCase()===String(email).toLowerCase());
+    sess={codigo:d.c,userId:a?a.id:null};view='inicio';Object.assign(ui,{gp:null,ep:null,cp:null,rp:null,kp:null,rcp:null,zonaSel:null});save();render();window.scrollTo(0,0);toast(`Ahora administras ${S.config.edificio}.`)},
+  wizCancelar:()=>{ui.wiz=null;render()},
+  wizAtras:()=>{ui.wiz.paso--;ui.wiz.err='';render()},
+  wizEjemplo:()=>{ui.wiz.texto=EJEMPLO_DEPTOS;const r=parseDeptos(ui.wiz.texto);Object.assign(ui.wiz,r,{revisado:true});render()},
+  wizRevisar:()=>{const r=parseDeptos(ui.wiz.texto);Object.assign(ui.wiz,r,{revisado:true});if(!r.filas.length&&!r.errores.length)toast('Pega o sube la tabla de departamentos primero.');render()},
+  wizOmitir:()=>{Object.assign(ui.wiz,{filas:[],errores:[],paso:4});render()},
+  wizDeptosOk:()=>{ui.wiz.paso=4;render()},
+  wizCrear:()=>{const w=ui.wiz;if(DB.edificios[w.ed.codigo]){w.paso=2;w.err=`El código "${w.ed.codigo}" ya está en uso. Elige otro.`;return render()}
+    const s=nuevoEdificio(w);DB.edificios[w.ed.codigo]=s;setActivo(w.ed.codigo);sess={codigo:w.ed.codigo,userId:'u_admin'};
+    ui.wiz=null;view='config';Object.assign(ui,{gp:null,ep:null,cp:null,rp:null,kp:null,rcp:null,zonaSel:null});commit();window.scrollTo(0,0);toast(`${s.config.edificio} creado con ${s.departamentos.length} departamentos. Completa la configuración.`)},
+  simInactivo:d=>{S.ultimaActividad=addDays(hoy(),-(+d.d));const nom=S.config.edificio;const out=depurarInactivos();save();render();
+    toast(out.length?`${nom} se eliminó por 90 días sin movimiento, con todos sus datos.`:`Simulado: ${d.d} días sin movimiento.`)},
+  togglePlan:()=>{S.suscripcionPagada=!S.suscripcionPagada;save();render();toast(S.suscripcionPagada?'Plan pagado: el edificio queda protegido de la depuración.':'Plan de prueba: aplica la depuración por inactividad.')},
+  arTab:d=>{ui.arTab=d.t;render()},
+  verZona:d=>{ui.zonaSel=d.id||null;ui.fechaRes=null;render();window.scrollTo(0,0)},
+  elegirTurno:d=>{const z=zona(ui.zonaSel),tot=z.tarifa+z.garantia;const fin=toHM(toMin(d.ini)+z.turno);
+    openModal('Reservar '+esc(z.nombre),`<p><b>${fdate(d.f)}, ${d.ini} a ${fin}</b></p>
+      <div class="panel" style="margin:.8rem 0;background:var(--surface2)"><p class="small"><b>Reglamento</b></p><p class="small" style="margin-top:.3rem">${esc(z.reglamento||'Sin reglamento registrado.')}</p></div>
+      ${tot?`<table><tbody>${z.tarifa?`<tr><td>Tarifa de uso</td><td class="r num">${money(z.tarifa)}</td></tr>`:''}${z.garantia?`<tr><td>Garantía reembolsable</td><td class="r num">${money(z.garantia)}</td></tr>`:''}</tbody><tfoot><tr><td>Total a pagar</td><td class="r num">${money(tot)}</td></tr></tfoot></table>
+      <p class="small muted" style="margin-top:.5rem">${z.aprobacion?'Cuando la administración apruebe la solicitud, se agregarán los cargos a tu cuenta.':'Los cargos se agregan a tu cuenta y la reserva se confirma cuando se valide el pago.'} Tienes ${z.plazoDias} ${z.plazoDias>1?'días':'día'} para pagar o el turno se libera.</p>`:`<p class="small muted">Sin costo.${z.aprobacion?' La administración debe aprobarla.':''}</p>`}
+      <form data-form="reservar"><input type="hidden" name="f" value="${d.f}"><input type="hidden" name="ini" value="${d.ini}">
+      <label class="row small" style="margin:1rem 0"><input type="checkbox" name="acepto" required> Leí y acepto el reglamento de uso</label>
+      <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">${z.aprobacion?'Enviar solicitud':'Reservar'}</button></div></form>`)},
+  aprobarRes:d=>{const r=S.reservas.find(x=>x.id===d.id);if(esMiaReserva(r))return toast('No puedes gestionar reservas de tu propio departamento.');const z=zona(r.zonaId);
+    if(z.tarifa+z.garantia>0)emitirCargosReserva(r);else r.estado='confirmada';commit();toast(r.estado==='confirmada'?'Reserva aprobada y confirmada.':`Reserva aprobada. Se emitieron los cargos al depto ${r.deptoId}.`)},
+  rechazarRes:d=>openModal('Rechazar reserva',`<form data-form="rechazoRes"><input type="hidden" name="id" value="${d.id}"><div class="field"><label for="rr">Motivo (lo verá el vecino)</label><textarea id="rr" name="nota" required></textarea></div><div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Volver</button><button class="btn danger">Rechazar</button></div></form>`),
+  cancelarRes:d=>{const r=S.reservas.find(x=>x.id===d.id);const cs=[r.cTarifa,r.cGarantia].filter(Boolean).map(id=>S.compromisos.find(x=>x.id===id));
+    if(cs.some(c=>c&&c.estado==='en_revision'))return toast('Hay un pago en revisión. Espera la validación antes de cancelar.');
+    const tarifaPagada=cs.some(c=>c&&c.tipo==='reserva'&&c.estado==='pagado');
+    askConfirm('Cancelar reserva',`${fdate(r.fecha)}, ${r.ini} a ${r.fin}. Se anulan los cargos no pagados.${r.gEstado==='en_custodia'?' La garantía pagada quedará por devolver.':''}${tarifaPagada?' La tarifa pagada no se devuelve.':''}`,'Cancelar reserva',()=>{
+      cs.forEach(c=>{if(c&&c.estado==='pendiente')c.estado='anulado'});r.estado='cancelada';
+      r.gEstado=r.gEstado==='en_custodia'?'por_devolver':r.gEstado==='por_cobrar'?'sin_garantia':r.gEstado;commit();toast('Reserva cancelada.')})},
+  cerrarRes:d=>{const r=S.reservas.find(x=>x.id===d.id);if(esMiaReserva(r))return toast('No puedes gestionar reservas de tu propio departamento.');
+    openModal('Cerrar reserva',`<p>${esc(zona(r.zonaId).nombre)}, ${fdate(r.fecha)}, depto ${r.deptoId}.</p>
+    <form data-form="cierreRes"><input type="hidden" name="id" value="${r.id}">
+    ${r.gEstado==='en_custodia'?`<p class="small muted" style="margin:.6rem 0">Garantía en custodia: <b>${money(r.gMonto)}</b>. Si no hubo daños, se devuelve completa.</p>
+      <div class="field"><label for="cr-m">Monto a retener por daños (S/)</label><input id="cr-m" name="retener" type="number" min="0" max="${r.gMonto}" step="0.01" value="0"></div>
+      <div class="field"><label for="cr-n">Descripción de los daños (obligatoria si retienes)</label><textarea id="cr-n" name="nota"></textarea></div>`:'<p class="small muted" style="margin:.6rem 0">Esta reserva no tiene garantía en custodia.</p>'}
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Volver</button><button class="btn">Cerrar reserva</button></div></form>`)},
+  devolverG:d=>{const r=S.reservas.find(x=>x.id===d.id);if(esMiaReserva(r))return toast('No puedes gestionar reservas de tu propio departamento.');r.gEstado='devuelta';r.gCerrada=hoy();commit();toast(`Devolución de ${money(r.gMonto)} registrada al depto ${r.deptoId}.`)},
+  zonaForm:d=>{const z=d.id?zona(d.id):{nombre:'',descripcion:'',aforo:10,reglamento:'',activa:true,dias:[0,1,2,3,4,5,6],apertura:'09:00',cierre:'21:00',turno:240,antMin:1,antMax:30,maxMes:2,aprobacion:false,tarifa:0,garantia:0,morosos:false,plazoDias:2};
+    openModal(d.id?'Editar zona':'Nueva zona',`<form data-form="zona"><input type="hidden" name="id" value="${d.id||''}">
+    <div class="grid2"><div class="field"><label for="zn">Nombre</label><input id="zn" name="nombre" value="${esc(z.nombre)}" required></div><div class="field"><label for="za">Aforo (personas)</label><input id="za" name="aforo" type="number" min="1" value="${z.aforo}" required></div></div>
+    <div class="field"><label for="zd">Descripción</label><input id="zd" name="descripcion" value="${esc(z.descripcion)}"></div>
+    <div class="field"><label for="zr">Reglamento de uso (el vecino lo acepta al reservar)</label><textarea id="zr" name="reglamento">${esc(z.reglamento)}</textarea></div>
+    <div class="field"><label>Días de atención</label><div class="dias">${DIAS.map((t,i)=>`<label><input type="checkbox" name="dia_${i}" ${z.dias.includes(i)?'checked':''}>${t}</label>`).join('')}</div></div>
+    <div class="grid2">
+      <div class="field"><label for="zh1">Abre</label><input id="zh1" name="apertura" type="time" value="${z.apertura}" required></div>
+      <div class="field"><label for="zh2">Cierra</label><input id="zh2" name="cierre" type="time" value="${z.cierre}" required></div>
+      <div class="field"><label for="zt">Duración del turno</label><select id="zt" name="turno">${[30,60,120,180,240,300,360].map(m=>`<option value="${m}" ${z.turno===m?'selected':''}>${m<60?m+' min':m/60+' h'}</option>`).join('')}</select></div>
+      <div class="field"><label for="zm1">Anticipación mínima (días)</label><input id="zm1" name="antMin" type="number" min="0" value="${z.antMin}"></div>
+      <div class="field"><label for="zm2">Anticipación máxima (días)</label><input id="zm2" name="antMax" type="number" min="0" value="${z.antMax}"></div>
+      <div class="field"><label for="zx">Reservas por depto al mes</label><input id="zx" name="maxMes" type="number" min="1" value="${z.maxMes}"></div>
+      <div class="field"><label for="zf">Tarifa de uso (S/)</label><input id="zf" name="tarifa" type="number" min="0" step="0.01" value="${z.tarifa}"></div>
+      <div class="field"><label for="zg">Garantía reembolsable (S/)</label><input id="zg" name="garantia" type="number" min="0" step="0.01" value="${z.garantia}"></div>
+      <div class="field"><label for="zp">Plazo para pagar</label><select id="zp" name="plazoDias">${[1,2,3].map(n=>`<option value="${n}" ${z.plazoDias===n?'selected':''}>${n} ${n>1?'días':'día'}</option>`).join('')}</select></div>
+    </div>
+    <label class="row small"><input type="checkbox" name="aprobacion" ${z.aprobacion?'checked':''}> Requiere aprobación de la administración</label>
+    <label class="row small" style="margin-top:.4rem"><input type="checkbox" name="morosos" ${z.morosos?'checked':''}> Permitir reservar a departamentos con deuda vencida</label>
+    <label class="row small" style="margin-top:.4rem"><input type="checkbox" name="activa" ${z.activa?'checked':''}> Zona activa para reservas</label>
+    <div class="row" style="justify-content:flex-end;margin-top:1rem"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Guardar zona</button></div></form>`)},
+  bloqueoForm:d=>openModal('Bloquear una fecha',`<form data-form="bloqueo"><input type="hidden" name="zonaId" value="${d.id}">
+    <div class="field"><label for="bf">Fecha</label><input id="bf" name="fecha" type="date" min="${hoy()}" value="${addDays(hoy(),7)}" required></div>
+    <div class="field"><label for="bm">Motivo (lo verán los vecinos)</label><input id="bm" name="motivo" required placeholder="Ej. Mantenimiento"></div>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Bloquear</button></div></form>`),
+  quitarBloqueo:d=>{S.bloqueos=S.bloqueos.filter(b=>b.id!==d.id);commit();toast('Bloqueo quitado.')},
+  close:()=>closeModal(),
+  doConfirm:()=>{const cb=confirmCb;closeModal();cb&&cb()},
+  depto:d=>modalDepto(d.id),
+  recibo:d=>modalRecibo(d.id,d.p),
+  cobTab:d=>{ui.cobTab=d.t;render()},
+  calcTab:d=>{ui.calcTab=d.t;render()},
+  print:()=>{document.body.classList.remove('print-recibo');window.print()},
+  pdf:d=>{document.getElementById('printarea').innerHTML=reciboHTML(d.id,d.p);document.body.classList.add('print-recibo');
+    const done=()=>{document.body.classList.remove('print-recibo');window.removeEventListener('afterprint',done)};window.addEventListener('afterprint',done);
+    try{window.print()}catch(e){done();toast('Este navegador no permite imprimir desde aquí.')}},
+  compartir:d=>{const t=reciboTexto(d.id,d.p);
+    if(navigator.share)navigator.share({title:'Recibo de mantenimiento',text:t}).catch(()=>{});
+    else if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Resumen del recibo copiado para compartir.'),()=>toast('No se pudo copiar el resumen.'));
+    else toast('Compartir no está disponible en este navegador.')},
+  enviar:d=>{marcarEnviado(d.id,d.p,'correo');const r=persona(userDe(d.id)?.personaId);closeModal();commit();toast(`Recibo enviado a ${r?.email||'el responsable'} (simulado).`)},
+  waSent:(d,el,e)=>{marcarEnviado(d.id,d.p,'whatsapp');save()},
+  enviarTodos:d=>askConfirm('Generar y enviar todos',`Se generarán ${S.departamentos.length} recibos de ${plabel(d.p)} y se enviarán al correo de cada responsable.`,'Enviar recibos',()=>{S.departamentos.forEach(x=>marcarEnviado(x.id,d.p,'correo'));commit();toast(`${S.departamentos.length} recibos enviados (simulado).`)}),
+  verComp:d=>modalComprobante(d.id),
+  pagar:d=>modalPagar(d.id),
+  validar:d=>{const p=S.pagos.find(x=>x.id===d.id);p.estado='validado';p.validado=hoy();const c=S.compromisos.find(x=>x.id===p.compromisoId);if(c){c.estado='pagado';onCompromisoPagado(c)}closeModal();commit();toast(c?.tipo==='garantia'?`Garantía del depto ${p.deptoId} recibida en custodia.`:`Pago del depto ${p.deptoId} validado. Ingreso registrado.`)},
+  rechazar:d=>openModal('Rechazar comprobante',`<form data-form="rechazo"><input type="hidden" name="id" value="${d.id}"><div class="field"><label for="rz">Motivo (lo verá el habitante)</label><textarea id="rz" name="nota" required placeholder="Ej. El monto no coincide con la cuota"></textarea></div><div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn danger">Rechazar comprobante</button></div></form>`),
+  efectivo:d=>{const c=S.compromisos.find(x=>x.id===d.id);S.pagos.push({id:uid('pag'),compromisoId:c.id,deptoId:c.deptoId,monto:c.monto,metodo:'Efectivo',operacion:'',fecha:hoy(),archivo:null,estado:'validado',nota:'Registrado por administración'});c.estado='pagado';onCompromisoPagado(c);closeModal();commit();toast(`Pago en efectivo registrado para el depto ${c.deptoId}.`)},
+  delGasto:d=>{S.gastos=S.gastos.filter(g=>g.id!==d.id);commit();toast('Gasto eliminado.')},
+  confirmarGastos:d=>askConfirm('Confirmar gastos',`Se bloquearán los gastos de ${plabel(d.p)} por ${money(sum(S.gastos.filter(g=>g.periodo===d.p)))} y el estado de cuenta pasará a oficial.`,'Confirmar gastos',()=>{periodoObj(d.p).gastosConfirmados=true;commit();toast(`Gastos de ${plabel(d.p)} confirmados. Estado de cuenta oficial.`)}),
+  nuevoCompromiso:()=>openModal('Nuevo compromiso extraordinario',`<form data-form="compromiso">
+    <div class="field"><label for="nc-c">Concepto</label><input id="nc-c" name="concepto" required placeholder="Ej. Cuota para pintura de fachada"></div>
+    <div class="grid2"><div class="field"><label for="nc-r">Reparto</label><select id="nc-r" name="reparto"><option value="alicuota">Monto total repartido por alícuota</option><option value="igual">Mismo monto por departamento</option></select></div>
+    <div class="field"><label for="nc-m">Monto (S/)</label><input id="nc-m" name="monto" type="number" step="0.01" min="0.01" required></div>
+    <div class="field"><label for="nc-v">Vence</label><input id="nc-v" name="vence" type="date" value="${lastDay(pActual())}" required></div></div>
+    <div class="field"><label for="nc-d">Aplicar a</label><select id="nc-d" name="destino"><option value="*">Todos los departamentos</option>${S.departamentos.map(d=>`<option value="${d.id}">Depto ${d.id}</option>`).join('')}</select></div>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Emitir compromiso</button></div></form>`),
+  toggleUser:d=>{const u=S.usuarios.find(x=>x.id===d.id);
+    if(u.estado==='inactivo'){if(userDe(u.deptoId))return toast(`El depto ${u.deptoId} ya tiene un usuario activo. Desactívalo primero.`);u.estado='activo';delete u.baja;commit();return toast(`Usuario del depto ${u.deptoId} reactivado.`)}
+    askConfirm('Desactivar acceso',`${esc(persona(u.personaId)?.nombre)} ya no podrá ingresar con el depto ${u.deptoId}. Las deudas quedan en la cuenta del departamento.`,'Desactivar',()=>{u.estado='inactivo';u.baja=hoy();if(sess.userId===u.id)sess.userId='u_admin';commit();toast('Acceso desactivado.')})},
+  resetPass:d=>{const u=S.usuarios.find(x=>x.id===d.id);u.pass=String(Math.floor(1000+Math.random()*9000));commit();openModal('Clave restablecida',`<p>Nueva clave para el depto ${u.deptoId}:</p><p style="font-size:2rem;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;margin:.5rem 0" class="num">${u.pass}</p><p class="small muted">Entrégala al ocupante; podrá cambiarla desde su perfil.</p><div class="row" style="justify-content:flex-end"><button class="btn" data-act="close">Listo</button></div>`)},
+  nuevoDepto:()=>{const last=S.departamentos[S.departamentos.length-1];openModal('Agregar departamento',`<form data-form="nuevoDepto"><div class="grid2">
+    <div class="field"><label for="nd-i">N.° de departamento</label><input id="nd-i" name="id" required placeholder="Ej. 501" inputmode="numeric"></div>
+    <div class="field"><label for="nd-p">Piso</label><input id="nd-p" name="piso" type="number" min="0" value="${(last?.piso||0)+1}" required></div>
+    <div class="field"><label for="nd-a">Área (m²)</label><input id="nd-a" name="area" type="number" step="0.01" min="1" required></div>
+    <div class="field"><label for="nd-o">Nombre del propietario</label><input id="nd-o" name="propietario" required></div>
+    <div class="field"><label for="nd-q">Inquilino actual (si aplica)</label><input id="nd-q" name="inquilino"></div>
+    <div class="field"><label for="nd-e">Correo para recibos</label><input id="nd-e" name="email" type="email"></div>
+    <div class="field"><label for="nd-c">Clave inicial</label><input id="nd-c" name="pass" value="${Math.floor(1000+Math.random()*9000)}" minlength="4" required></div>
+  </div><p class="small muted" style="margin-bottom:.8rem">La alícuota se calcula con el área total configurada (${nf(S.config.areaTotal,2)} m²).</p>
+  <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Agregar departamento</button></div></form>`)},
+  editDepto:d=>{const dp=depto(d.id),prop=ocupActiva(d.id,'propietario'),pp=prop?persona(prop.personaId):null,resp=persona(userDe(d.id)?.personaId);
+    openModal(`Editar depto ${d.id}`,`<form data-form="editDepto"><input type="hidden" name="id" value="${d.id}"><div class="grid2">
+    <div class="field"><label for="ed-p">Piso</label><input id="ed-p" name="piso" type="number" min="0" value="${dp.piso}" required></div>
+    <div class="field"><label for="ed-a">Área (m²)</label><input id="ed-a" name="area" type="number" step="0.01" min="1" value="${dp.area}" required></div>
+    <div class="field"><label for="ed-o">Nombre del propietario</label><input id="ed-o" name="propietario" value="${esc(pp?.nombre||'')}" required></div>
+    <div class="field"><label for="ed-e">Correo para recibos (${esc(resp?shortName(resp.nombre):'responsable')})</label><input id="ed-e" name="email" type="email" value="${esc(resp?.email||'')}"></div>
+    <div class="field"><label for="ed-t">Teléfono del responsable</label><input id="ed-t" name="telefono" value="${esc(resp?.telefono||'')}" inputmode="tel"></div>
+    </div><p class="small muted" style="margin-bottom:.8rem">Para registrar un nuevo inquilino o una venta usa <b>Cambio de ocupante</b>, así queda el historial.</p>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Guardar cambios</button></div></form>`)},
+  cambioOcupante:d=>{const deuda=sum(porCobrar(d.id));openModal(`Cambio de ocupante, depto ${d.id}`,`<p class="small muted" style="margin-bottom:1rem">Ocupante actual: <b>${esc(residente(d.id))}</b>. Su acceso se desactivará y quedará en el historial.${deuda?` La deuda pendiente de ${money(deuda)} se mantiene en la cuenta del departamento.`:''}</p>
+    <form data-form="ocupante"><input type="hidden" name="depto" value="${d.id}">
+    <div class="field"><label for="oc-t">Tipo de cambio</label><select id="oc-t" name="tipo"><option value="inquilino">Ingresa un nuevo inquilino</option><option value="propietario">Cambio de propietario (el nuevo propietario vive en el depto.)</option></select></div>
+    <div class="field"><label for="oc-n">Nombre completo</label><input id="oc-n" name="nombre" required></div>
+    <div class="grid2"><div class="field"><label for="oc-d">DNI</label><input id="oc-d" name="dni" inputmode="numeric" maxlength="8" required></div>
+    <div class="field"><label for="oc-f">Teléfono</label><input id="oc-f" name="telefono" inputmode="tel"></div>
+    <div class="field"><label for="oc-e">Correo para recibos</label><input id="oc-e" name="email" type="email"></div>
+    <div class="field"><label for="oc-i">Fecha de ingreso</label><input id="oc-i" name="desde" type="date" value="${hoy()}" required></div>
+    <div class="field"><label for="oc-p">Clave inicial</label><input id="oc-p" name="pass" value="${Math.floor(1000+Math.random()*9000)}" required minlength="4"></div></div>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Registrar cambio</button></div></form>`)},
+  setDia:d=>{S.config.fechaSim=d.d;commit(true);toast(`Fecha simulada: ${fdate(d.d)}.`)},
+  resetDemo:()=>askConfirm('Restaurar datos de prueba','Se borrarán todos los edificios de la demo y se restaurará Los Ficus con sus datos iniciales.','Restaurar',()=>{DB={edificios:{'los-ficus':seed()},activo:'los-ficus'};S=DB.edificios['los-ficus'];aplicarCorte();sess={codigo:'los-ficus',userId:'u_admin'};ui.zonaSel=null;view='inicio';Object.assign(ui,{gp:null,ep:null,cp:null,rp:null,kp:null,rcp:null});save();render();toast('Datos de prueba restaurados.')}),
+  adelanto:()=>{const u=sessionUser(),est=estimadoCuota(u.deptoId);let n=pActual(),opts=[];
+    for(let i=1;i<=3;i++){n=nextP(n);opts.push(n)}
+    openModal('Pagar meses por adelantado',`<p class="small muted" style="margin-bottom:1rem">Se crean las cuotas de los próximos meses con tu última cuota como monto estimado (${money(est)}). Si la cuota real resulta mayor, se emitirá un ajuste por la diferencia.</p>
+    <form data-form="adelanto"><div class="field"><label for="ad">Meses a adelantar</label><select id="ad" name="meses">${opts.map((o,i)=>`<option value="${i+1}">${i+1} ${i?'meses':'mes'} (hasta ${plabel(o)}), ${money(est*(i+1))}</option>`).join('')}</select></div>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn quiet" data-act="close">Cancelar</button><button class="btn">Solicitar adelanto</button></div></form>`)},
+  avanzarTicket:d=>{const t=S.tickets.find(x=>x.id===d.id);t.estado=t.estado==='Abierto'?'En proceso':'Resuelto';commit()},
+  cotizar:d=>{S.solicitudes.push({n:d.n,fecha:hoy()});commit();toast(`Cotización solicitada a ${d.n} (simulado).`)}
+};
+function marcarEnviado(id,p,canal){const e=S.recibos.find(x=>x.deptoId===id&&x.periodo===p);if(e){e.enviado=hoy();e.canal=canal}else S.recibos.push({deptoId:id,periodo:p,enviado:hoy(),canal})}
+function estimadoCuota(id){const c=S.compromisos.filter(x=>x.deptoId===id&&(x.tipo==='cuota'||x.tipo==='adelanto')&&x.detalle!==undefined).sort((a,b)=>b.periodo.localeCompare(a.periodo))[0];return c?c.monto:depto(id).area*5}
+
+/* =========================================================
+   CAMBIOS E INPUTS
+   ========================================================= */
+const C={
+  switchUser:t=>{sess.userId=t.value;view=null;ui.zonaSel=null;save();render();window.scrollTo(0,0)},
+  fechaRes:t=>{ui.fechaRes=t.value;render()},
+  wizTipo:t=>{ui.wiz.tipo=t.value},
+  wizFile:t=>{const f=t.files[0];if(!f)return;
+    if(/\.(csv|txt)$/i.test(f.name)){const r=new FileReader();r.onload=()=>{ui.wiz.texto=String(r.result);Object.assign(ui.wiz,parseDeptos(ui.wiz.texto),{revisado:true});render()};r.readAsText(f);return}
+    if(!window.XLSX)return toast('No se pudo cargar el lector de Excel. Copia la tabla y pégala en el recuadro.');
+    const r=new FileReader();r.onload=()=>{try{const wb=XLSX.read(new Uint8Array(r.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,blankrows:false});ui.wiz.texto=rows.map(x=>x.map(v=>v??'').join('\t')).join('\n');
+      Object.assign(ui.wiz,parseDeptos(ui.wiz.texto),{revisado:true});render()}catch(e){toast('No se pudo leer el archivo. Revisa que sea un Excel válido.')}};r.readAsArrayBuffer(f)},
+  setGP:t=>{ui.gp=t.value;render()},setEP:t=>{ui.ep=t.value;render()},setCP:t=>{ui.cp=t.value;render()},setRP:t=>{ui.rp=t.value;render()},setKP:t=>{ui.kp=t.value;render()},setRCP:t=>{ui.rcp=t.value;render()},
+  toggleDes:t=>{ui.desglose=t.checked;render()},
+  tipoCalc:t=>{const b=document.getElementById('aguaBox');if(b)b.hidden=t.value!=='mixta'},
+  area:t=>{const v=+t.value,d=depto(t.dataset.id);if(!(v>0)){t.value=d.area;return toast('El área debe ser mayor que cero.')}d.area=r2(v);commit();toast(`Depto ${d.id}: ${nf(d.area,2)} m², alícuota ${pct(alic(d))}.`)},
+  file:t=>{const f=t.files[0],box=document.getElementById('fprev');pendingFile=null;if(!f){box.innerHTML='';return}
+    if(!/^image\/|application\/pdf/.test(f.type)){box.innerHTML='<p class="note">Sube una imagen o un PDF.</p>';t.value='';return}
+    if(f.size>1.5*1024*1024){pendingFile={nombre:f.name,tipo:f.type,data:null};box.innerHTML=`<p class="hint">Archivo de ${(f.size/1048576).toFixed(1)} MB: en la demo se guarda solo el nombre (límite 1,5 MB para vista previa).</p>`;return}
+    const r=new FileReader();r.onload=()=>{pendingFile={nombre:f.name,tipo:f.type,data:r.result};box.innerHTML=`<div class="preview">${f.type.startsWith('image/')?`<img src="${r.result}" alt="Vista previa del comprobante">`:`<p class="small">PDF listo: ${esc(f.name)}</p>`}</div>`};r.readAsDataURL(f)}
+};
+const I={wizTexto:t=>{if(ui.wiz){ui.wiz.texto=t.value;ui.wiz.revisado=false}},aguaPrev:()=>{const g=id=>document.getElementById(id)?.value;const el=document.getElementById('aw-prev');if(el)el.innerHTML=aguaPreview(g('aw-m'),g('aw-c'),g('aw-r'))}};
+
+/* =========================================================
+   FORMULARIOS
+   ========================================================= */
+const F={
+  login:v=>{const l=v.login.trim().toLowerCase(),cod=(v.codigo||'').trim().toLowerCase(),porCorreo=l.includes('@');
+    const cands=porCorreo?Object.values(DB.edificios):[DB.edificios[cod]].filter(Boolean);
+    if(!porCorreo&&!cands.length){loginErr=cod?'No existe un edificio con ese código.':'Escribe el código del edificio.';return render()}
+    let found=null,existe=false,inactivo=false,mala=false;
+    for(const s of cands){const us=s.usuarios.filter(u=>u.login===l||(u.email&&u.email.toLowerCase()===l));if(us.length)existe=true;
+      const u=us.find(x=>x.estado==='activo');if(u){if(u.pass===v.pass){found={s,u};break}mala=true}else if(us.length)inactivo=true}
+    if(found){loginErr='';setActivo(found.s.config.codigo);sess={codigo:found.s.config.codigo,userId:found.u.id};view=null;save()}
+    else if(!existe)loginErr=porCorreo?'No hay una cuenta con ese correo.':'No existe un usuario con ese número de departamento en este edificio.';
+    else if(mala)loginErr='Contraseña incorrecta.';
+    else if(inactivo)loginErr='Este usuario está desactivado. Consulta con la administración.';
+    render()},
+  wizCuenta:v=>{const w=ui.wiz,email=v.email.trim().toLowerCase();
+    if(Object.values(DB.edificios).some(s=>s.usuarios.some(u=>(u.email||'').toLowerCase()===email))){w.err='Ya existe una cuenta con ese correo. Inicia sesión y registra el edificio desde "Mis edificios".';return render()}
+    w.cuenta={nombre:v.nombre.trim(),email,pass:v.pass};w.err='';w.paso=2;render();window.scrollTo(0,0)},
+  wizEdificio:v=>{const w=ui.wiz,cod=(v.codigo.trim().toLowerCase()||slug(v.nombre));
+    Object.assign(w.ed,{nombre:v.nombre.trim(),direccion:v.direccion.trim(),codigo:cod,total:v.total,area:v.area,mes:v.mes});
+    if(!/^[a-z0-9-]{3,30}$/.test(cod)){w.err='El código debe tener de 3 a 30 caracteres: letras minúsculas, números o guiones.';return render()}
+    if(DB.edificios[cod]){w.err=`El código "${cod}" ya está en uso. Elige otro.`;return render()}
+    w.err='';w.paso=3;render();window.scrollTo(0,0)},
+  reservar:(v,f)=>{const u=sessionUser(),z=zona(ui.zonaSel),fecha=v.f,ini=v.ini,fin=toHM(toMin(ini)+z.turno);
+    if(modEstado('areas')==='bloqueado')return toast('El módulo Áreas comunes no está activo en tu edificio.');
+    const ant=diasEntre(hoy(),fecha);
+    if(ant<z.antMin)return toast(`Reserva con al menos ${z.antMin} días de anticipación.`);
+    if(ant>z.antMax)return toast(`Solo puedes reservar hasta ${z.antMax} días antes.`);
+    if(S.reservas.filter(r=>r.deptoId===u.deptoId&&r.zonaId===z.id&&[...RES_ACTIVAS,'usada'].includes(r.estado)&&r.fecha.slice(0,7)===fecha.slice(0,7)).length>=z.maxMes)return toast(`Ya usaste tus ${z.maxMes} reservas de este mes en esta zona.`);
+    if(!z.morosos&&vencidos(u.deptoId).length)return toast('Tu departamento tiene deuda vencida. Ponte al día para reservar.');
+    if(!turnos(z,fecha).find(t=>t.ini===ini)?.libre)return toast('Ese turno acaba de ocuparse. Elige otro.');
+    const r={id:uid('rs'),zonaId:z.id,deptoId:u.deptoId,fecha,ini,fin,estado:'solicitada',cTarifa:null,cGarantia:null,gMonto:0,gEstado:'sin_garantia',gRetenida:0,gCerrada:null,vencePago:null,nota:'',creada:hoy()};
+    S.reservas.push(r);
+    if(!z.aprobacion){if(z.tarifa+z.garantia>0)emitirCargosReserva(r);else r.estado='confirmada'}
+    closeModal();commit();
+    toast(r.estado==='confirmada'?'Reserva confirmada.':r.estado==='solicitada'?'Solicitud enviada. Te avisaremos cuando la administración la revise.':`Reserva separada. Paga ${money(z.tarifa+z.garantia)} desde Mis cuentas antes del ${fdate(r.vencePago)}.`)},
+  rechazoRes:v=>{const r=S.reservas.find(x=>x.id===v.id);if(esMiaReserva(r))return toast('No puedes gestionar reservas de tu propio departamento.');r.estado='rechazada';r.nota='Motivo: '+v.nota.trim();closeModal();commit();toast('Reserva rechazada.')},
+  cierreRes:v=>{const r=S.reservas.find(x=>x.id===v.id),ret=+(v.retener||0);
+    if(r.gEstado==='en_custodia'){if(ret<0||ret>r.gMonto)return toast(`El monto retenido debe estar entre 0 y ${money(r.gMonto)}.`);
+      if(ret>0&&!(v.nota||'').trim())return toast('Describe los daños para retener la garantía.');
+      r.gRetenida=ret;r.gEstado=ret>0?'retenida':'devuelta';r.gCerrada=hoy();if(ret>0)r.nota='Daños: '+v.nota.trim()}
+    r.estado='usada';closeModal();commit();toast(ret>0?`Se retuvieron ${money(ret)} por daños; pasan a ingresos de ${plabel(pActual())}.`:'Reserva cerrada.')},
+  zona:(v,f)=>{const dias=DIAS.map((_,i)=>i).filter(i=>f.elements['dia_'+i].checked);
+    if(!dias.length)return toast('Elige al menos un día de atención.');
+    if(v.cierre<=v.apertura)return toast('La hora de cierre debe ser posterior a la de apertura.');
+    if(toMin(v.cierre)-toMin(v.apertura)<+v.turno)return toast('El turno es más largo que el horario de atención.');
+    if(+v.antMax<+v.antMin)return toast('La anticipación máxima debe ser mayor o igual que la mínima.');
+    const datos={nombre:v.nombre.trim(),descripcion:v.descripcion.trim(),aforo:+v.aforo,reglamento:v.reglamento.trim(),activa:f.elements.activa.checked,dias,apertura:v.apertura,cierre:v.cierre,turno:+v.turno,antMin:+v.antMin,antMax:+v.antMax,maxMes:+v.maxMes,aprobacion:f.elements.aprobacion.checked,tarifa:+v.tarifa||0,garantia:+v.garantia||0,morosos:f.elements.morosos.checked,plazoDias:+v.plazoDias};
+    if(v.id)Object.assign(zona(v.id),datos);else S.zonas.push({id:uid('z'),...datos});
+    closeModal();commit();toast(v.id?'Zona actualizada. Las reservas ya hechas se mantienen.':'Zona creada.')},
+  bloqueo:v=>{const n=S.reservas.filter(r=>r.zonaId===v.zonaId&&r.fecha===v.fecha&&RES_ACTIVAS.includes(r.estado)).length;
+    if(n)return toast(`Hay ${n} ${n>1?'reservas':'reserva'} ese día. Cancélalas primero para bloquear la fecha.`);
+    S.bloqueos.push({id:uid('bl'),zonaId:v.zonaId,fecha:v.fecha,motivo:v.motivo.trim()});closeModal();commit();toast(`Fecha bloqueada: ${fdate(v.fecha)}.`)},
+  config:(v,f)=>{const p=pActual();
+    if(v.aguaMonto!==undefined&&v.tipoCalculo==='mixta'){const m=+v.aguaMonto||0,c=+v.aguaConsumo||0,r=+v.aguaRiego||0;
+      if(r>c&&c>0)return toast('El riego no puede superar el consumo general.');
+      const a=S.agua[p]||{lecturas:{}};Object.assign(a,{monto:m,consumo:c,riego:r});S.agua[p]=a;syncAgua(p)}
+    Object.assign(S.config,{edificio:v.edificio.trim(),direccion:v.direccion.trim(),admin:v.admin.trim(),totalDeptos:Math.max(1,parseInt(v.totalDeptos)||1),areaTotal:Math.max(1,+v.areaTotal||1),tipoCalculo:v.tipoCalculo==='mixta'?'mixta':'alicuota',
+      diaCorte:Math.min(27,Math.max(1,+v.diaCorte||15)),mora:+v.mora||0,saldoInicial:+v.saldoInicial||0,banco:v.banco.trim(),yape:v.yape.trim(),publicarDesglose:!!f.publicarDesglose.checked});
+    commit();toast('Configuración guardada.')},
+  agua:v=>{const p=v.periodo,m=+v.monto||0,c=+v.consumo||0,r=+v.riego||0;
+    if(r>c)return toast('El riego no puede superar el consumo general.');
+    const lect={};S.departamentos.forEach(d=>{const x=v['lect_'+d.id];if(x!==''&&x!==undefined)lect[d.id]=+x});
+    S.agua[p]={monto:m,consumo:c,riego:r,lecturas:lect};syncAgua(p);commit();toast(`Agua de ${plabel(p)} guardada. Cuotas recalculadas.`)},
+  gasto:v=>{S.gastos.push({id:uid('gas'),periodo:v.periodo,tipo:v.tipo,categoria:v.categoria.trim(),descripcion:v.descripcion.trim(),monto:+v.monto,fecha:v.fecha});commit();toast(`Gasto ${v.tipo} registrado: ${money(v.monto)}.`)},
+  abrirMes:v=>{const p=pActual(),po=periodoObj(p),n=nextP(p),k=calcular(p);
+    if(!po.gastosConfirmados)return toast(`Confirma los gastos de ${plabel(p)} antes de abrir el siguiente mes.`);
+    if(!(k.total>0))return toast(`No hay gastos en ${plabel(p)} para calcular las cuotas.`);
+    po.estado='cerrado';S.periodos.push({id:n,estado:'abierto',gastosConfirmados:false});
+    let em=0,cub=0;
+    k.filas.forEach(f=>{
+      const det={base:p,alic:f.alic,comun:f.comun,agua:f.agua,m3:f.m3};
+      const ad=S.compromisos.find(c=>c.deptoId===f.id&&c.tipo==='adelanto'&&c.periodo===n);
+      if(ad){cub++;ad.detalle=det;const diff=r2(f.total-ad.monto);
+        if(diff>0)S.compromisos.push({id:uid('cmp'),deptoId:f.id,periodo:n,tipo:'extraordinario',concepto:'Ajuste de cuota adelantada, '+plabel(n),monto:diff,emitido:n+'-01',vence:n+'-'+pad(S.config.diaCorte),estado:'pendiente'});return}
+      S.compromisos.push({id:uid('cmp'),deptoId:f.id,periodo:n,tipo:'cuota',concepto:'Cuota de mantenimiento, '+plabel(n),monto:f.total,emitido:n+'-01',vence:n+'-'+pad(S.config.diaCorte),estado:'pendiente',detalle:det});em++});
+    Object.keys(v).filter(x=>x.startsWith('rec_')).forEach(x=>{const i=x.slice(4),cat=v['cat_'+i],m=+v[x];if(m>0)S.gastos.push({id:uid('gas'),periodo:n,tipo:'recurrente',categoria:cat,descripcion:cat+', '+plabel(n),monto:m,fecha:n+'-01'})});
+    S.config.fechaSim=n+'-01';Object.assign(ui,{gp:null,ep:null,cp:null,rp:null,kp:null,rcp:null});commit();
+    toast(`${Plabel(n)} abierto: ${em} cuotas emitidas${cub?`, ${cub} cubiertas por adelanto`:''}.`)},
+  compromiso:v=>{const ds=v.destino==='*'?S.departamentos.map(d=>d.id):[v.destino];
+    const tot=ds.reduce((t,id)=>t+alic(depto(id)),0);
+    ds.forEach(id=>{const monto=v.reparto==='alicuota'?r2(+v.monto*alic(depto(id))/tot):+v.monto;
+      S.compromisos.push({id:uid('cmp'),deptoId:id,periodo:pActual(),tipo:'extraordinario',concepto:v.concepto.trim(),monto,emitido:hoy(),vence:v.vence,estado:'pendiente'})});
+    closeModal();commit();toast(`Compromiso emitido a ${ds.length} ${ds.length>1?'departamentos':'departamento'}.`)},
+  rechazo:v=>{const p=S.pagos.find(x=>x.id===v.id);p.estado='rechazado';p.nota=v.nota.trim();const c=S.compromisos.find(x=>x.id===p.compromisoId);if(c)c.estado='pendiente';closeModal();commit();toast(`Comprobante del depto ${p.deptoId} rechazado.`)},
+  pago:v=>{if(!pendingFile)return toast('Adjunta el comprobante antes de enviar.');const c=S.compromisos.find(x=>x.id===v.cid);
+    S.pagos.push({id:uid('pag'),compromisoId:c.id,deptoId:c.deptoId,monto:c.monto,metodo:v.metodo,operacion:v.operacion.trim(),fecha:hoy(),archivo:pendingFile,estado:'en_revision',nota:''});
+    c.estado='en_revision';closeModal();commit();toast('Comprobante enviado. La administración lo validará.')},
+  adelanto:v=>{const u=sessionUser(),id=u.deptoId,est=estimadoCuota(id);let n=pActual(),k=0;
+    for(let i=0;i<+v.meses;i++){n=nextP(n);if(S.compromisos.find(c=>c.deptoId===id&&c.periodo===n&&(c.tipo==='cuota'||c.tipo==='adelanto')))continue;
+      S.compromisos.push({id:uid('cmp'),deptoId:id,periodo:n,tipo:'adelanto',concepto:'Cuota adelantada, '+plabel(n),monto:est,emitido:hoy(),vence:n+'-'+pad(S.config.diaCorte),estado:'pendiente'});k++}
+    closeModal();commit();toast(k?`Se agregaron ${k} ${k>1?'cuotas adelantadas':'cuota adelantada'} a tus pagos.`:'Esos meses ya estaban solicitados.')},
+  nuevoDepto:v=>{const id=v.id.trim();if(!/^[0-9A-Za-z-]{1,6}$/.test(id))return toast('Usa un número de departamento corto, por ejemplo 501.');if(depto(id))return toast(`El depto ${id} ya existe.`);
+    S.departamentos.push({id,piso:+v.piso,area:r2(+v.area)});
+    const pid=uid('per');S.personas.push({id:pid,nombre:v.propietario.trim(),dni:'',telefono:'',email:v.inquilino.trim()?'':v.email.trim()});
+    S.ocupaciones.push({id:uid('oc'),deptoId:id,personaId:pid,tipo:'propietario',desde:hoy(),hasta:null,activo:true});let resp=pid;
+    if(v.inquilino.trim()){const iid=uid('per');S.personas.push({id:iid,nombre:v.inquilino.trim(),dni:'',telefono:'',email:v.email.trim()});S.ocupaciones.push({id:uid('oc'),deptoId:id,personaId:iid,tipo:'inquilino',desde:hoy(),hasta:null,activo:true});resp=iid}
+    S.usuarios.push({id:uid('usr'),login:id.toLowerCase(),pass:v.pass,rol:'hab',deptoId:id,personaId:resp,estado:'activo'});
+    closeModal();commit();toast(`Depto ${id} agregado. Usuario ${id}, clave ${v.pass}.`)},
+  editDepto:v=>{const d=depto(v.id);d.piso=+v.piso;d.area=r2(+v.area)||d.area;
+    const prop=ocupActiva(v.id,'propietario');if(prop)persona(prop.personaId).nombre=v.propietario.trim();
+    const resp=persona(userDe(v.id)?.personaId);if(resp){resp.email=v.email.trim();resp.telefono=v.telefono.trim()}
+    closeModal();commit();toast(`Depto ${v.id} actualizado.`)},
+  ocupante:v=>{const dep=v.depto,old=userDe(dep);
+    if(old){old.estado='inactivo';old.baja=v.desde}
+    const tipos=v.tipo==='propietario'?['propietario','inquilino']:['inquilino'];
+    S.ocupaciones.filter(o=>o.deptoId===dep&&o.activo&&tipos.includes(o.tipo)).forEach(o=>{o.activo=false;o.hasta=v.desde});
+    const pid=uid('per');S.personas.push({id:pid,nombre:v.nombre.trim(),dni:v.dni,telefono:v.telefono,email:v.email.trim()});
+    S.ocupaciones.push({id:uid('oc'),deptoId:dep,personaId:pid,tipo:v.tipo,desde:v.desde,hasta:null,activo:true});
+    S.usuarios.push({id:uid('usr'),login:dep.toLowerCase(),pass:v.pass,rol:'hab',deptoId:dep,personaId:pid,estado:'activo'});
+    if(sess.userId===old?.id)sess.userId='u_admin';
+    closeModal();commit();toast(`${v.nombre} registrado en el depto ${dep}. Usuario ${dep}, clave ${v.pass}.`)},
+  pass:v=>{const u=sessionUser();if(v.actual!==u.pass)return toast('La contraseña actual no es correcta.');if(v.nueva!==v.rep)return toast('Las contraseñas nuevas no coinciden.');u.pass=v.nueva;commit();toast('Contraseña cambiada.')},
+  ticket:v=>{S.tickets.push({id:uid('tk'),titulo:v.titulo.trim(),prioridad:v.prioridad,estado:'Abierto',fecha:hoy(),reporta:'Administración'});commit();toast('Ticket creado.')},
+  chat:v=>{const u=sessionUser(),txt=v.texto.trim();if(!txt)return;
+    const now=()=>hoy()+' '+new Date().toTimeString().slice(0,5);
+    const admName=S.config.admin.split(' ').slice(0,2).join(' ')+' (Administración)';
+    S.chat.push({id:uid('m'),rol:u.rol,deptoId:u.deptoId,nombre:u.rol==='admin'?admName:persona(u.personaId)?.nombre,texto:txt,fecha:now()});
+    commit();
+    setTimeout(()=>{
+      let r;
+      if(u.rol==='admin'){const us=S.usuarios.filter(x=>x.rol==='hab'&&x.estado==='activo');const x=us[Math.floor(Math.random()*us.length)];r={rol:'hab',deptoId:x.deptoId,nombre:persona(x.personaId)?.nombre,texto:['Gracias por el aviso.','Entendido, gracias.','¿Podría enviarlo también por correo?','Perfecto, lo tendré en cuenta.'][Math.floor(Math.random()*4)]}}
+      else r={rol:'admin',deptoId:null,nombre:admName,texto:['Gracias por escribir. Lo reviso y te respondo hoy.','Recibido. Lo coordino con el conserje.','Anotado, lo incluyo en el próximo informe.'][Math.floor(Math.random()*3)]};
+      S.chat.push({id:uid('m'),...r,fecha:now()});save();if(view==='chat')render();
+    },1400)}
+};
+
+/* =========================================================
+   DELEGACIÓN DE EVENTOS
+   ========================================================= */
+document.addEventListener('click',e=>{
+  if(e.target===modal){closeModal();return}
+  const t=e.target.closest('[data-act]');if(!t)return;
+  const f=A[t.dataset.act];if(f)f(t.dataset,t,e);
+});
+document.addEventListener('change',e=>{const t=e.target.closest('[data-change]');if(t&&C[t.dataset.change])C[t.dataset.change](t)});
+document.addEventListener('input',e=>{const t=e.target.closest('[data-input]');if(t&&I[t.dataset.input])I[t.dataset.input](t)});
+document.addEventListener('submit',e=>{const f=e.target;if(f.dataset.form&&F[f.dataset.form]){e.preventDefault();const v={};new FormData(f).forEach((val,k)=>{if(typeof val==='string')v[k]=val});F[f.dataset.form](v,f)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeModal()});
+window.addEventListener('resize',()=>{const top=document.querySelector('.top');if(top)document.documentElement.style.setProperty('--toph',top.offsetHeight+'px')});
+
+const _purgados=depurarInactivos();
+if(S){aplicarCorte();aplicarExpiraciones()}save();render();
+if(_purgados.length)toast(`Se eliminaron por inactividad: ${_purgados.join(', ')}.`);
+</script>
+</body>
+</html>
