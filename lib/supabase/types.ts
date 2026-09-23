@@ -1559,6 +1559,18 @@ export type Database = {
         }
         Returns: number
       }
+      equipo_admin: {
+        Args: { p_edificio: string }
+        Returns: {
+          departamento_numero: string
+          desde: string
+          nivel: Database["public"]["Enums"]["nivel_admin"]
+          nombre: string
+          perfil_id: string
+          soy_yo: boolean
+          vigente_hasta: string
+        }[]
+      }
       es_admin: { Args: { p_edificio: string }; Returns: boolean }
       es_de_mi_depto: { Args: { p_departamento: string }; Returns: boolean }
       es_lector_admin: { Args: { p_edificio: string }; Returns: boolean }
@@ -1589,6 +1601,19 @@ export type Database = {
           dias_para_eliminar: number
           dias_sin_movimiento: number
           protegido: boolean
+        }[]
+      }
+      estado_validacion: {
+        Args: { p_edificio: string }
+        Returns: {
+          alerta: boolean
+          coadministradores: number
+          quien_valida: string
+          titular_departamento: string
+          titular_vive_en_edificio: boolean
+          validador_departamento: string
+          validador_nombre: string
+          validador_perfil: string
         }[]
       }
       exigir_cobranza_configurada: {
@@ -1809,6 +1834,18 @@ export type Database = {
         Returns: undefined
       }
       validar_pago: { Args: { p_pago: string }; Returns: undefined }
+      vecinos_con_cuenta: {
+        Args: { p_edificio: string }
+        Returns: {
+          departamento_id: string
+          departamento_numero: string
+          es_validador: boolean
+          nivel: Database["public"]["Enums"]["nivel_admin"]
+          nombre: string
+          perfil_id: string
+          vive_con_titular: boolean
+        }[]
+      }
     }
     Enums: {
       estado_compromiso: "pendiente" | "en_revision" | "pagado" | "anulado"

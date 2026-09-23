@@ -144,6 +144,16 @@ export default async function ConfiguracionPage() {
       </section>
 
       <FormPago e={e} puede={puede} />
+
+      <section className="panel">
+        <h3 className="mb-1">Equipo de administración</h3>
+        <p className="text-sm text-muted">
+          Coadministradores, vecino validador de los pagos del titular y transferencia de la titularidad.{" "}
+          <Link href="/equipo" className="font-semibold text-brand">
+            Ir a Equipo de administración
+          </Link>
+        </p>
+      </section>
     </>
   );
 }

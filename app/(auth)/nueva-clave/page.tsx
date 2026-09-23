@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { CampoClave } from "@/components/CampoClave";
 
 async function guardarClave(form: FormData) {
   "use server";
@@ -37,11 +38,11 @@ export default async function NuevaClavePage({ searchParams }: { searchParams: P
         )}
         <div className="field">
           <label htmlFor="nc-1">Nueva contraseña</label>
-          <input id="nc-1" name="clave" type="password" minLength={8} autoComplete="new-password" required />
+          <CampoClave id="nc-1" name="clave" minLength={8} autoComplete="new-password" required />
         </div>
         <div className="field">
           <label htmlFor="nc-2">Repite la contraseña</label>
-          <input id="nc-2" name="repite" type="password" minLength={8} autoComplete="new-password" required />
+          <CampoClave id="nc-2" name="repite" minLength={8} autoComplete="new-password" required />
         </div>
         <button className="btn w-full">Guardar contraseña</button>
       </form>

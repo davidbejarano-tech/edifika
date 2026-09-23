@@ -1,24 +1,27 @@
 @import "tailwindcss";
 
-/* Paleta y componentes tomados de docs/prototipo.html */
+/* Paleta EDIFIKA (logo): azul marino #0E2A47, azul #1A7FD4, celeste #55A8E0 y azul profundo #0B5A8A.
+   --brand es un azul un poco más oscuro que el del logo para que el texto blanco de los botones cumpla contraste AA. */
 :root {
-  --bg: #eef1ef; --surface: #ffffff; --surface2: #f5f7f6; --ink: #1e2b33; --muted: #5b6970; --line: #d5dcda;
-  --brand: #1f5c63; --brand-ink: #ffffff; --brand-soft: #dcebec; --brass: #9c6b1f;
+  --bg: #f3f6fa; --surface: #ffffff; --surface2: #edf2f8; --ink: #0e2a47; --muted: #55677c; --line: #d3dde8;
+  --brand: #1570c2; --brand-ink: #ffffff; --brand-soft: #e1eefb; --brass: #0b5a8a;
   --ok: #2e7d4f; --ok-bg: #e2f1e7; --warn: #8f5c0e; --warn-bg: #fbeed5; --bad: #b23a30; --bad-bg: #f8e0dc;
-  --info: #2f5f99; --info-bg: #e0e9f5; --locked: #9aa3a7;
+  --info: #1a5f9e; --info-bg: #e0ecf8; --locked: #9aa6b3;
+  --logo-navy: #0e2a47; --logo-azul: #1a7fd4; --logo-celeste: #55a8e0; --logo-profundo: #0b5a8a;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #12191c; --surface: #1a2327; --surface2: #1f2a2f; --ink: #e4eae8; --muted: #9ba8ad; --line: #2e3b41;
-    --brand: #5dafb5; --brand-ink: #0e1a1c; --brand-soft: #1f3a3d; --brass: #d6a24e;
+    --bg: #0a1522; --surface: #102033; --surface2: #152a40; --ink: #e4edf7; --muted: #93a6bb; --line: #24384f;
+    --brand: #4ea3e6; --brand-ink: #041222; --brand-soft: #14314d; --brass: #7dbdeb;
     --ok: #6cc08e; --ok-bg: #183326; --warn: #e3ae55; --warn-bg: #3a2c12; --bad: #ee8277; --bad-bg: #3d1c19;
-    --info: #86aee3; --info-bg: #1b2a3e; --locked: #56616a;
+    --info: #86b8e8; --info-bg: #16304a; --locked: #56647a;
+    --logo-navy: #e4edf7; --logo-azul: #3d98e3; --logo-celeste: #7cc0ee; --logo-profundo: #5aa6dc;
   }
 }
 
 @theme inline {
   --font-sans: var(--font-public-sans), system-ui, sans-serif;
-  --font-display: var(--font-bricolage), var(--font-public-sans), system-ui, sans-serif;
+  --font-display: var(--font-montserrat), var(--font-public-sans), system-ui, sans-serif;
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface2: var(--surface2);
@@ -41,7 +44,7 @@
 
 @layer base {
   body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-sans); }
-  h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; font-weight: 700; }
+  h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; font-weight: 700; color: var(--ink); }
   h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); letter-spacing: -0.01em; }
   h2 { font-size: 1.35rem; }
   h3 { font-size: 1.05rem; }
@@ -58,6 +61,7 @@
   .btn.ghost { background: transparent; color: var(--brand); }
   .btn.quiet { background: transparent; border-color: var(--line); color: var(--ink); }
   .btn.sm { padding: 0.3rem 0.65rem; font-size: 0.85rem; border-radius: 6px; }
+  .btn.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
   .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; filter: none; }
   .field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.85rem; }
   .field label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }

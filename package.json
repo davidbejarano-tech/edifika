@@ -1,5 +1,5 @@
 {
-  "name": "building-buddy",
+  "name": "edifika",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,8 @@
     "db:tipos": "supabase gen types typescript --linked --schema public > lib/supabase/types.ts",
     "probar:rutas": "tsx --env-file=.env.local scripts/probar-rutas.ts",
     "probar:cuotas": "tsx --env-file=.env.local scripts/probar-cuotas.ts",
-    "probar:permisos": "tsx --env-file=.env.local scripts/probar-permisos.ts"
+    "probar:permisos": "tsx --env-file=.env.local scripts/probar-permisos.ts",
+    "probar:equipo": "tsx --env-file=.env.local scripts/probar-equipo.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

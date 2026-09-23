@@ -1,4 +1,4 @@
-# Configurar los correos de Building Buddy
+# Configurar los correos de EDIFIKA
 
 Los correos de verificación, invitación y recuperación de contraseña los envía **Supabase Auth**. Sin configuración, Supabase usa un servidor de prueba que solo entrega a los miembros de tu equipo en Supabase y unos pocos correos por hora. Para que lleguen a los vecinos hay que hacer dos cosas, una sola vez.
 
@@ -10,7 +10,7 @@ Los correos de verificación, invitación y recuperación de contraseña los env
 | Campo | Valor |
 |---|---|
 | Sender email | `no-responder@tudominio.pe` (mientras no verifiques tu dominio en Resend: `onboarding@resend.dev`) |
-| Sender name | `Building Buddy` |
+| Sender name | `EDIFIKA` |
 | Host | `smtp.resend.com` |
 | Port | `465` |
 | Username | `resend` |
@@ -25,14 +25,14 @@ La aplicación valida los enlaces en el servidor (`/auth/callback`), así que lo
 **Confirm signup** (verificación al crear cuenta)
 ```html
 <h2>Confirma tu correo</h2>
-<p>Hola, confirma tu correo para registrar tu edificio en Building Buddy:</p>
+<p>Hola, confirma tu correo para registrar tu edificio en EDIFIKA:</p>
 <p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/edificios/nuevo">Confirmar mi correo</a></p>
 ```
 
 **Invite user** (invitación a un vecino)
 ```html
-<h2>Te invitaron a Building Buddy</h2>
-<p>La administración de tu edificio te dio acceso a Building Buddy, donde verás tus cuotas y podrás pagar.</p>
+<h2>Te invitaron a EDIFIKA</h2>
+<p>La administración de tu edificio te dio acceso a EDIFIKA, donde verás tus cuotas y podrás pagar.</p>
 <p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite&next=/nueva-clave">Crear mi contraseña</a></p>
 <p>Luego ingresa con el código de tu edificio, tu número de departamento y tu contraseña.</p>
 ```
@@ -40,7 +40,7 @@ La aplicación valida los enlaces en el servidor (`/auth/callback`), así que lo
 **Reset password** (recuperar contraseña)
 ```html
 <h2>Crea una contraseña nueva</h2>
-<p>Recibimos un pedido para cambiar tu contraseña de Building Buddy:</p>
+<p>Recibimos un pedido para cambiar tu contraseña de EDIFIKA:</p>
 <p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/nueva-clave">Crear contraseña nueva</a></p>
 <p>Si no lo pediste, ignora este correo.</p>
 ```

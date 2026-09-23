@@ -13,6 +13,7 @@ const GRUPOS: { grupo: string | null; items: Item[] }[] = [
     items: [
       { href: "/configuracion", texto: "Configuración", listo: true },
       { href: "/departamentos", texto: "Departamentos y ocupantes", listo: true },
+      { href: "/equipo", texto: "Equipo de administración", listo: true },
     ],
   },
   {

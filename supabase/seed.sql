@@ -1,5 +1,5 @@
 -- =====================================================================
--- Building Buddy · Datos de prueba (Edificio Los Ficus)
+-- EDIFIKA · Datos de prueba (Edificio Los Ficus)
 -- Ejecutar después de la migración. Crea el edificio, 12 departamentos,
 -- ocupantes, el periodo de agosto 2026 con gastos confirmados y agua,
 -- y setiembre abierto. Las cuentas de acceso se crean aparte con la

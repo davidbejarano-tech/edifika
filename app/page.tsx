@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Marca } from "@/components/Logo";
+import { Logo, Marca } from "@/components/Logo";
 
 // Página de bienvenida pública (SPEC 1.3). Con sesión, el middleware lleva directo al edificio.
 const BENEFICIOS = [
@@ -35,12 +35,15 @@ export default function Bienvenida() {
       </header>
 
       <main className="mx-auto max-w-[1100px] px-4 pb-16 md:px-8">
-        <section className="py-10 md:py-16">
+        <section className="grid items-center gap-8 py-10 md:grid-cols-[1fr_auto] md:py-16">
+          <div>
           <p className="mb-3 text-sm font-semibold tracking-wide text-brass uppercase">Administración de edificios en Perú</p>
-          <h1 className="max-w-[18ch] text-[clamp(2rem,6vw,3.2rem)]">Tu edificio en orden, sin hojas de cálculo.</h1>
+          <h1 className="max-w-[16ch] text-[clamp(2rem,6vw,3.2rem)] font-extrabold">
+            Administra tus edificios, <span className="text-[var(--logo-azul)]">sin complicaciones.</span>
+          </h1>
           <p className="mt-4 max-w-[52ch] text-lg text-muted">
-            Building Buddy calcula las cuotas, ordena la cobranza y mantiene informados a los vecinos. Para administradores
-            vecinos y empresas administradoras.
+            EDIFIKA calcula las cuotas, ordena la cobranza y mantiene informados a los vecinos. Para administradores vecinos y
+            empresas administradoras.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link href="/registro" className="btn px-6 py-3 text-base">
@@ -51,6 +54,10 @@ export default function Bienvenida() {
             </Link>
           </div>
           <p className="mt-3 text-sm text-muted">¿Eres vecino? Ingresa con el código de tu edificio y tu número de departamento.</p>
+          </div>
+          <div className="hidden md:block" aria-hidden="true">
+            <Logo size={200} />
+          </div>
         </section>
 
         <section aria-label="Beneficios" className="grid gap-4 md:grid-cols-3">
@@ -80,7 +87,7 @@ export default function Bienvenida() {
         </section>
       </main>
 
-      <footer className="border-t border-line py-6 text-center text-sm text-muted">Building Buddy · Lima, Perú</footer>
+      <footer className="border-t border-line py-6 text-center text-sm text-muted">EDIFIKA · Lima, Perú</footer>
     </>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { ingresar, type EstadoLogin } from "./acciones";
+import { CampoClave } from "@/components/CampoClave";
 
 export function FormularioLogin({ mensaje }: { mensaje?: string }) {
   const [estado, enviar, enviando] = useActionState<EstadoLogin, FormData>(ingresar, {
@@ -61,7 +62,7 @@ export function FormularioLogin({ mensaje }: { mensaje?: string }) {
 
         <div className="field">
           <label htmlFor="lg-p">Contraseña</label>
-          <input id="lg-p" name="password" type="password" autoComplete="current-password" required />
+          <CampoClave id="lg-p" name="password" autoComplete="current-password" required />
         </div>
 
         <button className="btn w-full" disabled={enviando}>

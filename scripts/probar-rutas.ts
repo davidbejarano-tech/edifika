@@ -96,6 +96,13 @@ async function main() {
   await contiene("Titular: departamentos con acciones", "/departamentos", titular, ["Cambio de ocupante", "Agregar departamento", "302"]);
   await contiene("Coadministrador: departamentos sin acciones", "/departamentos", coadmin, ["302"], ["Cambio de ocupante", "Agregar departamento"]);
 
+  // Etapa 2c: Equipo de administración y plataforma
+  await caso("Equipo (titular)", "/equipo", titular, "/equipo (200)");
+  await caso("Vecino 302 escribe /equipo", "/equipo", v302, "/cuentas");
+  await caso("Titular sin permiso de plataforma", "/plataforma", titular, "/edificios");
+  await contiene("Titular: equipo con acciones", "/equipo", titular, ["Equipo actual", "Transferir la titularidad", "Coadministrador"]);
+  await contiene("Coadministrador: equipo solo lectura", "/equipo", coadmin, ["Equipo actual", "Solo el administrador titular puede cambiarlo"], ["Transferir la titularidad", "Agregar coadministrador"]);
+
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
   console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);

@@ -1,4 +1,4 @@
-# Building Buddy · Plan de construcción por etapas
+# EDIFIKA · Plan de construcción por etapas
 
 Cada etapa termina con algo que puedes probar. Copia el prompt en Claude Code, deja que trabaje, prueba con la lista de verificación y recién entonces pasa a la siguiente. Si algo no cumple, díselo con precisión: qué hiciste, qué esperabas y qué pasó.
 

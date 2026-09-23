@@ -1,6 +1,6 @@
-# Building Buddy · Especificación funcional y técnica (MVP v1)
+# EDIFIKA · Especificación funcional y técnica (MVP v1)
 
-Versión 1.5 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto) · Product Owner: David
+Versión 1.6 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA, lema "Administra tus edificios, sin complicaciones") · Product Owner: David
 
 El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcional. Si este documento y el prototipo difieren, manda este documento.
 
@@ -8,7 +8,7 @@ El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcion
 
 ## 1. Producto
 
-Building Buddy es un SaaS para administrar edificios residenciales en Perú. El administrador calcula y cobra las cuotas de mantenimiento, registra gastos y emite estados de cuenta y recibos. El habitante consulta lo que debe, paga subiendo su comprobante y ve en qué se gasta el dinero del edificio.
+EDIFIKA es un SaaS para administrar edificios residenciales en Perú. El administrador calcula y cobra las cuotas de mantenimiento, registra gastos y emite estados de cuenta y recibos. El habitante consulta lo que debe, paga subiendo su comprobante y ve en qué se gasta el dinero del edificio.
 
 Modelo comercial: suscripción mensual por edificio con módulos base incluidos y módulos adicionales con prueba gratuita de 14 días (Product-Led Growth).
 
@@ -23,7 +23,7 @@ La administración puede estar a cargo de un vecino del edificio o de un externo
 | Administrador saliente | Quien entregó la titularidad | Solo lectura durante 15 días |
 | Vecino validador | Habitante designado por el titular | Valida los pagos del departamento del titular cuando no hay coadministrador |
 | Habitante | Propietario residente o inquilino con acceso | Ver sus cuentas, pagar y subir comprobantes, pedir adelantos, ver estado de cuenta, reportes y chat |
-| Plataforma | Equipo de Building Buddy | Transferencias forzadas con acta; alta de organizaciones y planes (fuera de v1) |
+| Plataforma | Equipo de EDIFIKA | Transferencias forzadas con acta; alta de organizaciones y planes (fuera de v1) |
 
 Un departamento tiene como máximo **un habitante con acceso activo**. Los propietarios que no viven en el edificio se registran como personas, sin cuenta. Un vecino administrador tiene los dos accesos: el de su departamento y el de administración.
 
@@ -157,7 +157,7 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 
 **RN-23 Transferencia de la titularidad.**
 - *Voluntaria:* el titular elige al nuevo titular (un coadministrador, un vecino o un externo invitado). El saliente queda con acceso de solo lectura por 15 días o, si hay cupo, como coadministrador. Si era vecino, conserva siempre su acceso de habitante.
-- *Forzada:* si el titular no entrega el cargo, el equipo de Building Buddy hace la transferencia con el acta de la junta de propietarios, que queda archivada. El saliente queda en lectura por 15 días.
+- *Forzada:* si el titular no entrega el cargo, el equipo de EDIFIKA hace la transferencia con el acta de la junta de propietarios, que queda archivada. El saliente queda en lectura por 15 días.
 - Los periodos abiertos, pagos en revisión y tareas pendientes continúan con el nuevo titular. Si el vecino validador vive con el nuevo titular, pierde la designación.
 
 **RN-24 Nombre en los documentos.** El estado de cuenta y los recibos muestran solo al titular. El estado de cuenta oficial guarda el nombre del titular que confirmó los gastos, y el recibo el del titular vigente al generarse. Una transferencia posterior no cambia documentos ya emitidos.
@@ -204,7 +204,7 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 ### Registro y edificios
 
 **Página de bienvenida (landing).** Es la página principal (`/`) y es pública.
-- Explica en pocas frases qué es Building Buddy y sus beneficios: cuotas calculadas solas, cobranza con comprobantes y transparencia para los vecinos.
+- Explica en pocas frases qué es EDIFIKA y sus beneficios: cuotas calculadas solas, cobranza con comprobantes y transparencia para los vecinos.
 - Ofrece dos caminos claros: **"Registrar mi edificio"** (lleva a Crear cuenta y al asistente) e **"Ingresar"** (lleva al login).
 - Si el visitante ya tiene sesión, pasa directo a su edificio (selector de RN-25).
 - La tarjeta de login mantiene el enlace "¿Administras un edificio? Crear cuenta y registrar mi edificio".

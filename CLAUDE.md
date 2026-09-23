@@ -1,14 +1,15 @@
-# CLAUDE.md · Building Buddy
+# CLAUDE.md · EDIFIKA
 
 Este archivo lo lee Claude Code al iniciar cada sesión. Define el proyecto, el stack y las reglas de trabajo.
 
 ## Proyecto
 
-Building Buddy es un SaaS de administración de edificios para Perú: cálculo de cuotas por alícuota o mixto con agua, cobranza con comprobantes, estado de cuenta y recibos. Roles: administrador titular (nivel 1), coadministrador (nivel 2, solo datos operativos), administrador saliente en lectura, vecino validador y habitante. Ver SPEC sección 2 y RN-19 a RN-25.
+EDIFIKA es un SaaS de administración de edificios para Perú: cálculo de cuotas por alícuota o mixto con agua, cobranza con comprobantes, estado de cuenta y recibos. Roles: administrador titular (nivel 1), coadministrador (nivel 2, solo datos operativos), administrador saliente en lectura, vecino validador y habitante. Ver SPEC sección 2 y RN-19 a RN-25.
 
 Documentos de referencia (léelos antes de cada etapa):
 - `docs/SPEC.md`: especificación y reglas de negocio (RN-01 a RN-18). Es la fuente de verdad.
 - `docs/prototipo.html`: prototipo navegable. Es la referencia de pantallas, textos y flujo. Ábrelo en el navegador.
+- **Marca:** EDIFIKA, lema "Administra tus edificios, sin complicaciones". Colores del logo: azul marino `#0E2A47`, azul `#1A7FD4`, celeste `#55A8E0` y azul profundo `#0B5A8A` (variables en `app/globals.css`). El prototipo conserva el nombre y los colores anteriores: úsalo solo como referencia de pantallas y textos.
 - `docs/ETAPAS.md`: plan de construcción por etapas.
 - `supabase/migrations/`: 0001 núcleo, 0002 autoregistro y depuración, 0003 Áreas comunes. Esquema, funciones de negocio y RLS ya diseñados y probados.
 

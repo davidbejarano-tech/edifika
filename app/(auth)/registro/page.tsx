@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { CampoClave } from "@/components/CampoClave";
 
 // Crear cuenta de administrador (SPEC sección 7). El correo se verifica antes de registrar el edificio.
 async function crearCuenta(form: FormData) {
@@ -85,7 +86,7 @@ export default async function RegistroPage({
         </div>
         <div className="field">
           <label htmlFor="rg-p">Contraseña (mínimo 8 caracteres)</label>
-          <input id="rg-p" name="clave" type="password" minLength={8} autoComplete="new-password" required />
+          <CampoClave id="rg-p" name="clave" minLength={8} autoComplete="new-password" required />
         </div>
         <p className="mb-4 text-sm text-muted">Te enviaremos un correo para verificar tu cuenta antes de continuar.</p>
         <button className="btn w-full">Crear cuenta</button>

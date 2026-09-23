@@ -1,4 +1,4 @@
-# Building Buddy · Kit de desarrollo
+# EDIFIKA · Kit de desarrollo
 
 Contenido:
 - `CLAUDE.md`: instrucciones permanentes para Claude Code
