@@ -74,6 +74,13 @@ export function FormularioLogin({ mensaje }: { mensaje?: string }) {
           ¿Olvidaste tu contraseña?
         </Link>
       </p>
+
+      <div className="mt-5 border-t border-line pt-4">
+        <p className="mb-2 text-sm text-muted">¿Administras un edificio?</p>
+        <Link href="/registro" className="btn quiet w-full">
+          Crear cuenta y registrar mi edificio
+        </Link>
+      </div>
     </>
   );
 }

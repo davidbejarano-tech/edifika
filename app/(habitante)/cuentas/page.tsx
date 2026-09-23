@@ -3,7 +3,7 @@ import { obtenerContexto } from "@/lib/contexto";
 
 export default async function CuentasPage() {
   const { supabase, actual } = await obtenerContexto();
-  if (!actual?.departamento_id) redirect("/elegir");
+  if (!actual?.departamento_id) redirect("/edificios");
 
   const { data: depto } = await supabase
     .from("departamentos")

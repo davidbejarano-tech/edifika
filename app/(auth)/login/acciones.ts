@@ -19,7 +19,7 @@ export async function ingresar(_prev: EstadoLogin, form: FormData): Promise<Esta
         return { modo, error: "Tu correo aún no está verificado. Revisa el enlace que te enviamos." };
       return { modo, error: "Correo o contraseña incorrectos." };
     }
-    redirect("/elegir?vista=admin");
+    redirect("/edificios?vista=admin");
   }
 
   const codigo = String(form.get("codigo") ?? "").trim().toLowerCase();
@@ -59,5 +59,5 @@ export async function ingresar(_prev: EstadoLogin, form: FormData): Promise<Esta
   });
   if (error) return { modo, error: "No pudimos iniciar sesión. Inténtalo otra vez." };
 
-  redirect("/elegir?vista=habitante");
+  redirect("/edificios?vista=habitante");
 }

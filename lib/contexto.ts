@@ -4,14 +4,8 @@ import type { Database } from "./supabase/types";
 
 export type NivelAdmin = Database["public"]["Enums"]["nivel_admin"];
 
-export type EdificioMio = {
-  edificio_id: string;
-  nombre: string;
-  codigo: string;
-  nivel: NivelAdmin | null;
-  departamento_id: string | null;
-  departamento_numero: string | null;
-};
+/** Una fila de resumen_mis_edificios(): acceso de la cuenta y cifras de gestión (solo para admins). */
+export type EdificioMio = Database["public"]["Functions"]["resumen_mis_edificios"]["Returns"][number];
 
 export const COOKIE_EDIFICIO = "bb_edificio";
 
@@ -29,20 +23,8 @@ export async function obtenerContexto() {
   } = await supabase.auth.getUser();
   if (!user) return { supabase, user: null, edificios: [] as EdificioMio[], actual: null };
 
-  const { data, error } = await supabase.rpc("mis_edificios");
+  const { data: edificios, error } = await supabase.rpc("resumen_mis_edificios");
   if (error) throw new Error(error.message);
-
-  const deptoIds = data.map((e) => e.departamento_id).filter((id): id is string => !!id);
-  const numeros = new Map<string, string>();
-  if (deptoIds.length) {
-    const { data: deps } = await supabase.from("departamentos").select("id, numero").in("id", deptoIds);
-    deps?.forEach((d) => numeros.set(d.id, d.numero));
-  }
-
-  const edificios: EdificioMio[] = data.map((e) => ({
-    ...e,
-    departamento_numero: e.departamento_id ? (numeros.get(e.departamento_id) ?? null) : null,
-  }));
 
   const elegido = (await cookies()).get(COOKIE_EDIFICIO)?.value;
   const actual =

@@ -67,16 +67,31 @@ async function main() {
   const v302 = await cookiesDe({ codigo: "los-ficus", numero: "302" });
 
   await caso("Sin sesión", "/inicio", "", "/login");
-  await caso("Titular entra", "/elegir?vista=admin", titular, "/inicio");
-  await caso("Vecino 302 entra", "/elegir?vista=habitante", v302, "/cuentas");
+  await caso("Bienvenida sin sesión", "/", "", "/ (200)");
+  await caso("Registro sin sesión", "/registro", "", "/registro (200)");
+  await caso("Asistente sin sesión", "/edificios/nuevo", "", "/login");
+  await caso("Bienvenida con sesión (titular)", "/", titular, "/inicio");
+  await caso("Bienvenida con sesión (vecino)", "/", v302, "/cuentas");
+  await caso("Mis edificios (titular)", "/edificios", titular, "/edificios (200)");
+  await caso("Asistente (titular)", "/edificios/nuevo", titular, "/edificios/nuevo (200)");
+
+  // Contenido: el asistente ya no pide área ni método; Inicio muestra el avance de la configuración.
+  const html = async (ruta: string, cookie: string) =>
+    (await fetch(BASE + ruta, { headers: { cookie: `${cookie}` } })).text();
+  const asistente = await html("/edificios/nuevo", titular);
+  const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
+  console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);
+  if (!sinArea) fallas++;
+  await caso("Titular entra", "/edificios?vista=admin", titular, "/inicio");
+  await caso("Vecino 302 entra", "/edificios?vista=habitante", v302, "/cuentas");
   await caso("Vecino 302 escribe /inicio", "/inicio", v302, "/cuentas");
-  await caso("Coadministrador entra", "/elegir?vista=admin", coadmin, "/inicio");
+  await caso("Coadministrador entra", "/edificios?vista=admin", coadmin, "/inicio");
   await caso("Titular con sesión va a /login", "/login", titular, "/inicio");
 
-  const d = await destino("/elegir?vista=admin", coadmin);
+  const d = await destino("/edificios?vista=admin", coadmin);
   console.log(d.includes("6 acciones deshabilitadas") ? "✔ Coadministrador: 6 acciones del titular deshabilitadas" : `✖ Coadministrador: ${d}`);
   if (!d.includes("6 acciones deshabilitadas")) fallas++;
-  const t = await destino("/elegir?vista=admin", titular);
+  const t = await destino("/edificios?vista=admin", titular);
   console.log(!t.includes("deshabilitadas") ? "✔ Titular: ninguna acción deshabilitada" : `✖ Titular: ${t}`);
   if (t.includes("deshabilitadas")) fallas++;
 

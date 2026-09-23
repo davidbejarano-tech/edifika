@@ -18,9 +18,11 @@ declare
 begin
   insert into organizaciones (nombre) values ('Administraciones Demo SAC') returning id into v_org;
   insert into edificios (organizacion_id, codigo, nombre, direccion, total_departamentos,
-                         area_total_m2, tipo_calculo, dia_corte, mora_monto, saldo_inicial, cuenta_bancaria, yape_plin)
+                         area_total_m2, tipo_calculo, dia_corte, mora_monto, saldo_inicial, cuenta_bancaria, yape_plin,
+                         monto_fijo_mensual, dia_lectura, base_cuota, agua_cuota, area_comun_m2)
   values (v_org, 'los-ficus', 'Edificio Los Ficus', 'Calle Los Ficus 245, San Isidro, Lima',
-          12, 1108, 'mixta_agua', 15, 20, 6500, 'BCP Soles 191-2345678-0-12', '987 654 321')
+          12, 1108, 'mixta_agua', 15, 20, 6500, 'BCP Soles 191-2345678-0-12', '987 654 321',
+          4900, 25, 'fijo_area', 'consumo', 180)
   returning id into v_ed;
 
   for f in 1..4 loop

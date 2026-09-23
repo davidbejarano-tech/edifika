@@ -6,8 +6,8 @@ import { obtenerContexto } from "@/lib/contexto";
 export default async function HabitanteLayout({ children }: { children: React.ReactNode }) {
   const { user, edificios, actual } = await obtenerContexto();
   if (!user) redirect("/login");
-  if (!actual) redirect("/elegir");
-  if (!actual.departamento_id) redirect(actual.nivel ? "/inicio" : "/elegir");
+  if (!actual) redirect("/edificios");
+  if (!actual.departamento_id) redirect(actual.nivel ? "/inicio" : "/edificios");
 
   return (
     <>

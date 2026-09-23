@@ -7,8 +7,8 @@ import { obtenerContexto } from "@/lib/contexto";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, edificios, actual } = await obtenerContexto();
   if (!user) redirect("/login");
-  if (!actual) redirect("/elegir");
-  if (!actual.nivel) redirect(actual.departamento_id ? "/cuentas" : "/elegir");
+  if (!actual) redirect("/edificios");
+  if (!actual.nivel) redirect(actual.departamento_id ? "/cuentas" : "/edificios");
 
   return (
     <>

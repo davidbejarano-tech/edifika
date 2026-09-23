@@ -32,7 +32,7 @@ Cada etapa termina con algo que puedes probar. Copia el prompt en Claude Code, d
 ## Etapa 2 · Gestión del edificio
 
 **Prompt:**
-> Ejecuta la Etapa 2 según docs/SPEC.md sección 7 y el prototipo. Empieza por el alta: página de bienvenida pública en `/` con los caminos "Registrar mi edificio" e "Ingresar", pantalla Crear cuenta, asistente "Registrar edificio" con crear_edificio e importación de departamentos con importar_departamentos (Excel con SheetJS o pegando la tabla, vista previa y errores por fila) y pantalla Mis edificios (RN-25 a RN-27). Luego: pantalla de Configuración del edificio con sus 4 pasos (datos, departamentos, cálculo de cuota con vista previa del reparto del agua, cobranza) y pantalla Departamentos y ocupantes con área editable en la celda, alícuota recalculada, agregar y editar departamento, activar o desactivar el acceso, historial y "Cambio de ocupante" usando la función registrar_cambio_ocupante más una Edge Function `invitar-habitante` que crea la cuenta y envía la invitación con Resend. Crea también el layout del administrador con la navegación agrupada del prototipo, mostrando u ocultando acciones según el nivel (matriz de permisos de SPEC sección 2). Agrega la sección Equipo de administración (RN-19 a RN-23): invitar y quitar coadministradores con la Edge Function `invitar-administrador`, designar al vecino validador y transferir la titularidad con confirmación explícita. Crea la Edge Function `transferencia-forzada` (solo plataforma, con carga del acta).
+> Ejecuta la Etapa 2 según docs/SPEC.md sección 7 y el prototipo. Empieza por el alta: página de bienvenida pública en `/` con los caminos "Registrar mi edificio" e "Ingresar", pantalla Crear cuenta, asistente "Registrar edificio" (sin áreas ni método de cálculo, RN-26) con registrar_edificio e importación de departamentos con importar_departamentos (Excel con SheetJS o pegando la tabla, vista previa y errores por fila) y pantalla Mis edificios (RN-25 a RN-27). Luego: pantalla de Configuración del edificio con sus 4 pasos (datos, departamentos, configuración de la cobranza con áreas, base de la cuota y tratamiento del agua (RN-03), monto fijo, áreas comunes y día de lectura, y datos de pago) y pantalla Departamentos y ocupantes con área editable en la celda, alícuota recalculada, medidor de agua por departamento con historial (RN-38), agregar y editar departamento, activar o desactivar el acceso, historial y "Cambio de ocupante" usando la función registrar_cambio_ocupante más una Edge Function `invitar-habitante` que crea la cuenta y envía la invitación con Resend. Crea también el layout del administrador con la navegación agrupada del prototipo, mostrando u ocultando acciones según el nivel (matriz de permisos de SPEC sección 2). Agrega la sección Equipo de administración (RN-19 a RN-23): invitar y quitar coadministradores con la Edge Function `invitar-administrador`, designar al vecino validador y transferir la titularidad con confirmación explícita. Crea la Edge Function `transferencia-forzada` (solo plataforma, con carga del acta).
 
 **Verificación:**
 - [ ] Sin sesión, `/` muestra la bienvenida con "Registrar mi edificio" e "Ingresar"; con sesión, me lleva a mi edificio.
@@ -42,7 +42,9 @@ Cada etapa termina con algo que puedes probar. Copia el prompt en Claude Code, d
 - [ ] Cambio el área de un departamento y la alícuota se actualiza; si no suman 100 %, aparece el aviso.
 - [ ] Registro un nuevo inquilino, le llega el correo y puede crear su clave.
 - [ ] El inquilino anterior ya no puede entrar y aparece en el historial.
-- [ ] Cambiar a "Mixta con agua" muestra los campos del recibo y la vista previa.
+- [ ] Registro un edificio sin áreas; Inicio me pide "Configurar la cobranza".
+- [ ] Elijo "Monto fijo por área" + "Agua por consumo", defino el monto fijo y el día de lectura, y la vista previa muestra el reparto.
+- [ ] Registro el medidor de un departamento; otro departamento no puede usar el mismo número de serie.
 - [ ] Invito 2 coadministradores; el sistema no permite un tercero.
 - [ ] Un coadministrador no puede crear usuarios ni cambiar la configuración, ni desde la pantalla ni llamando directamente a la base de datos.
 - [ ] Transfiero la titularidad: el saliente solo puede leer y, pasados 15 días, pierde el acceso (se prueba cambiando la fecha en local).
@@ -52,12 +54,14 @@ Cada etapa termina con algo que puedes probar. Copia el prompt en Claude Code, d
 ## Etapa 3 · Finanzas del administrador
 
 **Prompt:**
-> Ejecuta la Etapa 3: pantallas Gastos, Cálculo mensual (agua, lecturas y tabla de cuotas usando calcular_cuotas), Ciclo mensual (pasos y "Abrir mes" con abrir_periodo y confirmar_gastos), Cobranza (por validar con vista del comprobante desde Storage, validar_pago, rechazar_pago con motivo, cuentas por cobrar con cuentas_por_cobrar, compromisos emitidos, nuevo extraordinario con emitir_extraordinario, pago en efectivo con registrar_pago_efectivo), Resumen con la fachada del edificio y cuenta corriente por departamento, y Estado de cuenta con resumen_periodo e ingresos_por_tipo. Programa el corte diario con pg_cron según la sección 9 de la migración y agrega en local un botón oculto de desarrollo para ejecutar ejecutar_cortes().
+> Ejecuta la Etapa 3: pantallas Gastos, Lecturas de agua (lectura por medidor con registrar_lecturas y m³ calculados, RN-38), Cálculo mensual (recibo de agua y tabla de cuotas usando calcular_cuotas), Ciclo mensual (pasos y "Abrir mes" con abrir_periodo y confirmar_gastos), Cobranza (por validar con vista del comprobante desde Storage, validar_pago, rechazar_pago con motivo, cuentas por cobrar con cuentas_por_cobrar, compromisos emitidos, nuevo extraordinario con emitir_extraordinario, pago en efectivo con registrar_pago_efectivo), Resumen con la fachada del edificio y cuenta corriente por departamento, y Estado de cuenta con resumen_periodo e ingresos_por_tipo. Programa el corte diario con pg_cron según la sección 9 de la migración y agrega en local un botón oculto de desarrollo para ejecutar ejecutar_cortes().
 
 **Verificación:**
 - [ ] Registro gastos, los confirmo y ya no puedo editarlos.
 - [ ] Abro el mes siguiente y cada departamento recibe su cuota con el desglose correcto (compara con el prototipo).
-- [ ] La suma de cuotas es igual al total de gastos, con diferencia de céntimos por redondeo.
+- [ ] Por área: la suma de cuotas es igual al total de gastos, con diferencia de céntimos por redondeo.
+- [ ] Con el ejemplo de referencia (`npm run probar:cuotas`), las 17 cuotas coinciden con la planilla del Product Owner, la parte fija suma exactamente el monto fijo y el agua suma exactamente el recibo.
+- [ ] Una lectura menor que la anterior se rechaza indicando el medidor y el departamento.
 - [ ] El estado de cuenta muestra administrador, ingresos, gastos, acumulado y el desglose opcional.
 - [ ] Tras el corte, las cuotas impagas aparecen como vencidas y con mora.
 - [ ] Un titular vecino no puede validar su propio pago; lo valida el coadministrador.

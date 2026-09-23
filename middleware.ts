@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Rutas accesibles sin sesión
-const PUBLICAS = ["/login", "/recuperar", "/auth/"];
+// Rutas accesibles sin sesión (además de la bienvenida en "/")
+const PUBLICAS = ["/login", "/registro", "/recuperar", "/auth/"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const ruta = request.nextUrl.pathname;
-  const esPublica = PUBLICAS.some((p) => ruta.startsWith(p));
+  const esPublica = ruta === "/" || PUBLICAS.some((p) => ruta.startsWith(p));
 
   if (!user && !esPublica) {
     const url = request.nextUrl.clone();
@@ -36,10 +36,11 @@ export async function middleware(request: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
-  if (user && ruta === "/login") {
+  // Con sesión, la bienvenida, el login y el registro llevan directo al edificio.
+  if (user && (ruta === "/" || ruta === "/login" || ruta === "/registro")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/elegir";
-    url.search = "";
+    url.pathname = "/edificios";
+    url.search = "?vista=auto";
     return NextResponse.redirect(url);
   }
 

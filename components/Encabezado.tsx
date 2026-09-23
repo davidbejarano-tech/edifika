@@ -43,9 +43,9 @@ export function Encabezado({ edificio, vista, variosEdificios }: Props) {
         </nav>
       )}
 
-      {variosEdificios && (
-        <Link href="/elegir" className="btn quiet sm">
-          Cambiar edificio
+      {(variosEdificios || vista === "admin") && (
+        <Link href="/edificios" className="btn quiet sm">
+          Mis edificios
         </Link>
       )}
       <form action="/salir" method="post">

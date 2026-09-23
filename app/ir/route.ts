@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.redirect(new URL("/login", origin));
 
   const ed = edificios.find((e) => e.edificio_id === searchParams.get("e"));
-  if (!ed) return NextResponse.redirect(new URL("/elegir", origin));
+  if (!ed) return NextResponse.redirect(new URL("/edificios", origin));
 
   const quiereAdmin = searchParams.get("v") === "admin";
   const destino = (quiereAdmin && ed.nivel) || !ed.departamento_id ? "/inicio" : "/cuentas";

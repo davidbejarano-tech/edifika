@@ -173,7 +173,7 @@ export type Database = {
       }
       departamentos: {
         Row: {
-          area_m2: number
+          area_m2: number | null
           created_at: string
           edificio_id: string
           id: string
@@ -181,7 +181,7 @@ export type Database = {
           piso: number
         }
         Insert: {
-          area_m2: number
+          area_m2?: number | null
           created_at?: string
           edificio_id: string
           id?: string
@@ -189,7 +189,7 @@ export type Database = {
           piso: number
         }
         Update: {
-          area_m2?: number
+          area_m2?: number | null
           created_at?: string
           edificio_id?: string
           id?: string
@@ -235,66 +235,81 @@ export type Database = {
       }
       edificios: {
         Row: {
-          area_total_m2: number
+          agua_cuota: string | null
+          area_comun_m2: number | null
+          area_total_m2: number | null
           aviso_inactividad: number
+          base_cuota: string | null
           codigo: string
           creado_por: string | null
           created_at: string
           cuenta_bancaria: string | null
           dia_corte: number
+          dia_lectura: number | null
           direccion: string
           id: string
+          monto_fijo_mensual: number | null
           mora_monto: number
           nombre: string
           organizacion_id: string
           publicar_desglose: boolean
           saldo_inicial: number
           suscripcion_pagada: boolean
-          tipo_calculo: Database["public"]["Enums"]["tipo_calculo"]
+          tipo_calculo: Database["public"]["Enums"]["tipo_calculo"] | null
           total_departamentos: number
           ultima_actividad: string
           validador_designado_id: string | null
           yape_plin: string | null
         }
         Insert: {
-          area_total_m2: number
+          agua_cuota?: string | null
+          area_comun_m2?: number | null
+          area_total_m2?: number | null
           aviso_inactividad?: number
+          base_cuota?: string | null
           codigo: string
           creado_por?: string | null
           created_at?: string
           cuenta_bancaria?: string | null
           dia_corte?: number
+          dia_lectura?: number | null
           direccion: string
           id?: string
+          monto_fijo_mensual?: number | null
           mora_monto?: number
           nombre: string
           organizacion_id: string
           publicar_desglose?: boolean
           saldo_inicial?: number
           suscripcion_pagada?: boolean
-          tipo_calculo?: Database["public"]["Enums"]["tipo_calculo"]
+          tipo_calculo?: Database["public"]["Enums"]["tipo_calculo"] | null
           total_departamentos: number
           ultima_actividad?: string
           validador_designado_id?: string | null
           yape_plin?: string | null
         }
         Update: {
-          area_total_m2?: number
+          agua_cuota?: string | null
+          area_comun_m2?: number | null
+          area_total_m2?: number | null
           aviso_inactividad?: number
+          base_cuota?: string | null
           codigo?: string
           creado_por?: string | null
           created_at?: string
           cuenta_bancaria?: string | null
           dia_corte?: number
+          dia_lectura?: number | null
           direccion?: string
           id?: string
+          monto_fijo_mensual?: number | null
           mora_monto?: number
           nombre?: string
           organizacion_id?: string
           publicar_desglose?: boolean
           saldo_inicial?: number
           suscripcion_pagada?: boolean
-          tipo_calculo?: Database["public"]["Enums"]["tipo_calculo"]
+          tipo_calculo?: Database["public"]["Enums"]["tipo_calculo"] | null
           total_departamentos?: number
           ultima_actividad?: string
           validador_designado_id?: string | null
@@ -418,6 +433,112 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "periodos"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      lecturas_medidor: {
+        Row: {
+          created_at: string
+          fecha: string
+          lectura: number
+          lectura_anterior: number
+          m3: number
+          medidor_id: string
+          periodo_id: string
+          registrado_por: string | null
+        }
+        Insert: {
+          created_at?: string
+          fecha: string
+          lectura: number
+          lectura_anterior: number
+          m3: number
+          medidor_id: string
+          periodo_id: string
+          registrado_por?: string | null
+        }
+        Update: {
+          created_at?: string
+          fecha?: string
+          lectura?: number
+          lectura_anterior?: number
+          m3?: number
+          medidor_id?: string
+          periodo_id?: string
+          registrado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lecturas_medidor_medidor_id_fkey"
+            columns: ["medidor_id"]
+            isOneToOne: false
+            referencedRelation: "medidores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lecturas_medidor_periodo_id_fkey"
+            columns: ["periodo_id"]
+            isOneToOne: false
+            referencedRelation: "periodos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lecturas_medidor_registrado_por_fkey"
+            columns: ["registrado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medidores: {
+        Row: {
+          activo: boolean | null
+          created_at: string
+          departamento_id: string
+          edificio_id: string
+          id: string
+          instalado_en: string
+          lectura_inicial: number
+          numero_serie: string
+          retirado_en: string | null
+        }
+        Insert: {
+          activo?: boolean | null
+          created_at?: string
+          departamento_id: string
+          edificio_id: string
+          id?: string
+          instalado_en?: string
+          lectura_inicial?: number
+          numero_serie: string
+          retirado_en?: string | null
+        }
+        Update: {
+          activo?: boolean | null
+          created_at?: string
+          departamento_id?: string
+          edificio_id?: string
+          id?: string
+          instalado_en?: string
+          lectura_inicial?: number
+          numero_serie?: string
+          retirado_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medidores_departamento_id_edificio_id_fkey"
+            columns: ["departamento_id", "edificio_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id", "edificio_id"]
+          },
+          {
+            foreignKeyName: "medidores_departamento_id_edificio_id_fkey"
+            columns: ["departamento_id", "edificio_id"]
+            isOneToOne: false
+            referencedRelation: "v_departamentos"
+            referencedColumns: ["id", "edificio_id"]
           },
         ]
       }
@@ -1336,6 +1457,7 @@ export type Database = {
         Args: { p_nota?: string; p_reserva: string; p_retener?: number }
         Returns: undefined
       }
+      codigo_disponible: { Args: { p_codigo: string }; Returns: boolean }
       confirmar_gastos: { Args: { p_periodo: string }; Returns: undefined }
       crear_edificio: {
         Args: {
@@ -1411,6 +1533,22 @@ export type Database = {
       es_plataforma: { Args: never; Returns: boolean }
       es_titular: { Args: { p_edificio: string }; Returns: boolean }
       es_validador_designado: { Args: { p_edificio: string }; Returns: boolean }
+      estado_configuracion: {
+        Args: { p_edificio: string }
+        Returns: {
+          agua_cuota: string
+          area_comun: number
+          area_departamentos: number
+          base_cuota: string
+          cobranza_lista: boolean
+          con_area: number
+          con_medidor: number
+          departamentos: number
+          dia_lectura: number
+          monto_fijo: number
+          total_declarado: number
+        }[]
+      }
       estado_inactividad: {
         Args: { p_edificio: string }
         Returns: {
@@ -1418,6 +1556,42 @@ export type Database = {
           dias_sin_movimiento: number
           protegido: boolean
         }[]
+      }
+      exigir_cobranza_configurada: {
+        Args: { p_edificio: string }
+        Returns: {
+          agua_cuota: string | null
+          area_comun_m2: number | null
+          area_total_m2: number | null
+          aviso_inactividad: number
+          base_cuota: string | null
+          codigo: string
+          creado_por: string | null
+          created_at: string
+          cuenta_bancaria: string | null
+          dia_corte: number
+          dia_lectura: number | null
+          direccion: string
+          id: string
+          monto_fijo_mensual: number | null
+          mora_monto: number
+          nombre: string
+          organizacion_id: string
+          publicar_desglose: boolean
+          saldo_inicial: number
+          suscripcion_pagada: boolean
+          tipo_calculo: Database["public"]["Enums"]["tipo_calculo"] | null
+          total_departamentos: number
+          ultima_actividad: string
+          validador_designado_id: string | null
+          yape_plin: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "edificios"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       exigir_puede_validar: {
         Args: { p_departamento: string; p_edificio: string }
@@ -1443,6 +1617,23 @@ export type Database = {
           monto: number
           pagos: number
           tipo: string
+        }[]
+      }
+      lectura_anterior: {
+        Args: { p_medidor: string; p_periodo: string }
+        Returns: number
+      }
+      lecturas_del_periodo: {
+        Args: { p_periodo: string }
+        Returns: {
+          departamento_id: string
+          fecha: string
+          lectura: number
+          lectura_anterior: number
+          m3: number
+          medidor_id: string
+          numero: string
+          numero_serie: string
         }[]
       }
       marcar_aviso_inactividad: {
@@ -1497,9 +1688,53 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_edificio: {
+        Args: {
+          p_codigo: string
+          p_direccion: string
+          p_filas?: Json
+          p_mes_inicio: string
+          p_mi_nombre: string
+          p_nombre: string
+          p_organizacion?: string
+          p_organizacion_nombre?: string
+          p_total_departamentos: number
+        }
+        Returns: string
+      }
+      registrar_lecturas: {
+        Args: { p_fecha: string; p_lecturas: Json; p_periodo: string }
+        Returns: number
+      }
+      registrar_medidor: {
+        Args: {
+          p_departamento: string
+          p_fecha?: string
+          p_lectura_inicial?: number
+          p_numero_serie: string
+        }
+        Returns: string
+      }
       registrar_pago_efectivo: {
         Args: { p_compromiso: string }
         Returns: string
+      }
+      resumen_mis_edificios: {
+        Args: never
+        Returns: {
+          codigo: string
+          departamento_id: string
+          departamento_numero: string
+          departamentos: number
+          departamentos_morosos: number
+          dias_para_eliminar: number
+          dias_sin_movimiento: number
+          edificio_id: string
+          nivel: Database["public"]["Enums"]["nivel_admin"]
+          nombre: string
+          organizacion_id: string
+          pagos_por_validar: number
+        }[]
       }
       resumen_periodo: {
         Args: { p_periodo: string }

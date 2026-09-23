@@ -1,6 +1,6 @@
 # Building Buddy · Especificación funcional y técnica (MVP v1)
 
-Versión 1.3 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida) · Product Owner: David
+Versión 1.5 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto) · Product Owner: David
 
 El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcional. Si este documento y el prototipo difieren, manda este documento.
 
@@ -71,7 +71,8 @@ Definido en `supabase/migrations/`: `0001_esquema_inicial.sql` (núcleo), `0002_
 - **departamentos** (número, piso, área) · **personas** · **ocupaciones** (historial propietario/inquilino)
 - **perfiles** (cuenta de Auth) · **membresias** (rol por edificio: habitante ligado a un departamento, o admin con nivel titular, operador o lectura) · **plataforma_admins**
 - **edificios.validador_designado_id** (vecino que valida los pagos del titular)
-- **periodos** (un mes contable; uno abierto a la vez) · **gastos** · **recibos_agua** · **lecturas_agua**
+- **periodos** (un mes contable; uno abierto a la vez) · **gastos** · **recibos_agua** · **lecturas_agua** (m³ por departamento y periodo)
+- **medidores** (número de serie por departamento, con historial) · **lecturas_medidor** (lectura del día de lectura; de ella salen los m³) · **edificios.monto_fijo_mensual / dia_lectura**
 - **compromisos** (cuentas por cobrar: cuota, mora, extraordinario, adelanto, ajuste) · **pagos** · **cortes**
 - **recibos** (PDF y envío) · **mensajes** (chat) · **modulos_edificio** · **auditoria**
 - **edificios.ultima_actividad / suscripcion_pagada / aviso_inactividad** · **depuraciones** (rastro técnico sin datos personales)
@@ -83,15 +84,37 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 
 **RN-01 Identificador.** El número de departamento identifica al habitante dentro de su edificio. Es único por edificio.
 
-**RN-02 Alícuota.** Alícuota = área del departamento ÷ área total declarada del edificio. Si la suma de alícuotas no es 100 %, el sistema lo advierte en Configuración, Departamentos y Cálculo.
+**RN-02 Alícuota.** Alícuota = área del departamento ÷ suma de las áreas de todos los departamentos. El sistema la calcula solo: no hay un "área total" que declarar, así que las alícuotas siempre suman 100 %. Las **áreas comunes** (m²) se registran solo como dato informativo: cada departamento muestra su "área asignada" = su área + (su área ÷ suma de áreas) × áreas comunes, lo que da el mismo porcentaje. Las áreas se registran en la configuración de la cobranza, no al registrar el edificio (RN-26). Mientras falte el área de algún departamento no se pueden calcular cuotas que se repartan por área.
 
-**RN-03 Métodos de cálculo.**
-- *Fija por alícuota:* cuota = total de gastos del mes × alícuota.
-- *Mixta con agua:* costo del riego = recibo × (m³ de riego ÷ consumo general). Gastos comunes = gastos del mes − recibo de agua + costo del riego, repartidos por alícuota. Agua de departamentos = recibo − costo del riego, repartida por lectura ÷ suma de lecturas. Sin lecturas, se reparte por alícuota.
+**RN-03 Cómo se calcula la cuota.** Cuota del mes = **parte fija** + **parte variable (agua)**. El titular toma dos decisiones independientes en la configuración de la cobranza; mientras no las tome, la cobranza queda "sin configurar" y no se pueden calcular cuotas.
 
-**RN-04 Mes vencido.** Las cuotas de un mes se calculan con los gastos confirmados del mes anterior.
+*1. Base de la cuota:*
+- **Monto fijo por área:** el titular define el monto fijo mensual del edificio; cada departamento paga monto × alícuota.
+- **Monto fijo igual para todos:** el titular define el monto por departamento; todos pagan lo mismo. No necesita áreas.
+- **Gastos reales del mes por área:** el total de gastos confirmados del mes se reparte por alícuota.
 
-**RN-05 Recibo de agua.** Registrar el recibo de agua crea o actualiza automáticamente un gasto "Agua" del periodo. No se edita a mano.
+*2. Agua:*
+- **Por consumo:** el recibo se cobra aparte, según los medidores (RN-38). Si la base son los gastos reales, el gasto "Agua" no se suma a la base para no cobrarlo dos veces.
+- **Incluida en la cuota:** no se cobra agua aparte. Con monto fijo, el monto ya la cubre; con gastos reales, el recibo es un gasto más.
+
+| | Agua por consumo | Agua incluida |
+|---|---|---|
+| Monto fijo por área | Fijo × alícuota + agua medida | Se cobra lo mismo todos los meses |
+| Monto fijo igual para todos | Monto por depto + agua medida | Monto por depto, sin variable |
+| Gastos reales por área | (Gastos − agua) × alícuota + agua medida | Gastos × alícuota |
+
+*Redondeo:* cada parte se reparte al céntimo y los céntimos que sobran se asignan, de uno en uno, a los departamentos con mayor fracción. Así la parte fija suma exactamente el monto fijo (o los gastos) y el agua suma exactamente el recibo.
+
+**RN-04 Mes vencido.** Las cuotas de un mes se calculan con los datos confirmados del mes anterior: sus gastos, su recibo de agua y sus lecturas.
+
+**RN-05 Recibo de agua.** Registrar el recibo de agua (monto y consumo total en m³ del medidor general) crea o actualiza automáticamente un gasto "Agua" del periodo. No se edita a mano.
+
+**RN-38 Medidores y reparto del agua.**
+- Cada departamento puede tener **un medidor activo**, identificado por su **número de serie**, único dentro del edificio. Se registra la lectura inicial y la fecha de instalación. Al cambiar un medidor, el anterior queda en el historial y el nuevo empieza con su propia lectura inicial.
+- El edificio define un **día de lectura** del mes (1 a 28). Ese día la administración ingresa la lectura de cada medidor.
+- **Consumo del departamento (m³)** = lectura actual − lectura anterior del mismo medidor (o la lectura inicial, si es la primera). Una lectura menor que la anterior se rechaza con el nombre del medidor y del departamento.
+- **Reparto del recibo:** % de prorrateo = consumo del departamento ÷ suma del consumo de todos los departamentos. Cuota de agua = recibo × % de prorrateo. Todo el recibo se reparte así: el agua común (medidor general − suma de los departamentos: riego, limpieza, áreas comunes) queda incluida en proporción al consumo de cada uno.
+- El sistema muestra el agua común en m³ como dato informativo. Si no hay lecturas en el mes, el recibo se reparte por alícuota.
 
 **RN-06 Confirmación de gastos.** Al confirmar, los gastos, el agua y las lecturas del periodo quedan bloqueados y el estado de cuenta pasa de "Borrador" a "Oficial".
 
@@ -143,9 +166,9 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 
 ### Alta de edificios e inactividad
 
-**RN-26 Autoregistro.** Cualquier persona con correo verificado puede registrar un edificio y queda como su titular. El asistente pide nombre, dirección, código de acceso (único, en minúsculas), cantidad de departamentos, área total, método de cálculo y mes de inicio. Límite: 3 edificios sin plan pagado por persona. Un administrador externo agrega más edificios a su organización desde "Mis edificios".
+**RN-26 Autoregistro.** Cualquier persona con correo verificado puede registrar un edificio y queda como su titular. El asistente pide nombre, dirección, código de acceso (único, en minúsculas), cantidad de departamentos y mes de inicio. No pide áreas ni método de cálculo: quien registra el edificio no siempre tiene esos datos; se completan después en la configuración de la cobranza (RN-02, RN-03). Límite: 3 edificios sin plan pagado por persona. Un administrador externo agrega más edificios a su organización desde "Mis edificios".
 
-**RN-27 Importación de departamentos.** Desde Excel o pegando la tabla: número, piso, área, propietario, inquilino, correo y teléfono. La carga es todo o nada: si una fila tiene un error, no se guarda ninguna y el mensaje indica la fila y el problema. Máximo 500 filas. Las invitaciones a los vecinos se envían después, en bloque o por departamento.
+**RN-27 Importación de departamentos.** Desde Excel o pegando la tabla: número, piso, propietario, inquilino, correo y teléfono; y, si ya se tienen, área m² y número de serie del medidor de agua (opcionales). Si la primera fila tiene encabezados, las columnas se reconocen por su nombre; si no, se leen en ese orden. La carga es todo o nada: si una fila tiene un error, no se guarda ninguna y el mensaje indica la fila y el problema. Máximo 500 filas. Las invitaciones a los vecinos se envían después, en bloque o por departamento.
 
 **RN-28 Movimiento.** Cuenta como movimiento cualquier alta, cambio o baja hecha por una persona en periodos, gastos, cargos, pagos, departamentos, personas, mensajes, zonas o reservas. No cuentan los inicios de sesión ni los procesos automáticos (corte diario, expiración de reservas).
 
@@ -189,12 +212,11 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 
 **Crear cuenta.** Nombre, correo y contraseña; verificación del correo antes de continuar.
 
-**Asistente "Registrar edificio".** Tres pasos:
-1. Datos del edificio.
-2. Departamentos: importar desde Excel, pegar la tabla o agregar a mano, con vista previa y errores por fila antes de guardar.
-3. Método de cálculo.
+**Asistente "Registrar edificio".** Dos pasos:
+1. Datos del edificio (sin áreas ni método de cálculo).
+2. Departamentos: importar desde Excel, pegar la tabla o agregar a mano, con vista previa y errores por fila antes de guardar. Se puede omitir y cargarlos después.
 
-Al terminar, lleva a Configuración con el onboarding marcado según lo que ya completó.
+Al terminar, lleva a Inicio con el onboarding: el siguiente paso pendiente es "Configurar la cobranza".
 
 **Mis edificios.** Lista de edificios de la cuenta con su nivel, morosidad, pagos por validar y días sin movimiento. Incluye el botón "Registrar otro edificio". Si un edificio está en aviso de inactividad, muestra cuántos días faltan para su eliminación.
 
@@ -206,12 +228,14 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 
 **Inicio (dashboard de módulos).** Tarjetas de los 6 módulos: activos a color con una métrica en vivo; bloqueados en gris con "Prueba gratis" o "Upgrade". Al tocar uno bloqueado se abre la ficha del módulo con precio y botón de prueba. Muestra el avance del onboarding y las cifras del mes.
 
-**Configuración del edificio.** Pasos: datos del edificio, departamentos, cálculo de cuota y cobranza.
-- Guarda nombre, dirección, administrador, cantidad de departamentos y área total.
-- Selector de método de cálculo; en "Mixta" pide monto, consumo y riego del recibo de agua, con vista previa del reparto.
-- Indicadores de departamentos registrados y m² asignados.
+**Configuración del edificio.** Pasos: datos del edificio, departamentos, configuración de la cobranza y datos de pago.
+- Datos: nombre, dirección, administrador y cantidad de departamentos.
+- *Configuración de la cobranza:* área de cada departamento (se puede cargar desde Excel) y áreas comunes; base de la cuota (monto fijo por área, monto fijo igual para todos o gastos reales) y tratamiento del agua (por consumo o incluida), con el monto fijo y el día de lectura cuando corresponda, y vista previa del reparto.
+- Datos de pago: día de corte, mora, cuenta bancaria y Yape/Plin.
+- Indicadores de departamentos registrados, m² asignados y medidores registrados.
 
-**Departamentos y ocupantes.** Tabla con número, propietario, inquilino, área (editable en la celda) y alícuota recalculada al instante.
+**Departamentos y ocupantes.** Tabla con número, propietario, inquilino, área (editable en la celda), alícuota recalculada al instante y número de medidor.
+- Registrar o cambiar el medidor de un departamento (número de serie, lectura inicial y fecha), con historial de medidores.
 - Agregar y editar departamento.
 - Cambio de ocupante con invitación por correo.
 - Activar o desactivar el acceso y restablecer la clave.
@@ -230,7 +254,8 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 - *Garantías en custodia:* total y detalle por reserva.
 
 **Cálculo y recibos.**
-- *Cálculo mensual:* elige el periodo base, registra el agua y las lecturas, y muestra una tabla por departamento con alícuota, comunes, m³, agua y cuota, más totales.
+- *Lecturas de agua:* en el día de lectura, lista de medidores con la lectura anterior; la administración escribe la lectura actual y el sistema calcula los m³ de cada departamento (RN-38).
+- *Cálculo mensual:* elige el periodo base, registra el recibo de agua (monto y consumo general) y muestra una tabla por departamento con área, área asignada, alícuota, cuota fija, m³, % de prorrateo, cuota de agua y cuota del mes, más totales (como la planilla de referencia del Product Owner).
 - *Recibos:* lista por departamento con total y estado de envío. "Generar y enviar recibo" abre la vista previa formal con Descargar PDF, Compartir, WhatsApp (enlace) y Enviar por correo. También hay "Generar y enviar todos".
 
 **Ciclo mensual.** Pasos del mes con estado y botón "Abrir {mes siguiente}", que pide los montos recurrentes.
@@ -313,3 +338,5 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 6. Supuesto a confirmar: el coadministrador puede generar y enviar recibos (no modifica datos). Si no, se restringe al titular.
 7. Si la tarifa de una reserva cancelada por el vecino con mucha anticipación (por ejemplo, más de 72 horas) debería devolverse.
 8. Si los datos de un edificio depurado deben guardarse cifrados unos días más antes del borrado definitivo, por si el titular reclama.
+9. Otros modelos de cuota: montos por tipo de unidad (RN-03).
+10. Cambio de medidor a mitad de mes: en v1 el medidor nuevo empieza con su lectura inicial; falta decidir si se registra la lectura final del medidor retirado para sumar su consumo del mes.

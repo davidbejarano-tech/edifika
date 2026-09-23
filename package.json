@@ -9,14 +9,16 @@
     "lint": "eslint",
     "demo:usuarios": "tsx --env-file=.env.local scripts/crear-usuarios-demo.ts",
     "db:tipos": "supabase gen types typescript --linked --schema public > lib/supabase/types.ts",
-    "probar:rutas": "tsx --env-file=.env.local scripts/probar-rutas.ts"
+    "probar:rutas": "tsx --env-file=.env.local scripts/probar-rutas.ts",
+    "probar:cuotas": "tsx --env-file=.env.local scripts/probar-cuotas.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.1",
     "next": "15.5.26",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
