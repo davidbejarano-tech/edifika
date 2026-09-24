@@ -143,6 +143,14 @@ async function main() {
   await contiene("Vecino 302: aviso de ausencia", "/cuentas", v302, ["Avisar una ausencia"]);
   await contiene("Vecino 302: mi perfil con cambio de contraseña", "/perfil", v302, ["Mi perfil", "Área y alícuota", "Cambiar contraseña"]);
 
+  // Etapa 4b: estado de cuenta, reportes y chat
+  await contiene("Vecino 302: estado de cuenta del edificio", "/mi-estado-cuenta", v302, ["Estado de cuenta", "Saldo anterior", "Monto acumulado", "Gastos"]);
+  await contiene("Vecino 302: reportes", "/reportes", v302, ["Reportes", "Gastos por categoría", "Ingresos y gastos por mes", "Departamentos sin deuda vencida"]);
+  await contiene("Vecino 302: chat del edificio", "/mi-chat", v302, ["Chat del edificio", "Escribe un mensaje"]);
+  await contiene("Titular: chat del edificio", "/chat", titular, ["Chat del edificio", "como administración"]);
+  await caso("Vecino 302 escribe /chat (de administración)", "/chat", v302, "/cuentas");
+  await caso("Titular externo escribe /mi-chat", "/mi-chat", titular, "/inicio");
+
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
   console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);

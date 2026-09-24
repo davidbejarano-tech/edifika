@@ -28,7 +28,7 @@ const GRUPOS: { grupo: string | null; items: Item[] }[] = [
       { href: "/estado-cuenta", texto: "Estado de cuenta", listo: true },
     ],
   },
-  { grupo: "Comunicación", items: [{ href: "/chat", texto: "Chat del edificio" }] },
+  { grupo: "Comunicación", items: [{ href: "/chat", texto: "Chat del edificio", listo: true }] },
 ];
 
 // porValidar: pagos en revisión que la persona puede validar (contador junto a Cobranza)

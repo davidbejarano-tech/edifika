@@ -693,23 +693,41 @@ export type Database = {
       }
       mensajes: {
         Row: {
+          autor_depto: string | null
           autor_id: string
+          autor_nombre: string | null
+          autor_rol: string | null
+          como_admin: boolean
           created_at: string
           edificio_id: string
+          eliminado_en: string | null
+          eliminado_por: string | null
           id: string
           texto: string
         }
         Insert: {
+          autor_depto?: string | null
           autor_id?: string
+          autor_nombre?: string | null
+          autor_rol?: string | null
+          como_admin?: boolean
           created_at?: string
           edificio_id: string
+          eliminado_en?: string | null
+          eliminado_por?: string | null
           id?: string
           texto: string
         }
         Update: {
+          autor_depto?: string | null
           autor_id?: string
+          autor_nombre?: string | null
+          autor_rol?: string | null
+          como_admin?: boolean
           created_at?: string
           edificio_id?: string
+          eliminado_en?: string | null
+          eliminado_por?: string | null
           id?: string
           texto?: string
         }
@@ -726,6 +744,13 @@ export type Database = {
             columns: ["edificio_id"]
             isOneToOne: false
             referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_eliminado_por_fkey"
+            columns: ["eliminado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1637,6 +1662,15 @@ export type Database = {
         Args: { p_nota?: string; p_reserva: string; p_retener?: number }
         Returns: undefined
       }
+      cobranza_edificio: {
+        Args: { p_edificio: string }
+        Returns: {
+          departamentos: number
+          por_cobrar: number
+          sin_vencido: number
+          vencido: number
+        }[]
+      }
       codigo_disponible: { Args: { p_codigo: string }; Returns: boolean }
       compromisos_admin: {
         Args: { p_edificio: string }
@@ -1756,6 +1790,7 @@ export type Database = {
         }[]
       }
       ejecutar_cortes: { Args: never; Returns: number }
+      eliminar_mensaje: { Args: { p_mensaje: string }; Returns: undefined }
       emitir_extraordinario: {
         Args: {
           p_concepto: string
@@ -2041,6 +2076,17 @@ export type Database = {
       regreso_de_ausencia: {
         Args: { p_departamento: string; p_fecha: string }
         Returns: string
+      }
+      reporte_meses: {
+        Args: { p_edificio: string; p_meses?: number }
+        Returns: {
+          acumulado: number
+          gastos: number
+          ingresos: number
+          mes: string
+          oficial: boolean
+          periodo_id: string
+        }[]
       }
       resolver_ausencia: {
         Args: { p_aprobar: boolean; p_ausencia: string; p_nota?: string }

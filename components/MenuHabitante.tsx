@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 
 type Item = { href: string; texto: string; listo?: boolean };
 
-// Navegación del vecino (prototipo navHab). Las secciones de la Etapa 4b se muestran deshabilitadas.
+// Navegación del vecino (prototipo navHab).
 const ITEMS: Item[] = [
   { href: "/cuentas", texto: "Mis cuentas", listo: true },
-  { href: "/mi-estado-cuenta", texto: "Estado de cuenta" },
-  { href: "/reportes", texto: "Reportes" },
-  { href: "/chat", texto: "Chat del edificio" },
+  { href: "/mi-estado-cuenta", texto: "Estado de cuenta", listo: true },
+  { href: "/reportes", texto: "Reportes", listo: true },
+  { href: "/mi-chat", texto: "Chat del edificio", listo: true },
   { href: "/perfil", texto: "Mi perfil", listo: true },
 ];
 

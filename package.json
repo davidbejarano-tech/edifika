@@ -18,7 +18,8 @@
     "probar:cobranza": "tsx --env-file=.env.local scripts/probar-cobranza.ts",
     "corte": "tsx --env-file=.env.local scripts/ejecutar-corte.ts",
     "probar:corte": "tsx --env-file=.env.local scripts/probar-corte.ts",
-    "probar:vecino": "tsx --env-file=.env.local scripts/probar-vecino.ts"
+    "probar:vecino": "tsx --env-file=.env.local scripts/probar-vecino.ts",
+    "probar:comunicacion": "tsx --env-file=.env.local scripts/probar-comunicacion.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

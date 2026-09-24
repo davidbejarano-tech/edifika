@@ -1,6 +1,6 @@
 # EDIFIKA · Especificación funcional y técnica (MVP v1)
 
-Versión 1.8 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA · 1.7: pago adelantado como saldo a favor (RN-12) · 1.8: pago agrupado (RN-10) y ausencia prolongada (RN-40), lema "Administra tus edificios, sin complicaciones") · Product Owner: David
+Versión 1.9 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA · 1.7: pago adelantado como saldo a favor (RN-12) · 1.8: pago agrupado (RN-10) y ausencia prolongada (RN-40), lema "Administra tus edificios, sin complicaciones" · 1.9: chat del edificio RN-41) · Product Owner: David
 
 El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcional. Si este documento y el prototipo difieren, manda este documento.
 
@@ -115,6 +115,11 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 - Con la ausencia aprobada, el **agua por consumo** y los **compromisos extraordinarios** de esos meses vencen **15 días después de la fecha de regreso**: no figuran como vencidos ni generan mora.
 - La **parte fija** no se posterga: si el saldo a favor no alcanza, esa parte vence y genera mora como cualquier cuota.
 - Un vecino tiene como máximo una ausencia pendiente o vigente. Puede cancelarla mientras esté pendiente.
+
+**RN-41 Chat del edificio.** Canal común para vecinos y administración, en tiempo real.
+- Lo leen todos los miembros del edificio. Escriben los vecinos con acceso activo y la administración operativa (titular y coadministradores); el saliente en lectura solo lee.
+- Cada mensaje lleva el nombre del autor y su departamento, o su rol si escribe desde la vista de administración. Un administrador externo siempre escribe como administración.
+- Los mensajes no se editan. El autor puede eliminar los suyos y la administración puede eliminar cualquiera para moderar: queda "Mensaje eliminado" en su lugar.
 
 **RN-38 Medidores y reparto del agua.**
 - Cada departamento puede tener **un medidor activo**, identificado por su **número de serie**, único dentro del edificio. Se registra la lectura inicial y la fecha de instalación. Al cambiar un medidor, el anterior queda en el historial y el nuevo empieza con su propia lectura inicial.
