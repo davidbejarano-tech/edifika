@@ -135,6 +135,14 @@ async function main() {
   if (!corteBien) fallas++;
   console.log(`${corteBien ? "✔" : "✖"} El corte de desarrollo no se puede usar sin sesión (${corteSinSesion.status})`);
 
+  // Etapa 4a: Mis cuentas y Mi perfil del vecino
+  await caso("Vecino 302: mi perfil", "/perfil", v302, "/perfil (200)");
+  await caso("Titular externo escribe /cuentas", "/cuentas", titular, "/inicio");
+  await contiene("Vecino 302: mis cuentas", "/cuentas", v302, ["Departamento", "302", "Total por pagar", "Por pagar", "Mis pagos", "Pagar por adelantado"]);
+  await contiene("Titular: pestaña de ausencias", "/cobranza?t=ausencias", titular, ["Ausencias", "15 días después de su regreso"]);
+  await contiene("Vecino 302: aviso de ausencia", "/cuentas", v302, ["Avisar una ausencia"]);
+  await contiene("Vecino 302: mi perfil con cambio de contraseña", "/perfil", v302, ["Mi perfil", "Área y alícuota", "Cambiar contraseña"]);
+
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
   console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);

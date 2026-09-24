@@ -47,6 +47,87 @@ export type Database = {
         }
         Relationships: []
       }
+      ausencias: {
+        Row: {
+          created_at: string
+          departamento_id: string
+          desde: string
+          edificio_id: string
+          estado: string
+          hasta: string
+          id: string
+          motivo: string
+          nota: string | null
+          resuelta_en: string | null
+          resuelta_por: string | null
+          solicitada_por: string | null
+        }
+        Insert: {
+          created_at?: string
+          departamento_id: string
+          desde: string
+          edificio_id: string
+          estado?: string
+          hasta: string
+          id?: string
+          motivo: string
+          nota?: string | null
+          resuelta_en?: string | null
+          resuelta_por?: string | null
+          solicitada_por?: string | null
+        }
+        Update: {
+          created_at?: string
+          departamento_id?: string
+          desde?: string
+          edificio_id?: string
+          estado?: string
+          hasta?: string
+          id?: string
+          motivo?: string
+          nota?: string | null
+          resuelta_en?: string | null
+          resuelta_por?: string | null
+          solicitada_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ausencias_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "v_departamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_edificio_id_fkey"
+            columns: ["edificio_id"]
+            isOneToOne: false
+            referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_resuelta_por_fkey"
+            columns: ["resuelta_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_solicitada_por_fkey"
+            columns: ["solicitada_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bloqueos_zona: {
         Row: {
           desde: string
@@ -760,6 +841,7 @@ export type Database = {
           edificio_id: string
           estado: Database["public"]["Enums"]["estado_pago"]
           fecha_pago: string
+          grupo: string | null
           id: string
           metodo: string
           monto: number
@@ -777,6 +859,7 @@ export type Database = {
           edificio_id: string
           estado?: Database["public"]["Enums"]["estado_pago"]
           fecha_pago?: string
+          grupo?: string | null
           id?: string
           metodo: string
           monto: number
@@ -794,6 +877,7 @@ export type Database = {
           edificio_id?: string
           estado?: Database["public"]["Enums"]["estado_pago"]
           fecha_pago?: string
+          grupo?: string | null
           id?: string
           metodo?: string
           monto?: number
@@ -1201,6 +1285,75 @@ export type Database = {
           },
         ]
       }
+      saldo_favor: {
+        Row: {
+          compromiso_id: string | null
+          concepto: string
+          created_at: string
+          departamento_id: string
+          edificio_id: string
+          fecha: string
+          id: number
+          monto: number
+        }
+        Insert: {
+          compromiso_id?: string | null
+          concepto: string
+          created_at?: string
+          departamento_id: string
+          edificio_id: string
+          fecha?: string
+          id?: never
+          monto: number
+        }
+        Update: {
+          compromiso_id?: string | null
+          concepto?: string
+          created_at?: string
+          departamento_id?: string
+          edificio_id?: string
+          fecha?: string
+          id?: never
+          monto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saldo_favor_compromiso_id_fkey"
+            columns: ["compromiso_id"]
+            isOneToOne: false
+            referencedRelation: "compromisos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saldo_favor_compromiso_id_fkey"
+            columns: ["compromiso_id"]
+            isOneToOne: false
+            referencedRelation: "v_compromisos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saldo_favor_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saldo_favor_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "v_departamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saldo_favor_edificio_id_fkey"
+            columns: ["edificio_id"]
+            isOneToOne: false
+            referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zonas_comunes: {
         Row: {
           activa: boolean
@@ -1440,6 +1593,23 @@ export type Database = {
         Returns: undefined
       }
       aprobar_reserva: { Args: { p_reserva: string }; Returns: undefined }
+      ausencias_admin: {
+        Args: { p_edificio: string }
+        Returns: {
+          ausencia_id: string
+          creada: string
+          departamento_id: string
+          desde: string
+          estado: string
+          hasta: string
+          motivo: string
+          nota: string
+          numero: string
+          puede_resolver: boolean
+          resuelta_por: string
+          solicitante: string
+        }[]
+      }
       calcular_cuotas: {
         Args: { p_periodo: string }
         Returns: {
@@ -1457,6 +1627,8 @@ export type Database = {
         Args: { p_activo: boolean; p_departamento: string }
         Returns: undefined
       }
+      cancelar_adelanto: { Args: { p_compromiso: string }; Returns: undefined }
+      cancelar_ausencia: { Args: { p_ausencia: string }; Returns: undefined }
       cancelar_reserva: {
         Args: { p_motivo?: string; p_reserva: string }
         Returns: undefined
@@ -1523,6 +1695,7 @@ export type Database = {
           departamento_id: string
           numero: string
           pendiente: number
+          saldo_favor: number
           vencido: number
         }[]
       }
@@ -1785,6 +1958,7 @@ export type Database = {
           departamento_id: string
           enviado_en: string
           fecha_pago: string
+          grupo: string
           metodo: string
           monto: number
           motivo: string
@@ -1796,6 +1970,11 @@ export type Database = {
           tipo: Database["public"]["Enums"]["tipo_compromiso"]
         }[]
       }
+      parte_fija_actual: { Args: { p_edificio: string }; Returns: number }
+      puede_aprobar_ausencia: {
+        Args: { p_departamento: string; p_edificio: string }
+        Returns: boolean
+      }
       puede_validar_pago: {
         Args: { p_departamento: string; p_edificio: string }
         Returns: boolean
@@ -1803,6 +1982,10 @@ export type Database = {
       quitar_coadministrador: {
         Args: { p_edificio: string; p_perfil: string }
         Returns: undefined
+      }
+      rechazar_grupo: {
+        Args: { p_grupo: string; p_nota: string }
+        Returns: number
       }
       rechazar_pago: {
         Args: { p_nota: string; p_pago: string }
@@ -1855,6 +2038,14 @@ export type Database = {
         Args: { p_compromiso: string }
         Returns: string
       }
+      regreso_de_ausencia: {
+        Args: { p_departamento: string; p_fecha: string }
+        Returns: string
+      }
+      resolver_ausencia: {
+        Args: { p_aprobar: boolean; p_ausencia: string; p_nota?: string }
+        Returns: undefined
+      }
       responsable_de: { Args: { p_departamento: string }; Returns: string }
       resumen_mis_edificios: {
         Args: never
@@ -1885,7 +2076,20 @@ export type Database = {
           saldo_anterior: number
         }[]
       }
-      solicitar_adelanto: { Args: { p_meses: number }; Returns: number }
+      saldo_a_favor: { Args: { p_departamento: string }; Returns: number }
+      solicitar_adelanto: {
+        Args: { p_edificio: string; p_meses?: number; p_monto?: number }
+        Returns: string
+      }
+      solicitar_ausencia: {
+        Args: {
+          p_desde: string
+          p_edificio: string
+          p_hasta: string
+          p_motivo: string
+        }
+        Returns: string
+      }
       solicitar_reserva: {
         Args: { p_acepto_reglamento: boolean; p_inicio: string; p_zona: string }
         Returns: string
@@ -1900,6 +2104,7 @@ export type Database = {
         Args: { p_edificio: string; p_nuevo: string; p_saliente?: string }
         Returns: undefined
       }
+      validar_grupo: { Args: { p_grupo: string }; Returns: number }
       validar_pago: { Args: { p_pago: string }; Returns: undefined }
       vecinos_con_cuenta: {
         Args: { p_edificio: string }

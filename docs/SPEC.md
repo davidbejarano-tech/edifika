@@ -1,6 +1,6 @@
 # EDIFIKA · Especificación funcional y técnica (MVP v1)
 
-Versión 1.6 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA, lema "Administra tus edificios, sin complicaciones") · Product Owner: David
+Versión 1.8 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA · 1.7: pago adelantado como saldo a favor (RN-12) · 1.8: pago agrupado (RN-10) y ausencia prolongada (RN-40), lema "Administra tus edificios, sin complicaciones") · Product Owner: David
 
 El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcional. Si este documento y el prototipo difieren, manda este documento.
 
@@ -109,6 +109,13 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 
 **RN-05 Recibo de agua.** Registrar el recibo de agua (monto y consumo total en m³ del medidor general) crea o actualiza automáticamente un gasto "Agua" del periodo. No se edita a mano.
 
+**RN-40 Ausencia prolongada.** Un vecino que estará fuera de su departamento puede pedir que sus cargos variables se paguen a su regreso, sin mora.
+- El vecino solicita la ausencia con fecha de salida y de regreso (máximo 6 meses) y un motivo. Suele acompañarla de un pago adelantado (RN-12) para cubrir la parte fija.
+- La aprueba o la rechaza el administrador titular, con motivo si la rechaza. Si el que se ausenta vive en el departamento del titular, la aprueba un coadministrador. Mientras no se apruebe, se cobra normal.
+- Con la ausencia aprobada, el **agua por consumo** y los **compromisos extraordinarios** de esos meses vencen **15 días después de la fecha de regreso**: no figuran como vencidos ni generan mora.
+- La **parte fija** no se posterga: si el saldo a favor no alcanza, esa parte vence y genera mora como cualquier cuota.
+- Un vecino tiene como máximo una ausencia pendiente o vigente. Puede cancelarla mientras esté pendiente.
+
 **RN-38 Medidores y reparto del agua.**
 - Cada departamento puede tener **un medidor activo**, identificado por su **número de serie**, único dentro del edificio. Se registra la lectura inicial y la fecha de instalación. Al cambiar un medidor, el anterior queda en el historial y el nuevo empieza con su propia lectura inicial.
 - El edificio define un **día de lectura** del mes (1 a 28). Ese día la administración ingresa la lectura de cada medidor.
@@ -120,15 +127,23 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 
 **RN-07 Apertura de mes.** Requiere gastos confirmados del mes actual. Cierra el periodo, abre el siguiente, emite una cuota por departamento con su desglose y registra los gastos recurrentes del nuevo mes. Vencimiento = día de corte del nuevo mes.
 
-**RN-08 Cuentas por cobrar.** Todo compromiso emitido y no pagado es una cuenta por cobrar. Los adelantos cuentan solo desde su vencimiento.
+**RN-08 Cuentas por cobrar.** Todo compromiso emitido y no pagado es una cuenta por cobrar, salvo los pagos adelantados solicitados por el vecino (RN-12): son voluntarios y nunca son deuda ni generan mora.
 
 **RN-09 Corte automático.** Cada día a las 00:10 de Lima, las cuotas no pagadas después del día de corte se marcan como morosas y, si la mora es mayor que cero, se emite un compromiso de mora. Se ejecuta una sola vez por periodo. Un pago en revisión no genera mora.
 
-**RN-10 Pago del habitante.** El habitante elige un compromiso pendiente, indica medio y número de operación y sube el comprobante (imagen o PDF, máximo 5 MB). El compromiso pasa a "En revisión". El monto del pago es siempre el del compromiso.
+**RN-10 Pago del habitante.** El habitante elige uno o varios compromisos pendientes, indica medio y número de operación y sube un solo comprobante (imagen o PDF, máximo 5 MB). Los compromisos pasan a "En revisión". El monto de cada pago es siempre el del compromiso; el comprobante debe cubrir la suma.
+- *Pago agrupado:* cuando el vecino marca varios compromisos (o "marcar todos"), se registra un pago por compromiso, todos con el mismo comprobante y número de operación. La administración los ve como un grupo y los valida o rechaza completos (RN-11): si el comprobante tiene un problema, se rechaza todo el grupo y el vecino lo vuelve a enviar.
 
 **RN-11 Validación.** Quien tenga permiso según RN-22 valida (compromiso "Pagado", se registra el ingreso) o rechaza con motivo obligatorio (compromiso vuelve a "Pendiente" y el habitante ve el motivo). Con el mismo permiso se registran pagos en efectivo. Cada pago muestra quién lo validó.
 
-**RN-12 Adelantos.** El habitante puede adelantar de 1 a 6 meses. El monto estimado es su última cuota. Al abrir ese mes, si la cuota real es mayor, se emite un ajuste por la diferencia.
+**RN-12 Pago adelantado y saldo a favor.** Pagar por adelantado carga un **saldo a favor** del departamento, que se aplica solo a las cuotas siguientes.
+- *Con monto fijo (por área o igual para todos):* el vecino elige de 1 a 6 meses y paga N × la **parte fija** de su cuota actual. El agua por consumo no se adelanta: se cobra cada mes, en su fecha, según las lecturas.
+- *Con gastos reales del mes:* no hay parte fija, así que el vecino escribe el **monto en soles** que quiere adelantar; se le muestran sus 3 últimos pagos de cuota como referencia.
+- El pago adelantado se solicita, se paga y se valida como cualquier compromiso (RN-10, RN-11). El saldo a favor nace cuando el pago se valida. Mientras no lo pague, el vecino puede cancelarlo.
+- Al abrir cada mes, el saldo a favor se aplica a la cuota del departamento: con monto fijo, solo hasta la parte fija (el agua queda por pagar); con gastos reales, hasta la cuota completa. Si cubre toda la cuota, esta queda pagada sin que el vecino haga nada.
+- Cada mes el vecino ve cuánto le toca pagar y cuánto le queda de saldo a favor. Como el saldo se consume con las cuotas reales, nunca hay diferencias que cobrar ni devolver.
+- La cuenta corriente registra cargos (cuotas y demás compromisos por su valor completo) y abonos (pagos validados). Un saldo negativo es saldo a favor del vecino.
+- El pago adelantado es ingreso del edificio en el mes en que se valida; su aplicación a las cuotas no vuelve a contarse como ingreso.
 
 **RN-13 Extraordinarios.** El administrador emite un compromiso a todos o a un departamento, repartiendo un monto total por alícuota o cobrando el mismo monto a cada uno.
 
@@ -260,7 +275,7 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 
 **Ciclo mensual.** Pasos del mes con estado y botón "Abrir {mes siguiente}", que pide los montos recurrentes.
 
-**Cobranza.** Pestañas "Por validar" (comprobante, validar, rechazar; los pagos que el usuario no puede validar por RN-22 se muestran con el motivo), "Cuentas por cobrar" (por departamento) y "Compromisos emitidos". Botón "Nuevo compromiso extraordinario".
+**Cobranza.** Pestañas "Por validar" (comprobante, validar, rechazar; los pagos agrupados se muestran y se resuelven juntos; los pagos que el usuario no puede validar por RN-22 se muestran con el motivo), "Cuentas por cobrar" (por departamento), "Compromisos emitidos" y "Ausencias" (aprobar o rechazar solicitudes, RN-40). Botón "Nuevo compromiso extraordinario".
 
 **Gastos.** Lista por periodo (recurrentes y extraordinarios), alta, eliminación mientras no esté confirmado y botón "Confirmar gastos".
 
@@ -270,7 +285,7 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 
 ### Habitante
 
-**Mis cuentas.** Total por pagar, vencido, lista de compromisos con "Pagar y subir comprobante", motivo de rechazo si lo hubo, historial de pagos, cuenta corriente, recibo del mes y adelantos.
+**Mis cuentas.** Total por pagar, vencido, lista de compromisos con "Pagar y subir comprobante", motivo de rechazo si lo hubo, historial de pagos, cuenta corriente, recibo del mes, saldo a favor y pago adelantado (RN-12). Casillas para marcar varios compromisos (o todos) y pagarlos con un solo comprobante (RN-10). Solicitud de ausencia prolongada (RN-40).
 
 **Estado de cuenta, Reportes y Chat.** Iguales al prototipo.
 
@@ -341,3 +356,4 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 9. Otros modelos de cuota: montos por tipo de unidad (RN-03).
 10. Cambio de medidor a mitad de mes: en v1 el medidor nuevo empieza con su lectura inicial; falta decidir si se registra la lectura final del medidor retirado para sumar su consumo del mes.
 11. **Consola de plataforma (súper administrador, equipo de EDIFIKA).** El Product Owner entregará el detalle completo al terminar los módulos actuales. Ya confirmado para v1: (a) ver un edificio en solo lectura para dar soporte, con registro en la auditoría del edificio (Ley 29733); (b) gestionar el equipo de EDIFIKA (agregar o quitar miembros de la plataforma); (c) depuración manual: ver los edificios por eliminar, posponer la eliminación o eliminar a pedido del titular. Existe hoy solo la transferencia forzada con acta (`/plataforma`).
+12. **Módulo Junta de propietarios (futuro).** Incluirá los préstamos que la junta pida para dar liquidez al edificio, como alternativa al pago adelantado de los vecinos (RN-12). Se definirá más adelante.

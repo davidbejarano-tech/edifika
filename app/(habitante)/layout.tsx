@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Encabezado } from "@/components/Encabezado";
+import { MenuHabitante } from "@/components/MenuHabitante";
 import { obtenerContexto } from "@/lib/contexto";
 
 // Solo quien tiene acceso activo a un departamento del edificio elegido.
@@ -10,9 +11,12 @@ export default async function HabitanteLayout({ children }: { children: React.Re
   if (!actual.departamento_id) redirect(actual.nivel ? "/inicio" : "/edificios");
 
   return (
-    <>
-      <Encabezado edificio={actual} vista="habitante" variosEdificios={edificios.length > 1} />
-      <main className="mx-auto w-full max-w-[1200px] px-4 pt-5 pb-12 md:px-8">{children}</main>
-    </>
+    <div className="min-h-dvh md:grid md:grid-cols-[220px_1fr] md:grid-rows-[auto_1fr] print:block">
+      <div className="md:col-span-2">
+        <Encabezado edificio={actual} vista="habitante" variosEdificios={edificios.length > 1} />
+      </div>
+      <MenuHabitante />
+      <main className="mx-auto w-full max-w-[1000px] min-w-0 px-4 pt-5 pb-12 md:px-8">{children}</main>
+    </div>
   );
 }

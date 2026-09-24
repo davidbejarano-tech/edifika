@@ -9,8 +9,11 @@ import {
   anularCompromiso,
   emitirExtraordinario,
   pagoEfectivo,
+  rechazarGrupo,
   rechazarPago,
+  resolverAusencia,
   urlComprobante,
+  validarGrupo,
   validarPago,
   type Resultado,
 } from "./acciones";
@@ -26,7 +29,7 @@ const TIPO: Record<string, string> = {
   cuota: "Cuota",
   mora: "Mora",
   extraordinario: "Extraordinario",
-  adelanto: "Adelanto",
+  adelanto: "Pago adelantado",
   ajuste: "Ajuste",
   reserva: "Reserva",
   garantia: "Garantía",
@@ -51,11 +54,25 @@ function Aviso({ r }: { r: Resultado }) {
 // ---------------------------------------------------------------------
 // Por validar
 // ---------------------------------------------------------------------
+// Pagos que comparten comprobante (grupo) se muestran juntos y se resuelven completos (RN-10)
+type Lote = { clave: string; grupo: string | null; pagos: Pago[] };
+
 export function PorValidar({ pagos }: { pagos: Pago[] }) {
   const [aviso, setAviso] = useState<Resultado>(inicial);
   const [pendiente, iniciar] = useTransition();
-  const [rechazo, setRechazo] = useState<Pago | null>(null);
+  const [rechazo, setRechazo] = useState<Lote | null>(null);
   const [comprobante, setComprobante] = useState<{ url: string; pdf: boolean; titulo: string } | null>(null);
+
+  const lotes = useMemo(() => {
+    const porGrupo = new Map<string, Lote>();
+    for (const p of pagos) {
+      const clave = p.grupo ?? p.pago_id;
+      const lote = porGrupo.get(clave) ?? { clave, grupo: p.grupo, pagos: [] };
+      lote.pagos.push(p);
+      porGrupo.set(clave, lote);
+    }
+    return [...porGrupo.values()];
+  }, [pagos]);
 
   function ver(p: Pago) {
     if (!p.comprobante_path) return;
@@ -66,64 +83,89 @@ export function PorValidar({ pagos }: { pagos: Pago[] }) {
     });
   }
 
-  function validar(p: Pago) {
-    if (!confirm(`¿Validar el pago de ${soles(p.monto)} del departamento ${p.numero}? Revisa antes el comprobante.`)) return;
-    iniciar(async () => setAviso(await validarPago(p.pago_id)));
+  function validar(l: Lote) {
+    const total = l.pagos.reduce((s, p) => s + Number(p.monto), 0);
+    const texto = l.pagos.length > 1 ? `los ${l.pagos.length} compromisos (${soles(total)})` : `el pago de ${soles(total)}`;
+    if (!confirm(`¿Validar ${texto} del departamento ${l.pagos[0].numero}? Revisa antes el comprobante.`)) return;
+    iniciar(async () => setAviso(l.grupo ? await validarGrupo(l.grupo) : await validarPago(l.pagos[0].pago_id)));
   }
 
   return (
     <>
       <Aviso r={aviso} />
-      {pagos.length === 0 ? (
+      {lotes.length === 0 ? (
         <p className="hint">No hay pagos por validar.</p>
       ) : (
         <div className="grid gap-3">
-          {pagos.map((p) => (
-            <article key={p.pago_id} className="panel mb-0 flex flex-wrap items-center gap-4">
-              <div className="min-w-[220px] flex-1">
-                <p className="text-sm text-muted">Departamento {p.numero}</p>
-                <p className="font-semibold">{p.concepto}</p>
-                <p className="text-sm text-muted">
-                  {p.metodo}
-                  {p.operacion && ` · operación ${p.operacion}`} · pagado el {fecha(p.fecha_pago)}
-                  {p.registrado_por && ` · enviado por ${p.registrado_por}`}
-                </p>
-              </div>
-              <b className="font-display text-xl tabular-nums">{soles(p.monto)}</b>
-              <div className="flex flex-wrap items-center gap-2">
-                {p.comprobante_path ? (
-                  <button className="btn quiet sm" onClick={() => ver(p)} disabled={pendiente}>
-                    Ver comprobante
-                  </button>
-                ) : (
-                  <span className="text-sm text-muted">Sin comprobante</span>
-                )}
-                {p.puede_validar ? (
-                  <>
-                    <button className="btn danger sm" onClick={() => setRechazo(p)} disabled={pendiente}>
-                      Rechazar
+          {lotes.map((l) => {
+            const p = l.pagos[0];
+            const total = l.pagos.reduce((s, x) => s + Number(x.monto), 0);
+            const puede = l.pagos.every((x) => x.puede_validar);
+            return (
+              <article key={l.clave} className="panel mb-0 flex flex-wrap items-center gap-4">
+                <div className="min-w-[220px] flex-1">
+                  <p className="text-sm text-muted">
+                    Departamento {p.numero}
+                    {l.pagos.length > 1 && <span className="chip info ml-2">Pago agrupado · {l.pagos.length} compromisos</span>}
+                  </p>
+                  {l.pagos.length === 1 ? (
+                    <p className="font-semibold">{p.concepto}</p>
+                  ) : (
+                    <ul className="my-1 text-sm">
+                      {l.pagos.map((x) => (
+                        <li key={x.pago_id} className="flex justify-between gap-3">
+                          <span>{x.concepto}</span>
+                          <span className="tabular-nums">{soles(x.monto)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="text-sm text-muted">
+                    {p.metodo}
+                    {p.operacion && ` · operación ${p.operacion}`} · pagado el {fecha(p.fecha_pago)}
+                    {p.registrado_por && ` · enviado por ${p.registrado_por}`}
+                  </p>
+                </div>
+                <b className="font-display text-xl tabular-nums">{soles(total)}</b>
+                <div className="flex flex-wrap items-center gap-2">
+                  {p.comprobante_path ? (
+                    <button className="btn quiet sm" onClick={() => ver(p)} disabled={pendiente}>
+                      Ver comprobante
                     </button>
-                    <button className="btn sm" onClick={() => validar(p)} disabled={pendiente}>
-                      Validar pago
-                    </button>
-                  </>
-                ) : (
-                  <p className="max-w-[320px] text-sm text-muted">{p.motivo}</p>
-                )}
-              </div>
-            </article>
-          ))}
+                  ) : (
+                    <span className="text-sm text-muted">Sin comprobante</span>
+                  )}
+                  {puede ? (
+                    <>
+                      <button className="btn danger sm" onClick={() => setRechazo(l)} disabled={pendiente}>
+                        Rechazar{l.pagos.length > 1 ? " todo" : ""}
+                      </button>
+                      <button className="btn sm" onClick={() => validar(l)} disabled={pendiente}>
+                        Validar {l.pagos.length > 1 ? "todo" : "pago"}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="max-w-[320px] text-sm text-muted">{l.pagos.find((x) => !x.puede_validar)?.motivo}</p>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 
-      <Modal abierto={!!rechazo} titulo={`Rechazar el pago del depto ${rechazo?.numero ?? ""}`} onCerrar={() => setRechazo(null)}>
+      <Modal abierto={!!rechazo} titulo={`Rechazar el pago del depto ${rechazo?.pagos[0].numero ?? ""}`} onCerrar={() => setRechazo(null)}>
         {rechazo && (
           <FormMotivo
-            ayuda="El vecino verá este motivo y podrá volver a enviar su pago. La cuota vuelve a pendiente."
-            placeholder="Ej. El monto del voucher no coincide con la cuota"
-            boton="Rechazar pago"
+            ayuda={
+              rechazo.pagos.length > 1
+                ? `Se rechazan los ${rechazo.pagos.length} compromisos pagados con este comprobante. El vecino verá el motivo y podrá volver a enviarlo.`
+                : "El vecino verá este motivo y podrá volver a enviar su pago. La cuota vuelve a pendiente."
+            }
+            placeholder="Ej. El monto del voucher no coincide con el total"
+            boton={rechazo.pagos.length > 1 ? "Rechazar todo" : "Rechazar pago"}
             onEnviar={async (m) => {
-              const r = await rechazarPago(rechazo.pago_id, m);
+              const r = rechazo.grupo ? await rechazarGrupo(rechazo.grupo, m) : await rechazarPago(rechazo.pagos[0].pago_id, m);
               if (r.ok) {
                 setRechazo(null);
                 setAviso(r);
@@ -205,6 +247,7 @@ export function CuentasPorCobrar({ cuentas }: { cuentas: Cuenta[] }) {
   const pendiente = cuentas.reduce((s, c) => s + Number(c.pendiente), 0);
   const vencido = cuentas.reduce((s, c) => s + Number(c.vencido), 0);
   const conDeuda = cuentas.filter((c) => Number(c.pendiente) > 0);
+  const aFavor = cuentas.reduce((s, c) => s + Number(c.saldo_favor), 0);
   return (
     <>
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
@@ -220,6 +263,7 @@ export function CuentasPorCobrar({ cuentas }: { cuentas: Cuenta[] }) {
                 <th>Depto</th>
                 <th className="r">Por cobrar</th>
                 <th className="r">Vencido</th>
+                <th className="r">Saldo a favor</th>
                 <th></th>
               </tr>
             </thead>
@@ -229,6 +273,7 @@ export function CuentasPorCobrar({ cuentas }: { cuentas: Cuenta[] }) {
                   <td>{c.numero}</td>
                   <td className="r">{soles(c.pendiente)}</td>
                   <td className={`r ${Number(c.vencido) > 0 ? "font-semibold text-bad" : ""}`}>{soles(c.vencido)}</td>
+                  <td className="r text-ok">{Number(c.saldo_favor) > 0 ? soles(c.saldo_favor) : ""}</td>
                   <td className="r">
                     {Number(c.pendiente) > 0 ? (
                       <Link href={`/cobranza?t=emitidos&d=${c.numero}`} className="btn quiet sm">
@@ -246,12 +291,13 @@ export function CuentasPorCobrar({ cuentas }: { cuentas: Cuenta[] }) {
                 <td>Total</td>
                 <td className="r">{soles(pendiente)}</td>
                 <td className="r">{soles(vencido)}</td>
+                <td className="r text-ok">{aFavor > 0 ? soles(aFavor) : ""}</td>
                 <td></td>
               </tr>
             </tfoot>
           </table>
         </div>
-        <p className="mt-2 text-sm text-muted">Incluye los pagos en revisión. Los adelantos cuentan solo desde su vencimiento.</p>
+        <p className="mt-2 text-sm text-muted">Incluye los pagos en revisión. Los pagos adelantados no son deuda: al validarse pasan a saldo a favor y se aplican solos a las siguientes cuotas.</p>
       </section>
     </>
   );
@@ -513,5 +559,96 @@ function FormExtraordinario({
         </button>
       </div>
     </form>
+  );
+}
+
+// ---------------------------------------------------------------------
+// Ausencias (RN-40)
+// ---------------------------------------------------------------------
+type Ausencia = Fn["ausencias_admin"]["Returns"][number];
+const ESTADO_AUSENCIA: Record<string, { texto: string; clase: string }> = {
+  solicitada: { texto: "Por aprobar", clase: "info" },
+  aprobada: { texto: "Aprobada", clase: "activo" },
+  rechazada: { texto: "Rechazada", clase: "bad" },
+  cancelada: { texto: "Cancelada", clase: "tag" },
+};
+
+export function Ausencias({ ausencias }: { ausencias: Ausencia[] }) {
+  const [aviso, setAviso] = useState<Resultado>(inicial);
+  const [pendiente, iniciar] = useTransition();
+  const [rechazo, setRechazo] = useState<Ausencia | null>(null);
+
+  function aprobar(a: Ausencia) {
+    if (!confirm(`¿Aprobar la ausencia del departamento ${a.numero} del ${fecha(a.desde)} al ${fecha(a.hasta)}?`)) return;
+    iniciar(async () => setAviso(await resolverAusencia(a.ausencia_id, true, "")));
+  }
+
+  return (
+    <>
+      <Aviso r={aviso} />
+      <p className="mb-3 text-sm text-muted">
+        Con una ausencia aprobada, el agua y los compromisos extraordinarios del vecino vencen 15 días después de su regreso, sin
+        mora. La cuota fija sigue venciendo cada mes.
+      </p>
+      {ausencias.length === 0 ? (
+        <p className="hint">No hay solicitudes de ausencia.</p>
+      ) : (
+        <div className="grid gap-3">
+          {ausencias.map((a) => {
+            const e = ESTADO_AUSENCIA[a.estado] ?? ESTADO_AUSENCIA.cancelada;
+            return (
+              <article key={a.ausencia_id} className="panel mb-0 flex flex-wrap items-center gap-4">
+                <div className="min-w-[220px] flex-1">
+                  <p className="text-sm text-muted">
+                    Departamento {a.numero}
+                    {a.solicitante && ` · ${a.solicitante}`}
+                  </p>
+                  <p className="font-semibold">
+                    Del {fecha(a.desde)} al {fecha(a.hasta)}
+                  </p>
+                  <p className="text-sm text-muted">{a.motivo}</p>
+                  {a.nota && <p className="text-sm text-bad">Motivo del rechazo: {a.nota}</p>}
+                  {a.resuelta_por && a.estado !== "solicitada" && <p className="text-xs text-muted">Resolvió {a.resuelta_por}</p>}
+                </div>
+                <span className={`chip ${e.clase}`}>{e.texto}</span>
+                {a.estado === "solicitada" &&
+                  (a.puede_resolver ? (
+                    <div className="flex gap-2">
+                      <button className="btn danger sm" onClick={() => setRechazo(a)} disabled={pendiente}>
+                        Rechazar
+                      </button>
+                      <button className="btn sm" onClick={() => aprobar(a)} disabled={pendiente}>
+                        Aprobar
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="max-w-[280px] text-sm text-muted">
+                      La aprueba el administrador titular (si es su propio departamento, un coadministrador).
+                    </p>
+                  ))}
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      <Modal abierto={!!rechazo} titulo={`Rechazar la ausencia del depto ${rechazo?.numero ?? ""}`} onCerrar={() => setRechazo(null)}>
+        {rechazo && (
+          <FormMotivo
+            ayuda="El vecino verá este motivo. Sus cargos seguirán venciendo en las fechas normales."
+            placeholder="Ej. Tiene deuda vencida pendiente"
+            boton="Rechazar ausencia"
+            onEnviar={async (m) => {
+              const r = await resolverAusencia(rechazo.ausencia_id, false, m);
+              if (r.ok) {
+                setRechazo(null);
+                setAviso(r);
+              }
+              return r;
+            }}
+          />
+        )}
+      </Modal>
+    </>
   );
 }

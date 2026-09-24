@@ -70,3 +70,30 @@ export async function urlComprobante(ruta: string): Promise<{ url: string | null
   const { data, error } = await supabase.storage.from("comprobantes").createSignedUrl(ruta, 120);
   return error ? { url: null, error: "No pudimos abrir el comprobante." } : { url: data.signedUrl, error: null };
 }
+
+// RN-10: pago agrupado (un comprobante para varios compromisos): se resuelve completo
+export async function validarGrupo(grupo: string): Promise<Resultado> {
+  const { supabase } = await obtenerContexto();
+  const { data, error } = await supabase.rpc("validar_grupo", { p_grupo: grupo });
+  return error ? falla(error.message) : listo(`Pago agrupado validado: ${data} compromisos quedaron pagados.`);
+}
+
+export async function rechazarGrupo(grupo: string, nota: string): Promise<Resultado> {
+  if (!nota.trim()) return falla("Escribe el motivo del rechazo: el vecino lo verá.");
+  const { supabase } = await obtenerContexto();
+  const { data, error } = await supabase.rpc("rechazar_grupo", { p_grupo: grupo, p_nota: nota.trim() });
+  return error ? falla(error.message) : listo(`Pago agrupado rechazado: ${data} compromisos volvieron a pendiente.`);
+}
+
+// RN-40: aprobar o rechazar una ausencia prolongada
+export async function resolverAusencia(ausencia: string, aprobar: boolean, nota: string): Promise<Resultado> {
+  if (!aprobar && !nota.trim()) return falla("Escribe el motivo del rechazo: el vecino lo verá.");
+  const { supabase } = await obtenerContexto();
+  const { error } = await supabase.rpc("resolver_ausencia", { p_ausencia: ausencia, p_aprobar: aprobar, p_nota: nota.trim() || undefined });
+  if (error) return falla(error.message);
+  return listo(
+    aprobar
+      ? "Ausencia aprobada: el agua y los extraordinarios de esos meses vencen 15 días después del regreso."
+      : "Ausencia rechazada. El vecino verá el motivo.",
+  );
+}

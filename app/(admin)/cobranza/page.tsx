@@ -2,12 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { obtenerContexto } from "@/lib/contexto";
 import { periodosDe } from "@/lib/periodos";
-import { CuentasPorCobrar, Emitidos, NuevoExtraordinario, PorValidar } from "./Cobranza";
+import { Ausencias, CuentasPorCobrar, Emitidos, NuevoExtraordinario, PorValidar } from "./Cobranza";
 
 const PESTANAS = [
   { t: "validar", texto: "Por validar" },
   { t: "cobrar", texto: "Cuentas por cobrar" },
   { t: "emitidos", texto: "Compromisos emitidos" },
+  { t: "ausencias", texto: "Ausencias" },
 ];
 
 export default async function CobranzaPage({ searchParams }: { searchParams: Promise<{ t?: string; d?: string }> }) {
@@ -16,12 +17,14 @@ export default async function CobranzaPage({ searchParams }: { searchParams: Pro
   if (!actual?.nivel) redirect("/edificios");
   const esTitular = actual.nivel === "titular";
 
-  const [{ data: pagos }, { data: cuentas }, { data: compromisos }, { actual: periodo }] = await Promise.all([
+  const [{ data: pagos }, { data: cuentas }, { data: compromisos }, { actual: periodo }, { data: ausencias }] = await Promise.all([
     supabase.rpc("pagos_por_validar", { p_edificio: actual.edificio_id }),
     supabase.rpc("cuentas_por_cobrar", { p_edificio: actual.edificio_id }),
     supabase.rpc("compromisos_admin", { p_edificio: actual.edificio_id }),
     periodosDe(supabase, actual.edificio_id),
+    supabase.rpc("ausencias_admin", { p_edificio: actual.edificio_id }),
   ]);
+  const ausPorAprobar = (ausencias ?? []).filter((a) => a.estado === "solicitada" && a.puede_resolver).length;
   const listaPagos = pagos ?? [];
   const puedo = listaPagos.filter((p) => p.puede_validar).length;
 
@@ -54,6 +57,9 @@ export default async function CobranzaPage({ searchParams }: { searchParams: Pro
             {p.t === "validar" && puedo > 0 && (
               <span className="ml-1.5 rounded-full bg-bad px-1.5 text-xs font-bold text-white">{puedo}</span>
             )}
+            {p.t === "ausencias" && ausPorAprobar > 0 && (
+              <span className="ml-1.5 rounded-full bg-bad px-1.5 text-xs font-bold text-white">{ausPorAprobar}</span>
+            )}
           </Link>
         ))}
       </nav>
@@ -61,6 +67,7 @@ export default async function CobranzaPage({ searchParams }: { searchParams: Pro
       {t === "validar" && <PorValidar pagos={listaPagos} />}
       {t === "cobrar" && <CuentasPorCobrar cuentas={cuentas ?? []} />}
       {t === "emitidos" && <Emitidos compromisos={compromisos ?? []} esTitular={esTitular} filtroDepto={d ?? ""} />}
+      {t === "ausencias" && <Ausencias ausencias={ausencias ?? []} />}
     </>
   );
 }
