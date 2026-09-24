@@ -4,6 +4,7 @@ import { obtenerContexto } from "@/lib/contexto";
 import { fecha, mes, soles } from "@/lib/format";
 import { mesSiguiente, periodosDe } from "@/lib/periodos";
 import { AbrirMes, BotonConfirmar } from "./AbrirMes";
+import { CorteDesarrollo } from "./CorteDesarrollo";
 
 type Paso = { titulo: string; detalle: React.ReactNode; hecho: boolean; opcional?: boolean; accion?: React.ReactNode };
 
@@ -92,7 +93,7 @@ export default async function CicloPage() {
       titulo: `Corte automático del día ${diaCorte}`,
       detalle: corte
         ? `Aplicado el ${fecha(corte.ejecutado_en)}: ${corte.departamentos.length} departamentos pasaron a deuda vencida.`
-        : `Las cuotas no pagadas pasan a vencidas después del ${diaCorte} de ${nombre} (se activa en la Etapa 3c).`,
+        : `Las cuotas no pagadas pasan a vencidas después del ${diaCorte} de ${nombre}. Se ejecuta solo cada día a las 00:10.`,
       hecho: !!corte,
     },
     {
@@ -154,6 +155,8 @@ export default async function CicloPage() {
         recurrentes={recurrentes.map((g) => ({ categoria: g.categoria, descripcion: g.descripcion, monto: Number(g.monto) }))}
         cuotas={(calculo.data ?? []).map((f) => ({ numero: f.numero, total: Number(f.total) }))}
       />
+
+      {process.env.NODE_ENV === "development" && <CorteDesarrollo />}
     </>
   );
 }

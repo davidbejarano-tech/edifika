@@ -19,13 +19,13 @@ const GRUPOS: { grupo: string | null; items: Item[] }[] = [
   {
     grupo: "Finanzas y cuotas",
     items: [
-      { href: "/resumen", texto: "Resumen" },
+      { href: "/resumen", texto: "Resumen", listo: true },
       { href: "/ciclo", texto: "Ciclo mensual", listo: true },
       { href: "/gastos", texto: "Gastos", listo: true },
       { href: "/lecturas", texto: "Lecturas de agua", listo: true },
       { href: "/calculo", texto: "Cálculo mensual", listo: true },
       { href: "/cobranza", texto: "Cobranza", listo: true },
-      { href: "/estado-cuenta", texto: "Estado de cuenta" },
+      { href: "/estado-cuenta", texto: "Estado de cuenta", listo: true },
     ],
   },
   { grupo: "Comunicación", items: [{ href: "/chat", texto: "Chat del edificio" }] },
@@ -37,7 +37,7 @@ export function MenuAdmin({ porValidar = 0 }: { porValidar?: number }) {
   return (
     <nav
       aria-label="Secciones"
-      className="flex gap-1 overflow-x-auto border-b border-line bg-surface2 px-2 py-1.5 md:top-0 md:h-full md:flex-col md:overflow-visible md:border-r md:border-b-0 md:px-3 md:py-4"
+      className="flex gap-1 print:hidden overflow-x-auto border-b border-line bg-surface2 px-2 py-1.5 md:top-0 md:h-full md:flex-col md:overflow-visible md:border-r md:border-b-0 md:px-3 md:py-4"
     >
       {GRUPOS.map((g) => (
         <div key={g.grupo ?? "principal"} className="contents md:block">

@@ -8,6 +8,7 @@
   --ok: #2e7d4f; --ok-bg: #e2f1e7; --warn: #8f5c0e; --warn-bg: #fbeed5; --bad: #b23a30; --bad-bg: #f8e0dc;
   --info: #1a5f9e; --info-bg: #e0ecf8; --locked: #9aa6b3;
   --logo-navy: #0e2a47; --logo-azul: #1a7fd4; --logo-celeste: #55a8e0; --logo-profundo: #0b5a8a;
+  --facade: #dce6f1; --facade-dark: #c3d2e3; --frame: #0e2a47;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -16,6 +17,7 @@
     --ok: #6cc08e; --ok-bg: #183326; --warn: #e3ae55; --warn-bg: #3a2c12; --bad: #ee8277; --bad-bg: #3d1c19;
     --info: #86b8e8; --info-bg: #16304a; --locked: #56647a;
     --logo-navy: #e4edf7; --logo-azul: #3d98e3; --logo-celeste: #7cc0ee; --logo-profundo: #5aa6dc;
+    --facade: #1b2c41; --facade-dark: #152235; --frame: #6f95bd;
   }
 }
 
@@ -100,4 +102,22 @@
   .tbl tr:last-child td { border-bottom: 0; }
   .tbl .r { text-align: right; font-variant-numeric: tabular-nums; }
   .tbl tr.mal td { background: var(--bad-bg); }
+
+  /* Fachada del Resumen (prototipo) con los colores de EDIFIKA */
+  .facade { background: var(--facade); border: 2px solid var(--frame); border-radius: 10px 10px 0 0; padding: 0 0.9rem; }
+  .roof { margin: 0 -0.9rem; padding: 0.55rem 0.9rem; background: var(--frame); color: #f3f6fa; font-family: var(--font-display); font-weight: 700; display: flex; justify-content: space-between; gap: 0.5rem; border-radius: 7px 7px 0 0; font-size: 0.95rem; }
+  .floor { display: grid; gap: 0.6rem; padding: 0.6rem 0; border-bottom: 3px solid var(--facade-dark); }
+  .win { all: unset; box-sizing: border-box; cursor: pointer; border: 3px solid var(--frame); border-radius: 4px; padding: 0.45rem 0.5rem; min-height: 74px; display: flex; flex-direction: column; justify-content: space-between; background: var(--surface); transition: transform 0.12s; min-width: 0; }
+  .win:hover { transform: translateY(-2px); }
+  .win:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+  .win b { font-family: var(--font-display); font-size: 1.15rem; }
+  .win span { font-size: 0.72rem; color: var(--muted); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .win em { font-style: normal; font-size: 0.75rem; font-weight: 700; }
+  .win.s-aldia { background: var(--ok-bg); } .win.s-aldia em { color: var(--ok); }
+  .win.s-pendiente { background: var(--warn-bg); } .win.s-pendiente em { color: var(--warn); }
+  .win.s-revision { background: var(--info-bg); } .win.s-revision em { color: var(--info); }
+  .win.s-vencido { background: var(--bad-bg); } .win.s-vencido em { color: var(--bad); }
+  .ground { height: 54px; display: flex; justify-content: center; align-items: flex-end; }
+  .door { width: 70px; height: 44px; border: 3px solid var(--frame); border-bottom: 0; border-radius: 4px 4px 0 0; background: var(--surface2); }
+  .base { height: 10px; background: var(--frame); border-radius: 0 0 4px 4px; margin: 0 -2px; }
 }

@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!actual.nivel) redirect(actual.departamento_id ? "/cuentas" : "/edificios");
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[240px_1fr] md:grid-rows-[auto_1fr]">
+    <div className="min-h-dvh md:grid md:grid-cols-[240px_1fr] md:grid-rows-[auto_1fr] print:block">
       <div className="md:col-span-2">
         <Encabezado edificio={actual} vista="admin" variosEdificios={edificios.length > 1} />
       </div>

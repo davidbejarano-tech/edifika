@@ -123,6 +123,18 @@ async function main() {
   await contiene("Titular: compromisos emitidos con anular", "/cobranza?t=emitidos", titular, ["Cuota de mantenimiento", "Anular"]);
   await contiene("Coadministrador: emitidos sin anular", "/cobranza?t=emitidos", coadmin, ["Cuota de mantenimiento", "Efectivo"], [">Anular<"]);
 
+  // Etapa 3c: Resumen y Estado de cuenta
+  for (const ruta of ["/resumen", "/estado-cuenta"]) {
+    await caso(`${ruta} (coadministrador)`, ruta, coadmin, `${ruta} (200)`);
+    await caso(`Vecino 302 escribe ${ruta}`, ruta, v302, "/cuentas");
+  }
+  await contiene("Titular: resumen con fachada y cifras", "/resumen", titular, ["Fachada de", "Ingresos del mes", "Monto acumulado", "Por cobrar"]);
+  await contiene("Titular: estado de cuenta con sello", "/estado-cuenta", titular, ["Estado de cuenta", "Saldo anterior", "Administrador titular", "Imprimir o guardar PDF"]);
+  const corteSinSesion = await fetch(`${BASE}/dev/corte`, { method: "POST", redirect: "manual" });
+  const corteBien = corteSinSesion.status === 307 || corteSinSesion.status === 404;
+  if (!corteBien) fallas++;
+  console.log(`${corteBien ? "✔" : "✖"} El corte de desarrollo no se puede usar sin sesión (${corteSinSesion.status})`);
+
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
   console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);

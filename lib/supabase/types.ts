@@ -1505,6 +1505,18 @@ export type Database = {
         }
         Returns: string
       }
+      cuenta_corriente: {
+        Args: { p_departamento: string }
+        Returns: {
+          abono: number
+          cargo: number
+          concepto: string
+          estado: string
+          fecha: string
+          saldo: number
+          tipo: string
+        }[]
+      }
       cuentas_por_cobrar: {
         Args: { p_edificio: string }
         Returns: {
@@ -1616,6 +1628,19 @@ export type Database = {
           dia_lectura: number
           monto_fijo: number
           total_declarado: number
+        }[]
+      }
+      estado_departamentos: {
+        Args: { p_edificio: string }
+        Returns: {
+          departamento_id: string
+          deuda: number
+          en_revision: number
+          estado: string
+          numero: string
+          piso: number
+          responsable: string
+          vencido: number
         }[]
       }
       estado_inactividad: {
