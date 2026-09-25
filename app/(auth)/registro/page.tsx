@@ -26,7 +26,12 @@ async function crearCuenta(form: FormData) {
     password: clave,
     options: { data: { nombre, terminos_version: VERSION_TERMINOS }, emailRedirectTo: `${origen}/auth/callback?next=/edificios/nuevo` },
   });
-  if (error) volver(error.status === 429 ? "limite" : error.code === "weak_password" ? "debil" : "error");
+  if (error) {
+    console.error("Registro:", error.status, error.code, error.message);
+    volver(
+      error.status === 429 ? "limite" : error.code === "weak_password" ? "debil" : /sending confirmation email/i.test(error.message) ? "envio" : "error",
+    );
+  }
 
   // Si el correo ya tenía cuenta, Supabase no lo revela: mostramos el mismo mensaje.
   redirect(`/registro?enviado=${encodeURIComponent(email)}`);
@@ -39,6 +44,7 @@ const ERRORES: Record<string, string> = {
   terminos: "Para crear la cuenta, acepta los términos y la política de privacidad.",
   debil: "Esa contraseña es muy fácil de adivinar. Usa una más larga o combina letras y números.",
   limite: "Se enviaron demasiados correos en poco tiempo. Espera unos minutos e inténtalo otra vez.",
+  envio: "No pudimos enviarte el correo de verificación a esa dirección. Revisa que esté bien escrita; si el problema sigue, escríbenos.",
   error: "No pudimos crear la cuenta. Inténtalo otra vez en unos minutos.",
 };
 
