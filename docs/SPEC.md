@@ -1,6 +1,6 @@
 # EDIFIKA · Especificación funcional y técnica (MVP v1)
 
-Versión 1.10 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA · 1.7: pago adelantado como saldo a favor (RN-12) · 1.8: pago agrupado (RN-10) y ausencia prolongada (RN-40), lema "Administra tus edificios, sin complicaciones" · 1.9: chat del edificio RN-41 · 1.10: recibos generados en el servidor de Next.js) · Product Owner: David
+Versión 1.11 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA · 1.7: pago adelantado como saldo a favor (RN-12) · 1.8: pago agrupado (RN-10) y ausencia prolongada (RN-40), lema "Administra tus edificios, sin complicaciones" · 1.9: chat del edificio RN-41 · 1.10: recibos generados en el servidor de Next.js · 1.11: planes y correos configurables, consentimiento de términos) · Product Owner: David
 
 El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcional. Si este documento y el prototipo difieren, manda este documento.
 
@@ -158,7 +158,9 @@ Montos en `numeric(12,2)`, soles. Fechas de negocio en zona horaria `America/Lim
 
 **RN-16 Cambio de ocupante.** Lo registra solo el titular. El acceso anterior se desactiva y queda en el historial. La deuda pertenece al departamento, no a la persona. Una venta cierra también el alquiler vigente. Si el ocupante que sale era administrador, su nivel de administración no cambia automáticamente: el titular decide si lo mantiene, lo quita o, si era el titular, transfiere (RN-23).
 
-**RN-17 Módulos.** Los módulos base siempre están activos. Cada módulo adicional admite una prueba de 14 días, una sola vez. Vencida la prueba, vuelve a bloquearse.
+**RN-17 Módulos.** Los módulos base siempre están activos. Cada módulo adicional admite una prueba de 14 días, una sola vez. Vencida la prueba, vuelve a bloquearse. Un plan pagado activa los módulos que incluye. Mientras un módulo no esté construido se muestra como "Próximamente": se puede solicitar el plan, pero no iniciar la prueba (para no gastarla).
+
+**RN-42 Consentimiento.** Cada cuenta acepta la versión vigente de los términos y la política de privacidad: al registrarse (casilla obligatoria) o, si fue invitada, al ingresar por primera vez. Si la versión cambia, se vuelve a pedir. Se guarda la versión y la fecha de aceptación.
 
 **RN-18 Auditoría.** Confirmar gastos, abrir periodo, validar o rechazar pagos, pagos en efectivo, extraordinarios, anulaciones, cambios de ocupante, cambios del equipo, designación del validador, transferencias y cortes quedan registrados con autor y fecha.
 
@@ -353,12 +355,12 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 1. Cobro a mes vencido (RN-04) o por presupuesto anticipado.
 2. Monto de la mora y si debe ser fija o porcentual.
 3. Si los habitantes ven el desglose de deudas por departamento (RN-15).
-4. Precios de los planes: Básico S/ 149, Pro S/ 249, Premium S/ 349 (valores de ejemplo).
+4. Precios de los planes: Básico S/ 149, Pro S/ 249, Premium S/ 349 al mes por edificio, fijados en la Etapa 6 y guardados en la base (`plataforma_config.planes`). El Product Owner está estudiando precios del mercado para competir (referencia: en México se cobra USD 1.50 por departamento al mes); se podrán cambiar desde la consola de plataforma (punto 11).
 5. Si la junta de propietarios necesita un acceso de solo lectura permanente.
 6. Supuesto a confirmar: el coadministrador puede generar y enviar recibos (no modifica datos). Si no, se restringe al titular.
 7. Si la tarifa de una reserva cancelada por el vecino con mucha anticipación (por ejemplo, más de 72 horas) debería devolverse.
 8. Si los datos de un edificio depurado deben guardarse cifrados unos días más antes del borrado definitivo, por si el titular reclama.
 9. Otros modelos de cuota: montos por tipo de unidad (RN-03).
 10. Cambio de medidor a mitad de mes: en v1 el medidor nuevo empieza con su lectura inicial; falta decidir si se registra la lectura final del medidor retirado para sumar su consumo del mes.
-11. **Consola de plataforma (súper administrador, equipo de EDIFIKA).** El Product Owner entregará el detalle completo al terminar los módulos actuales. Ya confirmado para v1: (a) ver un edificio en solo lectura para dar soporte, con registro en la auditoría del edificio (Ley 29733); (b) gestionar el equipo de EDIFIKA (agregar o quitar miembros de la plataforma); (c) depuración manual: ver los edificios por eliminar, posponer la eliminación o eliminar a pedido del titular. Existe hoy solo la transferencia forzada con acta (`/plataforma`).
+11. **Consola de plataforma (súper administrador, equipo de EDIFIKA).** El Product Owner entregará el detalle completo al terminar los módulos actuales. Ya confirmado para v1: (a) ver un edificio en solo lectura para dar soporte, con registro en la auditoría del edificio (Ley 29733); (b) gestionar el equipo de EDIFIKA (agregar o quitar miembros de la plataforma); (c) depuración manual: ver los edificios por eliminar, posponer la eliminación o eliminar a pedido del titular; (d) **configurar planes y precios** sin publicar código: nombre, precio, moneda, módulos incluidos y límite de departamentos, y evaluar un modelo de precio por departamento; (e) **configurar los correos de la plataforma**: el que recibe los avisos de solicitudes de plan (hoy david.bejarano@gmail.com) y el de contacto que aparece en los términos y la privacidad; (f) ver y atender las solicitudes de plan y asignar el plan pagado a un edificio. Los valores ya viven en la tabla `plataforma_config` (Etapa 6). Existe hoy solo la transferencia forzada con acta (`/plataforma`).
 12. **Módulo Junta de propietarios (futuro).** Incluirá los préstamos que la junta pida para dar liquidez al edificio, como alternativa al pago adelantado de los vecinos (RN-12). Se definirá más adelante.

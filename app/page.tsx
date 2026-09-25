@@ -87,7 +87,16 @@ export default function Bienvenida() {
         </section>
       </main>
 
-      <footer className="border-t border-line py-6 text-center text-sm text-muted">EDIFIKA · Lima, Perú</footer>
+      <footer className="border-t border-line py-6 text-center text-sm text-muted">
+        EDIFIKA · Lima, Perú ·{" "}
+        <Link href="/terminos" className="hover:text-ink">
+          Términos
+        </Link>{" "}
+        ·{" "}
+        <Link href="/privacidad" className="hover:text-ink">
+          Privacidad
+        </Link>
+      </footer>
     </>
   );
 }

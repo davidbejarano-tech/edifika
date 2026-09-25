@@ -2,12 +2,14 @@ import { redirect } from "next/navigation";
 import { Encabezado } from "@/components/Encabezado";
 import { MenuAdmin } from "@/components/MenuAdmin";
 import { obtenerContexto } from "@/lib/contexto";
+import { terminosAceptados } from "@/lib/legal";
 
 // Solo el equipo de administración (titular, coadministrador o saliente en lectura).
 // La base de datos protege de verdad con RLS; esto solo evita mostrar pantallas que no corresponden.
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, edificios, actual } = await obtenerContexto();
+  const { supabase, user, edificios, actual } = await obtenerContexto();
   if (!user) redirect("/login");
+  if (!(await terminosAceptados(supabase, user.id, user.user_metadata))) redirect("/aceptar-terminos");
   if (!actual) redirect("/edificios");
   if (!actual.nivel) redirect(actual.departamento_id ? "/cuentas" : "/edificios");
 
@@ -17,7 +19,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Encabezado edificio={actual} vista="admin" variosEdificios={edificios.length > 1} />
       </div>
       <MenuAdmin porValidar={actual.pagos_por_validar ?? 0} />
-      <main className="mx-auto w-full max-w-[1200px] min-w-0 px-4 pt-5 pb-12 md:px-8">{children}</main>
+      <main className="mx-auto w-full max-w-[1200px] min-w-0 px-4 pt-5 pb-12 md:px-8">
+        {actual.dias_para_eliminar !== null && (
+          <div className="mb-4 rounded-xl border border-warn bg-warn-bg px-4 py-3 text-sm text-warn print:hidden" role="alert">
+            <b>Este edificio lleva {actual.dias_sin_movimiento} días sin movimiento.</b> Si llega a 90 días, se eliminará con todos sus
+            datos (quedan {actual.dias_para_eliminar} días). Cualquier registro, como un gasto, un pago o un mensaje, reinicia el
+            contador. Los edificios con plan pagado no se eliminan.
+            {actual.nivel === "titular" && (
+              <a href="/exportar" className="ml-1 font-bold underline">
+                Exportar los datos a Excel
+              </a>
+            )}
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   );
 }

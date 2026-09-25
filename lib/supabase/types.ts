@@ -333,6 +333,7 @@ export type Database = {
           mora_monto: number
           nombre: string
           organizacion_id: string
+          plan: string | null
           publicar_desglose: boolean
           saldo_inicial: number
           suscripcion_pagada: boolean
@@ -360,6 +361,7 @@ export type Database = {
           mora_monto?: number
           nombre: string
           organizacion_id: string
+          plan?: string | null
           publicar_desglose?: boolean
           saldo_inicial?: number
           suscripcion_pagada?: boolean
@@ -387,6 +389,7 @@ export type Database = {
           mora_monto?: number
           nombre?: string
           organizacion_id?: string
+          plan?: string | null
           publicar_desglose?: boolean
           saldo_inicial?: number
           suscripcion_pagada?: boolean
@@ -963,18 +966,24 @@ export type Database = {
           id: string
           nombre: string
           telefono: string | null
+          terminos_aceptados: string | null
+          terminos_version: string | null
         }
         Insert: {
           created_at?: string
           id: string
           nombre: string
           telefono?: string | null
+          terminos_aceptados?: string | null
+          terminos_version?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           nombre?: string
           telefono?: string | null
+          terminos_aceptados?: string | null
+          terminos_version?: string | null
         }
         Relationships: []
       }
@@ -1093,6 +1102,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plataforma_config: {
+        Row: {
+          actualizado_en: string
+          clave: string
+          valor: Json
+        }
+        Insert: {
+          actualizado_en?: string
+          clave: string
+          valor: Json
+        }
+        Update: {
+          actualizado_en?: string
+          clave?: string
+          valor?: Json
+        }
+        Relationships: []
       }
       recibos: {
         Row: {
@@ -1379,6 +1406,54 @@ export type Database = {
           },
         ]
       }
+      solicitudes_plan: {
+        Row: {
+          avisado_en: string | null
+          created_at: string
+          edificio_id: string
+          estado: string
+          id: string
+          nota: string | null
+          plan: string
+          solicitado_por: string | null
+        }
+        Insert: {
+          avisado_en?: string | null
+          created_at?: string
+          edificio_id: string
+          estado?: string
+          id?: string
+          nota?: string | null
+          plan: string
+          solicitado_por?: string | null
+        }
+        Update: {
+          avisado_en?: string | null
+          created_at?: string
+          edificio_id?: string
+          estado?: string
+          id?: string
+          nota?: string | null
+          plan?: string
+          solicitado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitudes_plan_edificio_id_fkey"
+            columns: ["edificio_id"]
+            isOneToOne: false
+            referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_plan_solicitado_por_fkey"
+            columns: ["solicitado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zonas_comunes: {
         Row: {
           activa: boolean
@@ -1615,6 +1690,7 @@ export type Database = {
         Args: { p_edificio: string; p_recurrentes?: Json }
         Returns: string
       }
+      aceptar_terminos: { Args: { p_version: string }; Returns: undefined }
       activar_prueba: {
         Args: { p_edificio: string; p_modulo: string }
         Returns: string
@@ -1710,6 +1786,7 @@ export type Database = {
         }[]
       }
       confirmar_gastos: { Args: { p_periodo: string }; Returns: undefined }
+      correo_contacto: { Args: never; Returns: string }
       crear_edificio: {
         Args: {
           p_area_total: number
@@ -1877,6 +1954,16 @@ export type Database = {
           protegido: boolean
         }[]
       }
+      estado_modulos: {
+        Args: { p_edificio: string }
+        Returns: {
+          dias_prueba: number
+          estado: string
+          modulo: string
+          prueba_hasta: string
+          prueba_usada: boolean
+        }[]
+      }
       estado_validacion: {
         Args: { p_edificio: string }
         Returns: {
@@ -1910,6 +1997,7 @@ export type Database = {
           mora_monto: number
           nombre: string
           organizacion_id: string
+          plan: string | null
           publicar_desglose: boolean
           saldo_inicial: number
           suscripcion_pagada: boolean
@@ -2028,6 +2116,7 @@ export type Database = {
         }[]
       }
       parte_fija_actual: { Args: { p_edificio: string }; Returns: number }
+      planes_vigentes: { Args: never; Returns: Json }
       puede_aprobar_ausencia: {
         Args: { p_departamento: string; p_edificio: string }
         Returns: boolean
@@ -2176,6 +2265,10 @@ export type Database = {
           p_hasta: string
           p_motivo: string
         }
+        Returns: string
+      }
+      solicitar_plan: {
+        Args: { p_edificio: string; p_nota?: string; p_plan: string }
         Returns: string
       }
       solicitar_reserva: {

@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Rutas accesibles sin sesión (además de la bienvenida en "/")
-const PUBLICAS = ["/login", "/registro", "/recuperar", "/auth/"];
+const PUBLICAS = ["/login", "/registro", "/recuperar", "/auth/", "/terminos", "/privacidad"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

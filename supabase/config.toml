@@ -417,3 +417,6 @@ enabled = true
 # Login por departamento: es público (el vecino aún no tiene sesión).
 [functions.login-departamento]
 verify_jwt = false
+
+[functions.depurar-edificios-inactivos]
+verify_jwt = false

@@ -7,13 +7,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { writeFileSync } from "node:fs";
+import { VERSION_TERMINOS } from "../lib/legal";
 
 const BASE = process.env.PRUEBA_URL || "http://localhost:3000";
 const CLAVE = process.env.DEMO_PASSWORD || "Demo2026!";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const publica = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
 
-async function cookiesDe(login: { email?: string; codigo?: string; numero?: string }) {
+// aceptar: registra la aceptación de los términos vigentes (si no, la app pide aceptarlos primero)
+async function cookiesDe(login: { email?: string; codigo?: string; numero?: string }, aceptar = true) {
   const jar = new Map<string, string>();
   const sb = createServerClient(url, publica, {
     cookies: {
@@ -34,6 +37,7 @@ async function cookiesDe(login: { email?: string; codigo?: string; numero?: stri
     if (!r.ok) throw new Error(`${login.numero}: ${s.error}`);
     await sb.auth.setSession(s);
   }
+  if (aceptar) await sb.rpc("aceptar_terminos", { p_version: VERSION_TERMINOS });
   return [...jar].map(([n, v]) => `${n}=${v}`).join("; ");
 }
 
@@ -194,12 +198,25 @@ async function main() {
   await caso("Coadministrador entra", "/edificios?vista=admin", coadmin, "/inicio");
   await caso("Titular con sesión va a /login", "/login", titular, "/inicio");
 
-  const d = await destino("/edificios?vista=admin", coadmin);
-  console.log(d.includes("6 acciones deshabilitadas") ? "✔ Coadministrador: 6 acciones del titular deshabilitadas" : `✖ Coadministrador: ${d}`);
-  if (!d.includes("6 acciones deshabilitadas")) fallas++;
-  const t = await destino("/edificios?vista=admin", titular);
-  console.log(!t.includes("deshabilitadas") ? "✔ Titular: ninguna acción deshabilitada" : `✖ Titular: ${t}`);
-  if (t.includes("deshabilitadas")) fallas++;
+  // Etapa 6A: dashboard de módulos, legales, exportación y consentimiento
+  await contiene("Titular: inicio con módulos y planes", "/inicio", titular, ["Gestión del edificio", "Finanzas y cuotas", "Áreas comunes", "Ver planes", "Próximamente"]);
+  await contiene("Coadministrador: inicio con módulos", "/inicio", coadmin, ["Comunicación", "Marketplace de servicios"]);
+  await caso("Términos sin sesión", "/terminos", "", "/terminos (200)");
+  await caso("Privacidad sin sesión", "/privacidad", "", "/privacidad (200)");
+  await contiene("Términos explican la depuración", "/terminos", "", ["90 días sin movimiento", "60", "83 días"]);
+  await contiene("Registro pide aceptar los términos", "/registro", "", ["Acepto los", "política de privacidad"]);
+  const xls = await fetch(BASE + "/exportar", { headers: { cookie: titular } });
+  const esXls = xls.status === 200 && (xls.headers.get("content-type") ?? "").includes("spreadsheetml");
+  console.log(`${esXls ? "✔" : "✖"} Titular exporta el edificio a Excel (${xls.status}, ${Math.round((await xls.arrayBuffer()).byteLength / 1024)} KB)`);
+  if (!esXls) fallas++;
+  const xlsCo = await fetch(BASE + "/exportar", { headers: { cookie: coadmin } });
+  console.log(`${xlsCo.status === 403 ? "✔" : "✖"} El coadministrador no exporta (${xlsCo.status})`);
+  if (xlsCo.status !== 403) fallas++;
+  // Una cuenta sin aceptar la versión vigente va primero a aceptar los términos
+  const { data: m101 } = await admin.from("membresias").select("perfil_id, departamentos!inner(numero, edificios!inner(codigo))").eq("rol", "habitante").eq("estado", "activo").eq("departamentos.numero", "101").eq("departamentos.edificios.codigo", "los-ficus");
+  for (const m of m101 ?? []) await admin.from("perfiles").update({ terminos_version: null }).eq("id", m.perfil_id);
+  const v101 = await cookiesDe({ codigo: "los-ficus", numero: "101" }, false);
+  await caso("Vecino 101 sin aceptar los términos", "/cuentas", v101, "/aceptar-terminos");
 
   console.log(fallas ? `\n${fallas} prueba(s) fallaron` : "\nTodas las pruebas pasaron");
   process.exit(fallas ? 1 : 0);

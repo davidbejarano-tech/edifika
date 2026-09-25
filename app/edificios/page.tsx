@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Marca } from "@/components/Logo";
 import { NOMBRE_NIVEL, obtenerContexto, type EdificioMio } from "@/lib/contexto";
+import { terminosAceptados } from "@/lib/legal";
 
 const ir = (e: EdificioMio, v: "admin" | "habitante") => `/ir?e=${e.edificio_id}&v=${v}`;
 
@@ -9,8 +10,9 @@ const ir = (e: EdificioMio, v: "admin" | "habitante") => `/ir?e=${e.edificio_id}
 // opción entra directo; si no, muestra la lista con las cifras de cada edificio.
 export default async function MisEdificiosPage({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
   const { vista } = await searchParams;
-  const { user, edificios } = await obtenerContexto();
+  const { supabase, user, edificios } = await obtenerContexto();
   if (!user) redirect("/login");
+  if (!(await terminosAceptados(supabase, user.id, user.user_metadata))) redirect("/aceptar-terminos");
 
   const administra = edificios.some((e) => e.nivel);
   if (vista && edificios.length === 1) {

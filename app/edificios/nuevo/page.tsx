@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { Marca } from "@/components/Logo";
 import { obtenerContexto } from "@/lib/contexto";
+import { terminosAceptados } from "@/lib/legal";
 import { Asistente } from "./Asistente";
 
 export default async function NuevoEdificioPage() {
   const { supabase, user, edificios } = await obtenerContexto();
   if (!user) redirect("/login");
+  if (!(await terminosAceptados(supabase, user.id, user.user_metadata))) redirect("/aceptar-terminos");
 
   // Organizaciones donde la cuenta es titular: puede agregar el edificio a una de ellas (RN-26).
   const orgIds = [...new Set(edificios.filter((e) => e.nivel === "titular").map((e) => e.organizacion_id))];

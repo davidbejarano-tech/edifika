@@ -91,6 +91,22 @@ export default async function ConfiguracionPage() {
           </Link>
         </p>
       </section>
+
+      {puede && (
+        <section className="panel">
+          <h3 className="mb-1">Datos del edificio</h3>
+          <p className="mb-3 text-sm text-muted">
+            Descarga una copia en Excel con departamentos y ocupantes, cargos, pagos y gastos. Los edificios sin plan pagado se
+            eliminan tras 90 días sin movimiento (avisamos a los 60 y a los 83 días).{" "}
+            <Link href="/terminos#depuracion" className="font-semibold text-brand">
+              Ver los términos
+            </Link>
+          </p>
+          <a href="/exportar" className="btn quiet">
+            Exportar a Excel
+          </a>
+        </section>
+      )}
     </>
   );
 }

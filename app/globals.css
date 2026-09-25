@@ -76,6 +76,12 @@
   .chip.activo { background: var(--ok-bg); color: var(--ok); }
   .err { color: var(--bad); font-size: 0.88rem; margin-bottom: 0.6rem; }
   .aviso { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.88rem; margin-bottom: 0.8rem; }
+  .legal h1 { margin-bottom: 0.3rem; }
+  .legal h2 { font-size: 1.15rem; margin: 1.6rem 0 0.5rem; }
+  .legal p, .legal li { line-height: 1.6; }
+  .legal p { margin-bottom: 0.6rem; }
+  .legal ul { list-style: disc; padding-left: 1.3rem; display: grid; gap: 0.4rem; margin-bottom: 0.6rem; }
+  .legal a { color: var(--brand); font-weight: 600; }
   .hint { background: var(--surface2); border: 1px dashed var(--line); border-radius: 8px; padding: 0.65rem 0.8rem; font-size: 0.86rem; color: var(--muted); }
   .field textarea { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.55rem 0.7rem; width: 100%; resize: vertical; }
   .errlist { background: var(--bad-bg); color: var(--bad); border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.86rem; margin: 0.6rem 0; }

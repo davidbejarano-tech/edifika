@@ -1,38 +1,43 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { NOMBRE_NIVEL, obtenerContexto, type NivelAdmin } from "@/lib/contexto";
+import { NOMBRE_NIVEL, obtenerContexto } from "@/lib/contexto";
+import { mes, soles } from "@/lib/format";
+import type { Plan } from "@/lib/modulos";
+import { periodosDe } from "@/lib/periodos";
+import { Modulos } from "./Modulos";
 
-type Accion = { texto: string; quien: "titular" | "equipo" };
-
-// Matriz de permisos (SPEC sección 2). Las pantallas llegan en las etapas siguientes.
-const ACCIONES: Accion[] = [
-  { texto: "Registrar gastos, agua y lecturas", quien: "equipo" },
-  { texto: "Validar pagos y registrar efectivo", quien: "equipo" },
-  { texto: "Generar y enviar recibos", quien: "equipo" },
-  { texto: "Confirmar gastos y abrir el mes", quien: "titular" },
-  { texto: "Emitir extraordinarios y anular compromisos", quien: "titular" },
-  { texto: "Configuración del edificio y departamentos", quien: "titular" },
-  { texto: "Crear o modificar usuarios y ocupantes", quien: "titular" },
-  { texto: "Equipo de administración y transferencia", quien: "titular" },
-  { texto: "Activar pruebas de módulos y solicitar planes", quien: "titular" },
-];
-
-const puede = (nivel: NivelAdmin, a: Accion) =>
-  nivel === "titular" || (nivel === "operador" && a.quien === "equipo");
-
+// Inicio: dashboard de módulos (SPEC · Inicio, RN-17), avance de la configuración y cifras del mes.
 export default async function InicioPage({ searchParams }: { searchParams: Promise<{ nuevo?: string }> }) {
   const { nuevo } = await searchParams;
-  const { supabase, actual } = await obtenerContexto();
-  if (!actual?.nivel) redirect("/edificios");
+  const { supabase, user, actual } = await obtenerContexto();
+  if (!user || !actual?.nivel) redirect("/edificios");
   const nivel = actual.nivel;
+  const ed = actual.edificio_id;
 
-  const { data: conf } = await supabase.rpc("estado_configuracion", { p_edificio: actual.edificio_id }).single();
+  const [{ data: conf }, { data: estados }, { data: planes }, { data: edificio }, { data: perfil }, { actual: periodo }, { data: cobranza }, { count: mensajes }] =
+    await Promise.all([
+      supabase.rpc("estado_configuracion", { p_edificio: ed }).single(),
+      supabase.rpc("estado_modulos", { p_edificio: ed }),
+      supabase.rpc("planes_vigentes"),
+      supabase.from("edificios").select("plan, suscripcion_pagada").eq("id", ed).single(),
+      supabase.from("perfiles").select("nombre").eq("id", user.id).maybeSingle(),
+      periodosDe(supabase, ed),
+      supabase.rpc("cobranza_edificio", { p_edificio: ed }).maybeSingle(),
+      supabase.from("mensajes").select("id", { count: "exact", head: true }).eq("edificio_id", ed),
+    ]);
+  const { data: r } = periodo ? await supabase.rpc("resumen_periodo", { p_periodo: periodo.id }).maybeSingle() : { data: null };
   const pasos = conf ? pasosDeConfiguracion(conf) : [];
   const hechos = pasos.filter((p) => p.ok).length;
+  const metricas: Record<string, string> = {
+    gestion: `${actual.departamentos ?? 0} departamentos`,
+    finanzas: `${soles(cobranza?.por_cobrar ?? 0)} por cobrar`,
+    comunicacion: `${mensajes ?? 0} mensajes en el chat`,
+  };
 
   return (
     <>
-      <div className="mb-5">
-        <h1>Inicio</h1>
+      <div className="mb-4">
+        <h1>Hola{perfil?.nombre ? `, ${perfil.nombre.split(" ")[0]}` : ""}</h1>
         <p className="mt-1 text-muted">
           {actual.nombre} · entraste como <b className="text-ink">{NOMBRE_NIVEL[nivel]}</b>.
         </p>
@@ -44,9 +49,22 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
           {actual.departamentos} {actual.departamentos === 1 ? "departamento" : "departamentos"}.
         </div>
       )}
+      {nivel === "lectura" && (
+        <p className="hint mb-4">
+          Entregaste la titularidad. Durante 15 días puedes ver la información del edificio, pero no hacer cambios.
+        </p>
+      )}
+
+      <Modulos
+        estados={estados ?? []}
+        metricas={metricas}
+        planes={(planes ?? []) as unknown as Plan[]}
+        planActual={edificio?.suscripcion_pagada ? edificio.plan : null}
+        esTitular={nivel === "titular"}
+      />
 
       {pasos.length > 0 && hechos < pasos.length && (
-        <section className="panel">
+        <section className="panel mt-5">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="flex-1">Termina de configurar tu edificio</h3>
             <span className="text-sm text-muted">
@@ -67,44 +85,33 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-sm text-muted">La pantalla de Configuración llega en la siguiente entrega (Etapa 2b).</p>
+          <Link href="/configuracion" className="btn quiet mt-3">
+            Ir a Configuración
+          </Link>
         </section>
       )}
 
-      {nivel === "lectura" && (
-        <p className="hint mb-4">
-          Entregaste la titularidad. Durante 15 días puedes ver la información del edificio, pero no hacer cambios.
-        </p>
+      {periodo && (
+        <>
+          <h2 className="mt-7 mb-3 capitalize">{mes(periodo.mes)}</h2>
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
+            <Cifra titulo="Ingresos del mes" valor={soles(r?.ingresos ?? 0)} />
+            <Cifra titulo="Gastos del mes" valor={soles(r?.gastos ?? 0)} />
+            <Cifra titulo="Monto acumulado" valor={soles(r?.acumulado ?? 0)} clase={Number(r?.acumulado ?? 0) < 0 ? "text-bad" : "text-ok"} />
+            <Cifra titulo="Pagos por validar" valor={String(actual.pagos_por_validar ?? 0)} />
+          </div>
+        </>
       )}
-
-      <section className="panel">
-        <h3 className="mb-3">Lo que puedes hacer</h3>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {ACCIONES.map((a) => {
-            const si = puede(nivel, a);
-            return (
-              <li key={a.texto}>
-                <button
-                  type="button"
-                  className={`btn w-full justify-start whitespace-normal text-left ${si ? "ghost" : "quiet"}`}
-                  disabled={!si}
-                  title={si ? "Disponible en las próximas etapas" : "Solo el administrador titular puede hacerlo"}
-                >
-                  {a.texto}
-                </button>
-                {!si && (
-                  <p className="mt-1 text-xs text-muted">
-                    {nivel === "lectura" ? "Solo lectura." : "Solo el administrador titular."}
-                  </p>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <p className="hint">Las pantallas de gestión se construyen en las siguientes etapas.</p>
     </>
+  );
+}
+
+function Cifra({ titulo, valor, clase = "" }: { titulo: string; valor: string; clase?: string }) {
+  return (
+    <div className="bg-surface px-4 py-3">
+      <p className="text-xs text-muted">{titulo}</p>
+      <p className={`font-display text-lg font-bold tabular-nums ${clase}`}>{valor}</p>
+    </div>
   );
 }
 
