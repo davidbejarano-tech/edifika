@@ -5,6 +5,8 @@
  * y verifica a dónde lleva cada ruta.
  */
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
+import { writeFileSync } from "node:fs";
 
 const BASE = process.env.PRUEBA_URL || "http://localhost:3000";
 const CLAVE = process.env.DEMO_PASSWORD || "Demo2026!";
@@ -54,6 +56,18 @@ async function destino(ruta: string, cookie = ""): Promise<string> {
 }
 
 let fallas = 0;
+
+// Pide un PDF y verifica que llegue como PDF (o que se niegue). GUARDAR_PDF=carpeta lo guarda para revisarlo.
+async function pdf(nombre: string, ruta: string, cookie: string, esPdf: boolean) {
+  const r = await fetch(BASE + ruta, { headers: { cookie }, redirect: "manual" });
+  const buf = Buffer.from(await r.arrayBuffer());
+  const llego = r.status === 200 && (r.headers.get("content-type") ?? "").includes("pdf") && buf.subarray(0, 4).toString() === "%PDF";
+  const ok = llego === esPdf;
+  if (!ok) fallas++;
+  console.log(`${ok ? "✔" : "✖"} ${nombre}: ${r.status} ${llego ? `PDF de ${Math.round(buf.length / 1024)} KB` : buf.toString().slice(0, 80)}`);
+  if (llego && process.env.GUARDAR_PDF) writeFileSync(`${process.env.GUARDAR_PDF}/${nombre.replace(/[^a-z0-9]+/gi, "-")}.pdf`, buf);
+}
+
 async function caso(nombre: string, ruta: string, cookie: string, espera: string) {
   const d = await destino(ruta, cookie);
   const ok = d.startsWith(espera);
@@ -129,7 +143,7 @@ async function main() {
     await caso(`Vecino 302 escribe ${ruta}`, ruta, v302, "/cuentas");
   }
   await contiene("Titular: resumen con fachada y cifras", "/resumen", titular, ["Fachada de", "Ingresos del mes", "Monto acumulado", "Por cobrar"]);
-  await contiene("Titular: estado de cuenta con sello", "/estado-cuenta", titular, ["Estado de cuenta", "Saldo anterior", "Administrador titular", "Imprimir o guardar PDF"]);
+  await contiene("Titular: estado de cuenta con sello", "/estado-cuenta", titular, ["Estado de cuenta", "Saldo anterior", "Administrador titular", "Descargar PDF"]);
   const corteSinSesion = await fetch(`${BASE}/dev/corte`, { method: "POST", redirect: "manual" });
   const corteBien = corteSinSesion.status === 307 || corteSinSesion.status === 404;
   if (!corteBien) fallas++;
@@ -150,6 +164,25 @@ async function main() {
   await contiene("Titular: chat del edificio", "/chat", titular, ["Chat del edificio", "como administración"]);
   await caso("Vecino 302 escribe /chat (de administración)", "/chat", v302, "/cuentas");
   await caso("Titular externo escribe /mi-chat", "/mi-chat", titular, "/inicio");
+
+  // Etapa 5: recibos y estado de cuenta en PDF
+  const sb = createClient(url, publica, { auth: { persistSession: false } });
+  await sb.auth.signInWithPassword({ email: "titular@demo.buildingbuddy.pe", password: CLAVE });
+  const { data: deps } = await sb.from("departamentos").select("id, numero, edificios!inner(codigo)").eq("edificios.codigo", "los-ficus");
+  const { data: per } = await sb.from("periodos").select("mes, edificios!inner(codigo)").eq("edificios.codigo", "los-ficus").eq("estado", "abierto").single();
+  const idDe = (n: string) => deps!.find((d) => d.numero === n)!.id;
+  const m = per!.mes.slice(0, 7);
+  await contiene("Titular: recibos del mes", "/recibos", titular, ["Recibos", "Generar y enviar todos", "Total a pagar", "enviados"]);
+  await contiene("Coadministrador: recibos del mes", "/recibos", coadmin, ["Generar y enviar todos"]);
+  await caso("Vecino 302 escribe /recibos", "/recibos", v302, "/cuentas");
+  await contiene("Vecino 302: botón de su recibo", "/cuentas", v302, ["Ver mi recibo de"]);
+  await pdf("Titular recibo 302", `/pdf/recibo?d=${idDe("302")}&m=${m}`, titular, true);
+  await pdf("Vecino 302 su recibo", `/pdf/recibo?d=${idDe("302")}&m=${m}`, v302, true);
+  await pdf("Vecino 302 recibo del 101 (negado)", `/pdf/recibo?d=${idDe("101")}&m=${m}`, v302, false);
+  await pdf("Sin sesión recibo (negado)", `/pdf/recibo?d=${idDe("302")}&m=${m}`, "", false);
+  await pdf("Titular estado de cuenta", "/pdf/estado-cuenta?d=1", titular, true);
+  await pdf("Vecino 302 estado de cuenta", "/pdf/estado-cuenta", v302, true);
+  await contiene("Estado de cuenta con descarga en PDF", "/estado-cuenta", titular, ["Descargar PDF"]);
 
   const asistente = await html("/edificios/nuevo", titular);
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");

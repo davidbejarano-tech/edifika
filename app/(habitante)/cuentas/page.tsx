@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { obtenerContexto } from "@/lib/contexto";
+import { periodosDe } from "@/lib/periodos";
 import { MisCuentas } from "./MisCuentas";
 import { ValidadorVecino } from "./ValidadorVecino";
 
@@ -47,7 +48,7 @@ export default async function CuentasPage() {
   const nombre = (ocup.find((o) => o.tipo === "inquilino") ?? ocup.find((o) => o.tipo === "propietario"))?.personas?.nombre ?? "";
 
   // RN-12: saldo a favor, parte fija (para adelantar meses) y últimos pagos de cuota (referencia con gastos reales)
-  const [{ data: saldo }, { data: parteFija }, { data: ausencias }] = await Promise.all([
+  const [{ data: saldo }, { data: parteFija }, { data: ausencias }, { actual: periodo }] = await Promise.all([
     supabase.rpc("saldo_a_favor", { p_departamento: dep }),
     supabase.rpc("parte_fija_actual", { p_edificio: actual.edificio_id }),
     supabase
@@ -56,6 +57,7 @@ export default async function CuentasPage() {
       .eq("departamento_id", dep)
       .order("created_at", { ascending: false })
       .limit(1),
+    periodosDe(supabase, actual.edificio_id),
   ]);
   const ultimosPagos = listaPagos
     .filter((p) => p.estado === "validado" && /^Cuota/.test(p.concepto))
@@ -94,6 +96,7 @@ export default async function CuentasPage() {
           ultimosPagos,
         }}
         ausencia={ausencias?.[0] ?? null}
+        mesRecibo={periodo?.mes ?? null}
       />
       {esValidador && <ValidadorVecino pagos={(porValidar ?? []).filter((p) => p.puede_validar)} />}
     </>

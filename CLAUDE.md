@@ -74,5 +74,7 @@ npx supabase db push             # aplica migraciones al proyecto en la nube
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # clave publishable (sb_publishable_...)
 SUPABASE_SERVICE_ROLE_KEY=       # clave secreta (sb_secret_...): solo Edge Functions y scripts locales
-RESEND_API_KEY=
+RESEND_API_KEY=                  # solo servidor: recibos por correo
+RESEND_FROM=                     # opcional: remitente de los recibos
+CORREO_PRUEBAS=                  # opcional, desarrollo: todos los recibos van a esta dirección
 ```

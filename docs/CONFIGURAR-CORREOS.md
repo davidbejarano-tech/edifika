@@ -18,6 +18,16 @@ Los correos de verificación, invitación y recuperación de contraseña los env
 
 3. Guarda. Mientras no verifiques un dominio propio en Resend, **solo se entregan correos a tu propia dirección** (la de tu cuenta de Resend). Para escribir a los vecinos, verifica tu dominio en **Resend → Domains** (Etapa 6).
 
+## Recibos por correo (Etapa 5)
+
+Los recibos los envía la aplicación directamente por la API de Resend, con el PDF adjunto. Usa estas variables en `.env.local` (y en Vercel en producción):
+
+| Variable | Para qué |
+|---|---|
+| `RESEND_API_KEY` | La misma clave de Resend. Solo en el servidor |
+| `RESEND_FROM` | Remitente, por ejemplo `EDIFIKA <recibos@tudominio.pe>`. Si no se define: `EDIFIKA <onboarding@resend.dev>` |
+| `CORREO_PRUEBAS` | Solo en desarrollo: todos los recibos llegan a esta dirección (el asunto dice a quién iban). Debe ser el correo de tu cuenta de Resend mientras no verifiques un dominio. Déjala vacía o quítala en producción |
+
 ## 2. Cambiar las plantillas de los correos
 
 La aplicación valida los enlaces en el servidor (`/auth/callback`), así que los enlaces deben llevar el `token_hash`. En **Supabase → Authentication → Emails → Templates**, reemplaza el enlace de cada plantilla:

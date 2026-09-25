@@ -1,6 +1,6 @@
 # EDIFIKA · Especificación funcional y técnica (MVP v1)
 
-Versión 1.9 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA · 1.7: pago adelantado como saldo a favor (RN-12) · 1.8: pago agrupado (RN-10) y ausencia prolongada (RN-40), lema "Administra tus edificios, sin complicaciones" · 1.9: chat del edificio RN-41) · Product Owner: David
+Versión 1.10 · Setiembre 2026 (1.1: jerarquía de administración RN-19 a RN-25 · 1.2: autoregistro y depuración RN-26 a RN-29, Áreas comunes RN-30 a RN-37 · 1.3: página de bienvenida · 1.4: áreas y método en la configuración de la cobranza, cuota mixta con monto fijo, medidores de agua RN-38 · 1.5: alícuota sobre la suma de áreas, cuota = base × agua, reparto del agua por % de consumo, redondeo exacto · 1.6: el producto se llama EDIFIKA · 1.7: pago adelantado como saldo a favor (RN-12) · 1.8: pago agrupado (RN-10) y ausencia prolongada (RN-40), lema "Administra tus edificios, sin complicaciones" · 1.9: chat del edificio RN-41 · 1.10: recibos generados en el servidor de Next.js) · Product Owner: David
 
 El prototipo navegable (`docs/prototipo.html`) es la referencia visual y funcional. Si este documento y el prototipo difieren, manda este documento.
 
@@ -326,8 +326,8 @@ Las pantallas y botones se muestran según el nivel (matriz de la sección 2). U
 | `invitar-administrador` | Solo titular. Crea la cuenta del externo si no existe y llama a `agregar_coadministrador` o `transferir_titularidad` |
 | `transferencia-forzada` | Solo plataforma. Recibe el acta, la guarda en `actas/` y llama a `transferencia_forzada` |
 | `depurar-edificios-inactivos` | Diaria, con service role. Envía los avisos del día 60 y 83, borra los archivos de Storage del edificio, llama a `depurar_edificio` y elimina de Auth las cuentas que quedaron sin edificio |
-| `generar-recibo` | Genera el PDF del recibo, lo guarda en `recibos/` y registra la fila en `recibos` |
-| `enviar-recibo` | Envía el PDF por Resend al correo del responsable y marca `enviado_en` |
+
+**Recibos (Etapa 5).** Se generan en el servidor de Next.js, no en Edge Functions: el PDF se dibuja con `@react-pdf/renderer` con los datos de `datos_recibo()`, se guarda en `recibos/{edificio}/{departamento}/{AAAAMM}.pdf` con la sesión del administrador (RLS de Storage) y se registra con `registrar_recibo()`. El correo sale por la API de Resend con el PDF adjunto y se marca con `marcar_recibo_enviado()`. La clave de Resend vive solo en el servidor (`RESEND_API_KEY`, nunca `NEXT_PUBLIC_*`). El PDF del estado de cuenta se genera igual.
 
 ## 10. Seguridad y cumplimiento
 

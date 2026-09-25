@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Modal } from "@/components/Modal";
+import { ReciboModal } from "@/components/ReciboModal";
 import { prepararComprobante } from "@/lib/comprobante";
-import { fecha, soles } from "@/lib/format";
+import { fecha, mes, soles } from "@/lib/format";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 
 type Compromiso = {
@@ -53,6 +54,7 @@ type Props = {
   datosPago: { cuenta: string | null; yape: string | null };
   adelanto: Adelanto;
   ausencia: Ausencia | null;
+  mesRecibo: string | null; // mes abierto (AAAA-MM-01)
 };
 type Ausencia = { id: string; desde: string; hasta: string; motivo: string; estado: string; nota: string | null };
 
@@ -67,13 +69,14 @@ const ESTADO: Record<string, { texto: string; clase: string }> = {
 const METODOS = ["Yape", "Plin", "Transferencia BCP", "Transferencia BBVA", "Transferencia Interbank", "Transferencia Scotiabank", "Depósito en agencia"];
 const hoyLima = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date());
 
-export function MisCuentas({ edificioId, departamentoId, numero, nombre, compromisos, pagos, movimientos, datosPago, adelanto: ad, ausencia }: Props) {
+export function MisCuentas({ edificioId, departamentoId, numero, nombre, compromisos, pagos, movimientos, datosPago, adelanto: ad, ausencia, mesRecibo }: Props) {
   const router = useRouter();
   const [pagar, setPagar] = useState<Compromiso[] | null>(null);
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [avisoAusencia, setAvisoAusencia] = useState(false);
   const [adelanto, setAdelanto] = useState(false);
   const [verCuenta, setVerCuenta] = useState(false);
+  const [verRecibo, setVerRecibo] = useState(false);
   const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
   const [abriendo, iniciar] = useTransition();
 
@@ -170,6 +173,11 @@ export function MisCuentas({ edificioId, departamentoId, numero, nombre, comprom
           )}
         </div>
         <div className="flex flex-wrap gap-2">
+          {mesRecibo && (
+            <button className="btn quiet" onClick={() => setVerRecibo(true)}>
+              Ver mi recibo de {mes(mesRecibo).split(" ")[0]}
+            </button>
+          )}
           <button className="btn quiet" onClick={() => setVerCuenta((v) => !v)} aria-expanded={verCuenta}>
             {verCuenta ? "Ocultar mi cuenta corriente" : "Mi cuenta corriente"}
           </button>
@@ -425,6 +433,7 @@ export function MisCuentas({ edificioId, departamentoId, numero, nombre, comprom
           />
         )}
       </Modal>
+      <ReciboModal departamentoId={verRecibo ? departamentoId : null} mesIso={mesRecibo ?? ""} numero={numero} onCerrar={() => setVerRecibo(false)} />
     </>
   );
 }

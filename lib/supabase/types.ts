@@ -1587,6 +1587,20 @@ export type Database = {
         Args: { r: Database["public"]["Tables"]["reservas"]["Row"] }
         Returns: undefined
       }
+      _totales_recibo: {
+        Args: { p_departamento: string; p_mes: string }
+        Returns: {
+          anterior: number
+          anteriores: number
+          cargos: number
+          en_revision: number
+          pagado: number
+          saldo_aplicado: number
+          total: number
+          vence: string
+          vencido: boolean
+        }[]
+      }
       _transferir_titularidad: {
         Args: {
           p_acta: string
@@ -1732,6 +1746,10 @@ export type Database = {
           saldo_favor: number
           vencido: number
         }[]
+      }
+      datos_recibo: {
+        Args: { p_departamento: string; p_mes: string }
+        Returns: Json
       }
       departamentos_admin: {
         Args: { p_edificio: string }
@@ -1965,6 +1983,10 @@ export type Database = {
         Args: { p_aviso: number; p_edificio: string }
         Returns: undefined
       }
+      marcar_recibo_enviado: {
+        Args: { p_canal: string; p_recibo: string }
+        Returns: undefined
+      }
       mes_es: { Args: { p: string }; Returns: string }
       mi_departamento_en: { Args: { p_edificio: string }; Returns: string }
       mis_edificios: {
@@ -2030,6 +2052,22 @@ export type Database = {
         Args: { p_motivo: string; p_reserva: string }
         Returns: undefined
       }
+      recibos_del_mes: {
+        Args: { p_edificio: string; p_mes: string }
+        Returns: {
+          canal: string
+          correo: string
+          departamento_id: string
+          enviado_en: string
+          estado: string
+          generado_en: string
+          numero: string
+          recibo_id: string
+          responsable: string
+          telefono: string
+          total: number
+        }[]
+      }
       registrar_cambio_ocupante: {
         Args: {
           p_departamento: string
@@ -2071,6 +2109,10 @@ export type Database = {
       }
       registrar_pago_efectivo: {
         Args: { p_compromiso: string }
+        Returns: string
+      }
+      registrar_recibo: {
+        Args: { p_departamento: string; p_mes: string; p_pdf_path: string }
         Returns: string
       }
       regreso_de_ausencia: {

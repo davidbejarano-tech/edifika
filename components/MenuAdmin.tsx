@@ -25,6 +25,7 @@ const GRUPOS: { grupo: string | null; items: Item[] }[] = [
       { href: "/lecturas", texto: "Lecturas de agua", listo: true },
       { href: "/calculo", texto: "Cálculo mensual", listo: true },
       { href: "/cobranza", texto: "Cobranza", listo: true },
+      { href: "/recibos", texto: "Recibos", listo: true },
       { href: "/estado-cuenta", texto: "Estado de cuenta", listo: true },
     ],
   },

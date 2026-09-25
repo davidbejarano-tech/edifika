@@ -19,9 +19,11 @@
     "corte": "tsx --env-file=.env.local scripts/ejecutar-corte.ts",
     "probar:corte": "tsx --env-file=.env.local scripts/probar-corte.ts",
     "probar:vecino": "tsx --env-file=.env.local scripts/probar-vecino.ts",
-    "probar:comunicacion": "tsx --env-file=.env.local scripts/probar-comunicacion.ts"
+    "probar:comunicacion": "tsx --env-file=.env.local scripts/probar-comunicacion.ts",
+    "probar:recibos": "tsx --env-file=.env.local scripts/probar-recibos.ts"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.1",
     "next": "15.5.26",

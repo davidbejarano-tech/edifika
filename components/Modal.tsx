@@ -7,10 +7,11 @@ type Props = {
   titulo: string;
   onCerrar: () => void;
   children: React.ReactNode;
+  amplio?: boolean; // documentos como el recibo
 };
 
 // Ventana modal accesible con <dialog>: foco atrapado, Escape para cerrar y fondo oscurecido.
-export function Modal({ abierto, titulo, onCerrar, children }: Props) {
+export function Modal({ abierto, titulo, onCerrar, children, amplio = false }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export function Modal({ abierto, titulo, onCerrar, children }: Props) {
       ref={ref}
       onClose={onCerrar}
       aria-labelledby="modal-titulo"
-      className="m-auto w-[min(560px,calc(100%-2rem))] rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/40"
+      className={`m-auto ${amplio ? "w-[min(820px,calc(100%-1rem))]" : "w-[min(560px,calc(100%-2rem))]"} rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/40`}
     >
       {abierto && (
         <div className="max-h-[85dvh] overflow-y-auto p-5">

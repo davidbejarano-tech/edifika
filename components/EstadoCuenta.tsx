@@ -1,32 +1,23 @@
 import { SelectorPeriodo } from "@/components/SelectorPeriodo";
 import type { EdificioMio } from "@/lib/contexto";
-import type { crearClienteServidor } from "@/lib/supabase/server";
+import { cargarEstadoCuenta } from "@/lib/estado-cuenta";
 import { mes, soles } from "@/lib/format";
-import { periodosDe } from "@/lib/periodos";
+import type { crearClienteServidor } from "@/lib/supabase/server";
 import { BotonImprimir, Desglose } from "./ControlesEstadoCuenta";
-
-const INGRESO: Record<string, string> = {
-  cuota: "Cuotas de mantenimiento",
-  mora: "Moras",
-  extraordinario: "Compromisos extraordinarios",
-  adelanto: "Adelantos",
-  ajuste: "Ajustes",
-  reserva: "Reservas de áreas comunes",
-  garantia_retenida: "Garantías retenidas por daños",
-};
 
 type Props = {
   supabase: Awaited<ReturnType<typeof crearClienteServidor>>;
   actual: EdificioMio;
   p?: string;
+  d?: string; // desglose por departamento: "1" o "0"
   vecino?: boolean; // vista del vecino: el desglose aparece solo si el edificio lo publica (RN-15)
 };
 
 // Estado de cuenta del periodo (RN-14, RN-15, RN-24, RN-36), común a la administración y a los vecinos.
-// Todos los montos vienen de la base.
-export async function EstadoCuenta({ supabase, actual, p, vecino = false }: Props) {
-  const { periodos, actual: periodo } = await periodosDe(supabase, actual.edificio_id, p);
-  if (!periodo) {
+// Todos los montos vienen de la base; el PDF (lib/pdf/EstadoCuentaPdf.tsx) usa los mismos datos.
+export async function EstadoCuenta({ supabase, actual, p, d, vecino = false }: Props) {
+  const e = await cargarEstadoCuenta(supabase, actual, p, d, vecino);
+  if (!e.periodo) {
     return (
       <>
         <h1 className="mb-4">Estado de cuenta</h1>
@@ -34,29 +25,7 @@ export async function EstadoCuenta({ supabase, actual, p, vecino = false }: Prop
       </>
     );
   }
-
-  const [{ data: r }, { data: ingresos }, { data: gastos }, { data: cuentas }, { data: garantias }, { data: ed }] =
-    await Promise.all([
-      supabase.rpc("resumen_periodo", { p_periodo: periodo.id }).maybeSingle(),
-      supabase.rpc("ingresos_por_tipo", { p_periodo: periodo.id }),
-      supabase.from("gastos").select("tipo, categoria, descripcion, monto").eq("periodo_id", periodo.id).order("fecha"),
-      supabase.rpc("cuentas_por_cobrar", { p_edificio: actual.edificio_id }),
-      supabase.rpc("garantias_en_custodia", { p_edificio: actual.edificio_id }).maybeSingle(),
-      supabase.from("edificios").select("direccion, publicar_desglose").eq("id", actual.edificio_id).single(),
-    ]);
-
-  const oficial = !!r?.oficial;
-  const categorias = Object.entries(
-    (gastos ?? []).reduce<Record<string, number>>(
-      (acc, g) => ({
-        ...acc,
-        [g.categoria]: (acc[g.categoria] ?? 0) + Number(g.monto),
-      }),
-      {},
-    ),
-  );
-  const deudores = (cuentas ?? []).filter((c) => Number(c.pendiente) > 0);
-  const custodia = Number(garantias?.en_custodia ?? 0) + Number(garantias?.por_devolver ?? 0);
+  const urlPdf = `/pdf/estado-cuenta?p=${e.periodo.id}&d=${e.conDesglose ? 1 : 0}`;
 
   return (
     <>
@@ -65,49 +34,43 @@ export async function EstadoCuenta({ supabase, actual, p, vecino = false }: Prop
           <h1>Estado de cuenta</h1>
           <p className="mt-1 text-muted">Ingresos, gastos y saldo del edificio en el mes.</p>
         </div>
-        <SelectorPeriodo periodos={periodos} actual={periodo.id} />
+        <SelectorPeriodo periodos={e.periodos} actual={e.periodo.id} />
+        <a className="btn" href={`${urlPdf}&descargar=1`} download>
+          Descargar PDF
+        </a>
         <BotonImprimir />
       </div>
 
       <article className="panel relative mx-auto max-w-[820px] print:border-0 print:p-0">
         <span
           className={`absolute top-4 right-4 -rotate-6 rounded-md border-2 px-3 py-1 font-display text-sm font-extrabold tracking-widest uppercase ${
-            oficial ? "border-ok text-ok" : "border-warn text-warn"
+            e.oficial ? "border-ok text-ok" : "border-warn text-warn"
           }`}
         >
-          {oficial ? "Oficial" : "Borrador"}
+          {e.oficial ? "Oficial" : "Borrador"}
         </span>
-        <header className="mb-4 border-b border-line pb-3 pr-28">
+        <header className="mb-4 border-b border-line pr-28 pb-3">
           <p className="text-sm text-muted">Estado de cuenta</p>
-          <h2 className="text-2xl">{actual.nombre}</h2>
-          <p className="text-sm text-muted">{ed?.direccion}</p>
+          <h2 className="text-2xl">{e.nombre}</h2>
+          <p className="text-sm text-muted">{e.direccion}</p>
           <p className="mt-2 text-sm">
-            Periodo: <b className="capitalize">{mes(periodo.mes)}</b> · Administrador titular: <b>{r?.administrador ?? "—"}</b>
+            Periodo: <b className="capitalize">{mes(e.periodo.mes)}</b> · Administrador titular: <b>{e.administrador ?? "—"}</b>
           </p>
-          {!oficial && (
-            <p className="mt-1 text-xs text-muted">Borrador: los gastos del mes aún no están confirmados y pueden cambiar.</p>
-          )}
+          {!e.oficial && <p className="mt-1 text-xs text-muted">Borrador: los gastos del mes aún no están confirmados y pueden cambiar.</p>}
         </header>
 
         <div className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
-          <Cifra titulo="Saldo anterior" valor={soles(r?.saldo_anterior ?? 0)} />
-          <Cifra titulo="Ingresos del mes" valor={soles(r?.ingresos ?? 0)} clase="text-ok" />
-          <Cifra titulo="Gastos del mes" valor={soles(r?.gastos ?? 0)} clase="text-bad" />
-          <Cifra
-            titulo="Monto acumulado"
-            valor={soles(r?.acumulado ?? 0)}
-            clase={Number(r?.acumulado ?? 0) >= 0 ? "" : "text-bad"}
-          />
+          <Cifra titulo="Saldo anterior" valor={soles(e.saldoAnterior)} />
+          <Cifra titulo="Ingresos del mes" valor={soles(e.ingresos)} clase="text-ok" />
+          <Cifra titulo="Gastos del mes" valor={soles(e.gastos)} clase="text-bad" />
+          <Cifra titulo="Monto acumulado" valor={soles(e.acumulado)} clase={e.acumulado >= 0 ? "" : "text-bad"} />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           <section>
             <h3 className="mb-2">Ingresos</h3>
-            {ingresos?.length ? (
-              <Lista
-                filas={ingresos.map((i) => [`${INGRESO[i.tipo] ?? i.tipo} (${i.pagos})`, Number(i.monto)])}
-                total={Number(r?.ingresos ?? 0)}
-              />
+            {e.filasIngresos.length ? (
+              <Lista filas={e.filasIngresos} total={e.ingresos} />
             ) : (
               <p className="text-sm text-muted">Sin pagos validados en el mes.</p>
             )}
@@ -115,43 +78,34 @@ export async function EstadoCuenta({ supabase, actual, p, vecino = false }: Prop
           </section>
           <section>
             <h3 className="mb-2">Gastos</h3>
-            {categorias.length ? (
-              <Lista filas={categorias} total={Number(r?.gastos ?? 0)} />
-            ) : (
-              <p className="text-sm text-muted">Sin gastos registrados.</p>
-            )}
+            {e.categorias.length ? <Lista filas={e.categorias} total={e.gastos} /> : <p className="text-sm text-muted">Sin gastos registrados.</p>}
           </section>
         </div>
 
-        {custodia > 0 && (
+        {e.custodia > 0 && (
           <p className="mt-4 rounded-lg bg-surface2 px-3 py-2 text-sm">
-            <b>Garantías en custodia:</b> {soles(custodia)}. Es dinero de los vecinos por reservas de áreas comunes: no forma
-            parte del saldo del edificio.
+            <b>Garantías en custodia:</b> {soles(e.custodia)}. Es dinero de los vecinos por reservas de áreas comunes: no forma parte
+            del saldo del edificio.
           </p>
         )}
 
-        {(!vecino || ed?.publicar_desglose) && (
-          <Desglose inicial={!!ed?.publicar_desglose}>
+        {e.puedeDesglose && (
+          <Desglose activo={e.conDesglose}>
             <section className="mt-5">
               <h3 className="mb-2">Cuentas por cobrar por departamento</h3>
-              {deudores.length ? (
+              {e.deudores.length ? (
                 <Lista
-                  filas={deudores.map((c) => [
+                  filas={e.deudores.map((c) => [
                     `Depto ${c.numero}${Number(c.vencido) > 0 ? ` · vencido ${soles(c.vencido)}` : ""}`,
                     Number(c.pendiente),
                   ])}
-                  total={deudores.reduce((s, c) => s + Number(c.pendiente), 0)}
+                  total={e.deudores.reduce((s, c) => s + Number(c.pendiente), 0)}
                 />
               ) : (
                 <p className="text-sm text-muted">Todos los departamentos están al día.</p>
               )}
               <p className="mt-1 text-xs text-muted">
-                Al{" "}
-                {new Intl.DateTimeFormat("es-PE", {
-                  timeZone: "America/Lima",
-                  dateStyle: "long",
-                }).format(new Date())}
-                .
+                Al {new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", dateStyle: "long" }).format(new Date())}.
               </p>
             </section>
           </Desglose>
