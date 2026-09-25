@@ -198,6 +198,13 @@ async function main() {
   await caso("Coadministrador entra", "/edificios?vista=admin", coadmin, "/inicio");
   await caso("Titular con sesión va a /login", "/login", titular, "/inicio");
 
+  // El logo siempre lleva al inicio en un clic
+  const logo = (href: string) => `aria-label="EDIFIKA, ir al inicio" title="Ir al inicio" href="${href}"`;
+  for (const ruta of ["/login", "/registro", "/recuperar", "/terminos", "/privacidad"]) await contiene(`Logo al inicio en ${ruta}`, ruta, "", [logo("/")]);
+  await contiene("Logo al inicio del panel (titular)", "/cobranza", titular, [logo("/inicio")]);
+  await contiene("Logo al inicio del panel (vecino)", "/reportes", v302, [logo("/cuentas")]);
+  await contiene("Logo al inicio en Mis edificios", "/edificios", titular, [logo("/")]);
+
   // Etapa 6A: dashboard de módulos, legales, exportación y consentimiento
   await contiene("Titular: inicio con módulos y planes", "/inicio", titular, ["Gestión del edificio", "Finanzas y cuotas", "Áreas comunes", "Ver planes", "Próximamente"]);
   await contiene("Coadministrador: inicio con módulos", "/inicio", coadmin, ["Comunicación", "Marketplace de servicios"]);

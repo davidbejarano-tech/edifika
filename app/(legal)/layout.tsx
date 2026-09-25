@@ -7,9 +7,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
     <div className="min-h-dvh">
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-[860px] items-center gap-3 px-4 py-3">
-          <Link href="/" aria-label="EDIFIKA, inicio">
-            <Marca size={30} />
-          </Link>
+          <Marca size={30} />
           <span className="flex-1" />
           <Link href="/terminos" className="text-sm font-semibold text-muted hover:text-ink">
             Términos
