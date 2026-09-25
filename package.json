@@ -21,7 +21,8 @@
     "probar:vecino": "tsx --env-file=.env.local scripts/probar-vecino.ts",
     "probar:comunicacion": "tsx --env-file=.env.local scripts/probar-comunicacion.ts",
     "probar:recibos": "tsx --env-file=.env.local scripts/probar-recibos.ts",
-    "probar:comercial": "tsx --env-file=.env.local scripts/probar-comercial.ts"
+    "probar:comercial": "tsx --env-file=.env.local scripts/probar-comercial.ts",
+    "probar:plataforma": "tsx --env-file=.env.local scripts/probar-plataforma.ts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

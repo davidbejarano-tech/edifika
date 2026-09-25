@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { NOMBRE_NIVEL, obtenerContexto } from "@/lib/contexto";
-import { mes, soles } from "@/lib/format";
+import { fecha, mes, soles } from "@/lib/format";
 import type { Plan } from "@/lib/modulos";
 import { periodosDe } from "@/lib/periodos";
 import { Modulos } from "./Modulos";
@@ -18,14 +18,18 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
     await Promise.all([
       supabase.rpc("estado_configuracion", { p_edificio: ed }).single(),
       supabase.rpc("estado_modulos", { p_edificio: ed }),
-      supabase.rpc("planes_vigentes"),
+      supabase.rpc("planes_para_edificio", { p_edificio: ed }),
       supabase.from("edificios").select("plan, suscripcion_pagada").eq("id", ed).single(),
       supabase.from("perfiles").select("nombre").eq("id", user.id).maybeSingle(),
       periodosDe(supabase, ed),
       supabase.rpc("cobranza_edificio", { p_edificio: ed }).maybeSingle(),
       supabase.from("mensajes").select("id", { count: "exact", head: true }).eq("edificio_id", ed),
     ]);
-  const { data: r } = periodo ? await supabase.rpc("resumen_periodo", { p_periodo: periodo.id }).maybeSingle() : { data: null };
+  const [{ data: r }, { data: enSoporte }, { data: intervenciones }] = await Promise.all([
+    periodo ? supabase.rpc("resumen_periodo", { p_periodo: periodo.id }).maybeSingle() : Promise.resolve({ data: null }),
+    supabase.rpc("es_soporte", { p_edificio: ed }),
+    supabase.rpc("intervenciones_soporte", { p_edificio: ed }),
+  ]);
   const pasos = conf ? pasosDeConfiguracion(conf) : [];
   const hechos = pasos.filter((p) => p.ok).length;
   const metricas: Record<string, string> = {
@@ -49,7 +53,21 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
           {actual.departamentos} {actual.departamentos === 1 ? "departamento" : "departamentos"}.
         </div>
       )}
-      {nivel === "lectura" && (
+      {(intervenciones ?? []).length > 0 && (
+        <section className="mb-4 rounded-xl border border-info bg-info-bg px-4 py-3 text-sm text-info" role="status">
+          <b>El equipo de EDIFIKA hizo cambios en tu edificio para atender un reclamo:</b>
+          <ul className="mt-1 list-disc pl-5">
+            {(intervenciones ?? []).map((i) => (
+              <li key={i.sesion_id}>
+                {fecha(i.fecha.slice(0, 10))} · {i.persona} · {i.motivo} (reclamo: {i.referencia}) · {i.cambios}{" "}
+                {i.cambios === 1 ? "cambio" : "cambios"}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-xs">El detalle queda en la auditoría del edificio. Si no reconoces un cambio, escríbenos.</p>
+        </section>
+      )}
+      {nivel === "lectura" && !enSoporte && (
         <p className="hint mb-4">
           Entregaste la titularidad. Durante 15 días puedes ver la información del edificio, pero no hacer cambios.
         </p>
@@ -60,7 +78,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
         metricas={metricas}
         planes={(planes ?? []) as unknown as Plan[]}
         planActual={edificio?.suscripcion_pagada ? edificio.plan : null}
-        esTitular={nivel === "titular"}
+        esTitular={nivel === "titular" && !enSoporte}
       />
 
       {pasos.length > 0 && hechos < pasos.length && (

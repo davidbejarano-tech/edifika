@@ -6,9 +6,10 @@ type Props = {
   edificio: EdificioMio;
   vista: "admin" | "habitante";
   variosEdificios: boolean;
+  soporte?: string | null; // "revision" | "intervencion": equipo EDIFIKA dando soporte
 };
 
-export function Encabezado({ edificio, vista, variosEdificios }: Props) {
+export function Encabezado({ edificio, vista, variosEdificios, soporte = null }: Props) {
   const ambos = !!edificio.nivel && !!edificio.departamento_id;
   const base = `/ir?e=${edificio.edificio_id}`;
   return (
@@ -17,9 +18,11 @@ export function Encabezado({ edificio, vista, variosEdificios }: Props) {
       <div className="text-sm text-muted md:border-l md:border-line md:pl-4">
         <b className="font-semibold text-ink">{edificio.nombre}</b>
         {" · "}
-        {vista === "admin" && edificio.nivel
-          ? NOMBRE_NIVEL[edificio.nivel]
-          : `Depto ${edificio.departamento_numero ?? ""}`}
+        {soporte
+          ? `Soporte EDIFIKA · ${soporte === "intervencion" ? "Intervención" : "Revisión"}`
+          : vista === "admin" && edificio.nivel
+            ? NOMBRE_NIVEL[edificio.nivel]
+            : `Depto ${edificio.departamento_numero ?? ""}`}
       </div>
       <div className="flex-1" />
 
@@ -43,10 +46,16 @@ export function Encabezado({ edificio, vista, variosEdificios }: Props) {
         </nav>
       )}
 
-      {(variosEdificios || vista === "admin") && (
-        <Link href="/edificios" className="btn quiet sm">
-          Mis edificios
+      {soporte ? (
+        <Link href="/plataforma/edificios" className="btn quiet sm">
+          Consola
         </Link>
+      ) : (
+        (variosEdificios || vista === "admin") && (
+          <Link href="/edificios" className="btn quiet sm">
+            Mis edificios
+          </Link>
+        )
       )}
       <form action="/salir" method="post">
         <button className="btn quiet sm">Salir</button>

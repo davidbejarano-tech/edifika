@@ -91,11 +91,24 @@ export const ICONO_CANDADO = "M5 13a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2
 export type Plan = {
   id: "basico" | "pro" | "premium";
   nombre: string;
-  precio: number;
+  precio: number; // fijo al mes
+  precio_departamento?: number | null; // por departamento al mes
+  minimo?: number | null;
+  total?: number; // precio para un edificio concreto (planes_para_edificio)
+  departamentos?: number;
   moneda: string;
   max_departamentos: number | null;
   incluye: string;
   modulos: string[];
 };
 
-export const precioPlan = (p: Plan) => `${p.moneda === "PEN" ? "S/" : p.moneda} ${p.precio.toLocaleString("en-US")} al mes`;
+const dinero = (p: Plan, n: number) =>
+  `${p.moneda === "PEN" ? "S/" : p.moneda} ${n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+
+/** "S/ 149 al mes" o, con precio por departamento, "S/ 180 al mes (S/ 1.50 × 120 departamentos)". El total lo calcula la base. */
+export const precioPlan = (p: Plan) => {
+  const total = p.total ?? p.precio;
+  if (!p.precio_departamento) return `${dinero(p, total)} al mes`;
+  const detalle = `${p.precio ? `${dinero(p, p.precio)} + ` : ""}${dinero(p, p.precio_departamento)} × ${p.departamentos ?? 0} departamentos`;
+  return `${dinero(p, total)} al mes (${detalle}${p.minimo && total === p.minimo ? "; mínimo" : ""})`;
+};

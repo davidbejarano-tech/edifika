@@ -15,6 +15,9 @@ export default async function MisEdificiosPage({ searchParams }: { searchParams:
   if (!(await terminosAceptados(supabase, user.id, user.user_metadata))) redirect("/aceptar-terminos");
 
   const administra = edificios.some((e) => e.nivel);
+  const { data: esPlataforma } = await supabase.rpc("es_plataforma");
+  // El equipo EDIFIKA sin edificios propios entra directo a la consola
+  if (vista && esPlataforma === true && edificios.length === 0) redirect("/plataforma");
   if (vista && edificios.length === 1) {
     const e = edificios[0];
     if (vista === "admin" && e.nivel) redirect(ir(e, "admin"));
@@ -33,6 +36,14 @@ export default async function MisEdificiosPage({ searchParams }: { searchParams:
           <button className="btn quiet sm">Salir</button>
         </form>
       </div>
+
+      {esPlataforma === true && (
+        <Link href="/plataforma" className="panel mt-5 mb-0 flex items-center gap-3 hover:bg-surface2">
+          <span className="chip info">Equipo EDIFIKA</span>
+          <span className="flex-1 font-semibold">Consola de plataforma</span>
+          <span className="text-brand">Abrir →</span>
+        </Link>
+      )}
 
       <div className="mt-6 mb-5 flex flex-wrap items-end gap-3">
         <div className="flex-1">

@@ -107,7 +107,7 @@ Cada etapa termina con algo que puedes probar. Copia el prompt en Claude Code, d
 
 ---
 
-## Etapa 6b · Consola de plataforma (pendiente de definición)
+## Etapa 6b · Consola de plataforma
 
 **Prompt:** se escribirá cuando el Product Owner entregue el detalle de funciones (SPEC sección 12, punto 11). Confirmado hasta ahora: ver un edificio en solo lectura con auditoría, gestionar el equipo de EDIFIKA, depuración manual, **configurar planes y precios** (incluido evaluar precio por departamento), **configurar los correos de la plataforma** (avisos y contacto) y atender las solicitudes de plan. Depende de la Etapa 6 (planes, módulos y depuración).
 

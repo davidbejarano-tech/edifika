@@ -24,6 +24,7 @@ export type Database = {
           entidad: string
           entidad_id: string | null
           id: number
+          soporte_id: string | null
         }
         Insert: {
           accion: string
@@ -34,6 +35,7 @@ export type Database = {
           entidad: string
           entidad_id?: string | null
           id?: never
+          soporte_id?: string | null
         }
         Update: {
           accion?: string
@@ -44,8 +46,17 @@ export type Database = {
           entidad?: string
           entidad_id?: string | null
           id?: never
+          soporte_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "auditoria_soporte_id_fkey"
+            columns: ["soporte_id"]
+            isOneToOne: false
+            referencedRelation: "sesiones_soporte"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ausencias: {
         Row: {
@@ -295,6 +306,7 @@ export type Database = {
           dias_inactivo: number
           edificio_id: string
           id: number
+          motivo: string | null
         }
         Insert: {
           codigo: string
@@ -303,6 +315,7 @@ export type Database = {
           dias_inactivo: number
           edificio_id: string
           id?: never
+          motivo?: string | null
         }
         Update: {
           codigo?: string
@@ -311,6 +324,7 @@ export type Database = {
           dias_inactivo?: number
           edificio_id?: string
           id?: never
+          motivo?: string | null
         }
         Relationships: []
       }
@@ -331,6 +345,7 @@ export type Database = {
           id: string
           monto_fijo_mensual: number | null
           mora_monto: number
+          no_depurar_hasta: string | null
           nombre: string
           organizacion_id: string
           plan: string | null
@@ -359,6 +374,7 @@ export type Database = {
           id?: string
           monto_fijo_mensual?: number | null
           mora_monto?: number
+          no_depurar_hasta?: string | null
           nombre: string
           organizacion_id: string
           plan?: string | null
@@ -387,6 +403,7 @@ export type Database = {
           id?: string
           monto_fijo_mensual?: number | null
           mora_monto?: number
+          no_depurar_hasta?: string | null
           nombre?: string
           organizacion_id?: string
           plan?: string | null
@@ -1406,6 +1423,57 @@ export type Database = {
           },
         ]
       }
+      sesiones_soporte: {
+        Row: {
+          cerrada_en: string | null
+          edificio_id: string
+          expira: string
+          id: string
+          inicio: string
+          modo: string
+          motivo: string
+          perfil_id: string
+          referencia: string | null
+        }
+        Insert: {
+          cerrada_en?: string | null
+          edificio_id: string
+          expira: string
+          id?: string
+          inicio?: string
+          modo: string
+          motivo: string
+          perfil_id?: string
+          referencia?: string | null
+        }
+        Update: {
+          cerrada_en?: string | null
+          edificio_id?: string
+          expira?: string
+          id?: string
+          inicio?: string
+          modo?: string
+          motivo?: string
+          perfil_id?: string
+          referencia?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sesiones_soporte_edificio_id_fkey"
+            columns: ["edificio_id"]
+            isOneToOne: false
+            referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sesiones_soporte_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solicitudes_plan: {
         Row: {
           avisado_en: string | null
@@ -1654,6 +1722,10 @@ export type Database = {
       }
     }
     Functions: {
+      _borrar_edificio: {
+        Args: { p_edificio: string; p_motivo: string }
+        Returns: string[]
+      }
       _emitir_cargos_reserva: {
         Args: { p_reserva: string }
         Returns: undefined
@@ -1703,11 +1775,20 @@ export type Database = {
         Args: { p_edificio: string; p_perfil: string }
         Returns: string
       }
+      agregar_plataforma: { Args: { p_correo: string }; Returns: undefined }
       anular_compromiso: {
         Args: { p_compromiso: string; p_motivo: string }
         Returns: undefined
       }
       aprobar_reserva: { Args: { p_reserva: string }; Returns: undefined }
+      asignar_plan: {
+        Args: { p_edificio: string; p_plan: string }
+        Returns: undefined
+      }
+      atender_solicitud: {
+        Args: { p_estado: string; p_solicitud: string }
+        Returns: undefined
+      }
       ausencias_admin: {
         Args: { p_edificio: string }
         Returns: {
@@ -1752,6 +1833,7 @@ export type Database = {
         Args: { p_nota?: string; p_reserva: string; p_retener?: number }
         Returns: undefined
       }
+      cerrar_soporte: { Args: never; Returns: undefined }
       cobranza_edificio: {
         Args: { p_edificio: string }
         Returns: {
@@ -1885,6 +1967,10 @@ export type Database = {
         }[]
       }
       ejecutar_cortes: { Args: never; Returns: number }
+      eliminar_edificio_a_pedido: {
+        Args: { p_edificio: string; p_motivo: string }
+        Returns: string[]
+      }
       eliminar_mensaje: { Args: { p_mensaje: string }; Returns: undefined }
       emitir_extraordinario: {
         Args: {
@@ -1914,6 +2000,7 @@ export type Database = {
       es_lector_admin: { Args: { p_edificio: string }; Returns: boolean }
       es_miembro: { Args: { p_edificio: string }; Returns: boolean }
       es_plataforma: { Args: never; Returns: boolean }
+      es_soporte: { Args: { p_edificio: string }; Returns: boolean }
       es_titular: { Args: { p_edificio: string }; Returns: boolean }
       es_validador_designado: { Args: { p_edificio: string }; Returns: boolean }
       estado_acceso: { Args: { p_departamento: string }; Returns: string }
@@ -1995,6 +2082,7 @@ export type Database = {
           id: string
           monto_fijo_mensual: number | null
           mora_monto: number
+          no_depurar_hasta: string | null
           nombre: string
           organizacion_id: string
           plan: string | null
@@ -2026,6 +2114,11 @@ export type Database = {
           por_devolver: number
         }[]
       }
+      guardar_correo_plataforma: {
+        Args: { p_clave: string; p_correo: string }
+        Returns: undefined
+      }
+      guardar_planes: { Args: { p_planes: Json }; Returns: undefined }
       hay_operador: { Args: { p_edificio: string }; Returns: boolean }
       historial_ocupantes: {
         Args: { p_edificio: string }
@@ -2048,6 +2141,26 @@ export type Database = {
           monto: number
           pagos: number
           tipo: string
+        }[]
+      }
+      iniciar_soporte: {
+        Args: {
+          p_edificio: string
+          p_modo: string
+          p_motivo: string
+          p_referencia?: string
+        }
+        Returns: string
+      }
+      intervenciones_soporte: {
+        Args: { p_edificio: string }
+        Returns: {
+          cambios: number
+          fecha: string
+          motivo: string
+          persona: string
+          referencia: string
+          sesion_id: string
         }[]
       }
       lectura_anterior: {
@@ -2077,6 +2190,15 @@ export type Database = {
       }
       mes_es: { Args: { p: string }; Returns: string }
       mi_departamento_en: { Args: { p_edificio: string }; Returns: string }
+      mi_soporte: {
+        Args: { p_edificio: string }
+        Returns: {
+          expira: string
+          modo: string
+          motivo: string
+          referencia: string
+        }[]
+      }
       mis_edificios: {
         Args: never
         Returns: {
@@ -2116,7 +2238,74 @@ export type Database = {
         }[]
       }
       parte_fija_actual: { Args: { p_edificio: string }; Returns: number }
+      planes_para_edificio: { Args: { p_edificio: string }; Returns: Json }
       planes_vigentes: { Args: never; Returns: Json }
+      plataforma_config_leer: { Args: never; Returns: Json }
+      plataforma_depuraciones: {
+        Args: never
+        Returns: {
+          codigo: string
+          creado_en: string
+          depurado_en: string
+          dias_inactivo: number
+          motivo: string
+        }[]
+      }
+      plataforma_edificios: {
+        Args: never
+        Returns: {
+          aviso_inactividad: number
+          codigo: string
+          correo_titular: string
+          creado: string
+          departamentos: number
+          dias_sin_movimiento: number
+          direccion: string
+          edificio_id: string
+          no_depurar_hasta: string
+          nombre: string
+          pagado: boolean
+          plan: string
+          solicitudes: number
+          soporte_activo: string
+          titular: string
+        }[]
+      }
+      plataforma_equipo: {
+        Args: never
+        Returns: {
+          correo: string
+          desde: string
+          nombre: string
+          perfil_id: string
+          soy_yo: boolean
+        }[]
+      }
+      plataforma_solicitudes: {
+        Args: never
+        Returns: {
+          avisado: boolean
+          codigo: string
+          correo: string
+          creada: string
+          departamentos: number
+          edificio: string
+          edificio_id: string
+          estado: string
+          nota: string
+          plan: string
+          solicitante: string
+          solicitud_id: string
+        }[]
+      }
+      posponer_depuracion: {
+        Args: { p_dias: number; p_edificio: string; p_motivo: string }
+        Returns: string
+      }
+      precio_plan: {
+        Args: { p_departamentos: number; p_plan: Json }
+        Returns: number
+      }
       puede_aprobar_ausencia: {
         Args: { p_departamento: string; p_edificio: string }
         Returns: boolean
@@ -2129,6 +2318,7 @@ export type Database = {
         Args: { p_edificio: string; p_perfil: string }
         Returns: undefined
       }
+      quitar_plataforma: { Args: { p_perfil: string }; Returns: undefined }
       rechazar_grupo: {
         Args: { p_grupo: string; p_nota: string }
         Returns: number
@@ -2254,6 +2444,26 @@ export type Database = {
         }[]
       }
       saldo_a_favor: { Args: { p_departamento: string }; Returns: number }
+      sesion_soporte: {
+        Args: { p_edificio: string }
+        Returns: {
+          cerrada_en: string | null
+          edificio_id: string
+          expira: string
+          id: string
+          inicio: string
+          modo: string
+          motivo: string
+          perfil_id: string
+          referencia: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sesiones_soporte"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       solicitar_adelanto: {
         Args: { p_edificio: string; p_meses?: number; p_monto?: number }
         Returns: string

@@ -205,6 +205,23 @@ async function main() {
   await contiene("Logo al inicio del panel (vecino)", "/reportes", v302, [logo("/cuentas")]);
   await contiene("Logo al inicio en Mis edificios", "/edificios", titular, [logo("/")]);
 
+  // Etapa 6b: consola de plataforma (la titular demo entra al equipo EDIFIKA solo durante esta prueba)
+  await caso("Titular sin equipo EDIFIKA escribe /plataforma/edificios", "/plataforma/edificios", titular, "/edificios");
+  const { data: tit } = await admin.from("membresias").select("perfil_id, edificios!inner(codigo)").eq("rol", "admin").eq("nivel", "titular").eq("estado", "activo").eq("edificios.codigo", "los-ficus").single();
+  await admin.from("plataforma_admins").insert({ perfil_id: tit!.perfil_id });
+  try {
+    await contiene("Consola: resumen", "/plataforma", titular, ["Consola de plataforma", "Con plan pagado", "Solicitudes pendientes", "En riesgo de depuración"]);
+    await contiene("Consola: edificios", "/plataforma/edificios", titular, ["Edificio Los Ficus", "Abrir"]);
+    await contiene("Consola: solicitudes", "/plataforma/solicitudes", titular, ["Solicitudes de plan"]);
+    await contiene("Consola: planes y correos", "/plataforma/planes", titular, ["Precio por depto", "Mínimo al mes", "Correo de avisos internos", "Precio guardado según tamaño"]);
+    await contiene("Consola: depuración", "/plataforma/depuracion", titular, ["Eliminados"]);
+    await contiene("Consola: equipo", "/plataforma/equipo", titular, ["Agregar al equipo"]);
+    await contiene("Consola: transferencia forzada", "/plataforma/transferencia", titular, ["Acta de la junta"]);
+    await contiene("Mis edificios muestra la consola al equipo", "/edificios", titular, ["Consola de plataforma"]);
+  } finally {
+    await admin.from("plataforma_admins").delete().eq("perfil_id", tit!.perfil_id);
+  }
+
   // Etapa 6A: dashboard de módulos, legales, exportación y consentimiento
   await contiene("Titular: inicio con módulos y planes", "/inicio", titular, ["Gestión del edificio", "Finanzas y cuotas", "Áreas comunes", "Ver planes", "Próximamente"]);
   await contiene("Coadministrador: inicio con módulos", "/inicio", coadmin, ["Comunicación", "Marketplace de servicios"]);
