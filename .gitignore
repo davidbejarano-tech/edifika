@@ -10,3 +10,6 @@ supabase/.branches/
 # Nunca versionar contraseñas ni artefactos de compilación
 password*.txt
 *.tsbuildinfo
+
+# Permisos locales de Claude Code
+.claude/settings.local.json
