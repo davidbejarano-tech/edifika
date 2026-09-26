@@ -216,9 +216,11 @@ async function main() {
   await contiene("Coadministrador: sin subir logo", "/configuracion", coadmin, ["Foto y logo"], ["Agregar certificación"]);
   await contiene("Titular: importar departamentos", "/departamentos", titular, ["Importar departamentos y ocupantes"]);
   await contiene("Asistente con plantillas en línea", "/edificios/nuevo", titular, ["Registra"]);
-  const xlsx = await fetch(BASE + "/plantillas/plantilla-departamentos.xlsx");
-  console.log(`${xlsx.ok ? "✔" : "✖"} La plantilla Excel se descarga (${xlsx.status})`);
-  if (!xlsx.ok) fallas++;
+  // Sin sesión: el visor de Excel en línea de Microsoft la descarga sin iniciar sesión
+  const xlsx = await fetch(BASE + "/plantillas/plantilla-departamentos.xlsx", { redirect: "manual" });
+  const esPlantilla = xlsx.status === 200 && (xlsx.headers.get("content-type") ?? "").includes("spreadsheetml");
+  console.log(`${esPlantilla ? "✔" : "✖"} La plantilla Excel se descarga sin sesión (${xlsx.status})`);
+  if (!esPlantilla) fallas++;
 
   // Etapa 7: áreas comunes (Los Ficus no tiene el módulo activo)
   await contiene("Titular: áreas comunes", "/areas", titular, ["Áreas comunes", "Reservas", "Zonas", "Garantías", "El módulo no está activo"]);
