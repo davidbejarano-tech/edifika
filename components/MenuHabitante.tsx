@@ -14,14 +14,16 @@ const ITEMS: Item[] = [
   { href: "/perfil", texto: "Mi perfil", listo: true },
 ];
 
-export function MenuHabitante() {
+// areas: el edificio tiene el módulo Áreas comunes activo (o el vecino tiene reservas)
+export function MenuHabitante({ areas = false }: { areas?: boolean }) {
   const ruta = usePathname();
+  const items = areas ? [ITEMS[0], { href: "/reservas", texto: "Áreas comunes", listo: true }, ...ITEMS.slice(1)] : ITEMS;
   return (
     <nav
       aria-label="Secciones"
       className="flex gap-1 overflow-x-auto border-b border-line bg-surface2 px-2 py-1.5 print:hidden md:h-full md:flex-col md:overflow-visible md:border-r md:border-b-0 md:px-3 md:py-4"
     >
-      {ITEMS.map((i) =>
+      {items.map((i) =>
         i.listo ? (
           <Link
             key={i.href}

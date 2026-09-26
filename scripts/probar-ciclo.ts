@@ -101,6 +101,7 @@ async function main() {
       p_recurrentes: [
         { categoria: "Sueldos", descripcion: "Conserje", monto: 1500 },
         { categoria: "Energía eléctrica", descripcion: "Luz", monto: 420 },
+        { categoria: "Mantenimiento", descripcion: "Extintores", monto: 300, frecuencia_meses: 6 },
       ],
     });
     ok(!ab.error, "La titular abre setiembre");
@@ -119,8 +120,9 @@ async function main() {
     const det = c101.detalle as { base_mes?: string; comun?: number; agua?: number };
     ok(det?.base_mes === "2026-08-01" && Number(det.comun) === 800 && Number(det.agua) === 100, "La cuota guarda su desglose (mes base, parte fija y agua)");
 
-    const { data: recs } = await T.sb.from("gastos").select("categoria, monto").eq("periodo_id", setiembre).eq("tipo", "recurrente");
-    ok(recs?.length === 2 && recs.some((r) => r.categoria === "Energía eléctrica" && Number(r.monto) === 420), "Los gastos recurrentes de setiembre se registran con los montos indicados");
+    const { data: recs } = await T.sb.from("gastos").select("categoria, monto, frecuencia_meses").eq("periodo_id", setiembre).eq("tipo", "recurrente");
+    ok(recs?.length === 3 && recs.some((r) => r.categoria === "Energía eléctrica" && Number(r.monto) === 420), "Los gastos recurrentes de setiembre se registran con los montos indicados");
+    ok(recs?.find((r) => r.categoria === "Mantenimiento")?.frecuencia_meses === 6 && recs.find((r) => r.categoria === "Sueldos")?.frecuencia_meses === 1, "Cada recurrente guarda su frecuencia (semestral; mensual si no se indica)");
 
     const hoja2 = (await T.sb.rpc("lecturas_del_periodo", { p_periodo: setiembre })).data!;
     ok(Number(hoja2.find((h) => h.numero === "103")!.lectura_anterior) === 30, "En setiembre, la lectura anterior del 103 es la de agosto (30)");

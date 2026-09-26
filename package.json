@@ -22,7 +22,9 @@
     "probar:comunicacion": "tsx --env-file=.env.local scripts/probar-comunicacion.ts",
     "probar:recibos": "tsx --env-file=.env.local scripts/probar-recibos.ts",
     "probar:comercial": "tsx --env-file=.env.local scripts/probar-comercial.ts",
-    "probar:plataforma": "tsx --env-file=.env.local scripts/probar-plataforma.ts"
+    "probar:plataforma": "tsx --env-file=.env.local scripts/probar-plataforma.ts",
+    "probar:areas": "tsx --env-file=.env.local scripts/probar-areas.ts",
+    "probar:datos": "tsx --env-file=.env.local scripts/probar-datos-edificio.ts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

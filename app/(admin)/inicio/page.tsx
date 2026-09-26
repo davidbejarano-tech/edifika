@@ -25,6 +25,12 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
       supabase.rpc("cobranza_edificio", { p_edificio: ed }).maybeSingle(),
       supabase.from("mensajes").select("id", { count: "exact", head: true }).eq("edificio_id", ed),
     ]);
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date());
+  const en30 = new Date(Date.parse(`${hoy}T12:00:00Z`) + 30 * 86400000).toISOString().slice(0, 10);
+  const [{ data: proximas }, { data: porVencer }] = await Promise.all([
+    supabase.rpc("reservas_proximas", { p_edificio: ed }),
+    supabase.from("certificaciones").select("id, nombre, vence_en").eq("edificio_id", ed).lte("vence_en", en30).order("vence_en"),
+  ]);
   const [{ data: r }, { data: enSoporte }, { data: intervenciones }] = await Promise.all([
     periodo ? supabase.rpc("resumen_periodo", { p_periodo: periodo.id }).maybeSingle() : Promise.resolve({ data: null }),
     supabase.rpc("es_soporte", { p_edificio: ed }),
@@ -36,6 +42,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
     gestion: `${actual.departamentos ?? 0} departamentos`,
     finanzas: `${soles(cobranza?.por_cobrar ?? 0)} por cobrar`,
     comunicacion: `${mensajes ?? 0} mensajes en el chat`,
+    areas_comunes: `${proximas ?? 0} ${proximas === 1 ? "reserva próxima" : "reservas próximas"}`,
   };
 
   return (
@@ -65,6 +72,21 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
             ))}
           </ul>
           <p className="mt-1 text-xs">El detalle queda en la auditoría del edificio. Si no reconoces un cambio, escríbenos.</p>
+        </section>
+      )}
+      {(porVencer ?? []).length > 0 && (
+        <section className="mb-4 rounded-xl border border-warn bg-warn-bg px-4 py-3 text-sm text-warn" role="status">
+          <b>Certificaciones por renovar:</b>{" "}
+          {(porVencer ?? []).map((c, i) => (
+            <span key={c.id}>
+              {i > 0 && " · "}
+              {c.nombre} ({c.vence_en! < hoy ? "venció" : "vence"} el {fecha(c.vence_en!)})
+            </span>
+          ))}
+          .{" "}
+          <Link href="/configuracion" className="font-bold underline">
+            Ver certificaciones
+          </Link>
         </section>
       )}
       {nivel === "lectura" && !enSoporte && (

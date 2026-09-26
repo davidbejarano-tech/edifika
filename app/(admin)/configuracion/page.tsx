@@ -3,19 +3,26 @@ import { redirect } from "next/navigation";
 import { obtenerContexto } from "@/lib/contexto";
 import { TablaReparto } from "@/components/TablaReparto";
 import { mes } from "@/lib/format";
-import { FormCobranza, FormDatos, FormPago } from "./Formularios";
+import { cargarUbigeos } from "@/lib/ubigeos";
+import { Certificaciones, FormDatos, FotoYLogo } from "./DatosEdificio";
+import { FormCobranza, FormPago } from "./Formularios";
 
 export default async function ConfiguracionPage() {
   const { supabase, actual } = await obtenerContexto();
   if (!actual?.nivel) redirect("/edificios");
   const puede = actual.nivel === "titular";
 
-  const [{ data: e }, { data: conf }, { data: periodo }] = await Promise.all([
+  const [{ data: e }, { data: conf }, { data: periodo }, ubigeos, { data: certificaciones }] = await Promise.all([
     supabase.from("edificios").select("*").eq("id", actual.edificio_id).single(),
     supabase.rpc("estado_configuracion", { p_edificio: actual.edificio_id }).single(),
     supabase.from("periodos").select("id, mes").eq("edificio_id", actual.edificio_id).eq("estado", "abierto").maybeSingle(),
+    cargarUbigeos(supabase),
+    supabase.from("certificaciones").select("id, nombre, entidad, emitida_en, vence_en, archivo_path").eq("edificio_id", actual.edificio_id).order("vence_en", { nullsFirst: false }),
   ]);
   if (!e || !conf) redirect("/inicio");
+  const firmar = async (ruta: string | null) => (ruta ? ((await supabase.storage.from("edificios").createSignedUrl(ruta, 3600)).data?.signedUrl ?? null) : null);
+  const [foto, logo] = await Promise.all([firmar(e.foto_path), firmar(e.logo_path)]);
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date());
 
   // Vista previa del reparto con los datos del mes abierto. El cálculo lo hace la base (calcular_cuotas).
   const previa = periodo ? await supabase.rpc("calcular_cuotas", { p_periodo: periodo.id }) : null;
@@ -35,7 +42,9 @@ export default async function ConfiguracionPage() {
         <p className="hint mb-4">Puedes ver la configuración. Solo el administrador titular puede cambiarla.</p>
       )}
 
-      <FormDatos e={e} puede={puede} />
+      <FormDatos e={e} ubigeos={ubigeos} puede={puede} />
+      <FotoYLogo edificioId={e.id} urls={{ foto, logo }} puede={puede} />
+      <Certificaciones edificioId={e.id} lista={certificaciones ?? []} hoy={hoy} puede={puede} />
 
       <section className="panel">
         <h3 className="mb-3">Departamentos</h3>

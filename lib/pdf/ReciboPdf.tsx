@@ -1,4 +1,5 @@
-import { Document, Page, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Image as Imagen, Page, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import type { LogoPdf as LogoEdificio } from "../logo-edificio";
 import { fecha, mes, soles } from "../format";
 import { ESTADO_RECIBO, porcentaje, type DatosRecibo } from "../recibo";
 import { C, Fila, FilaTotal, LogoPdf, Pie, s } from "./comunes";
@@ -7,7 +8,7 @@ const menos = (n: number) => `- ${soles(n)}`;
 const Mes = (iso: string) => mes(iso).replace(/^./, (x) => x.toUpperCase());
 
 // Recibo formal en A4: el mismo contenido que components/ReciboVista.tsx
-function ReciboPdf({ d }: { d: DatosRecibo }) {
+function ReciboPdf({ d, logo }: { d: DatosRecibo; logo: LogoEdificio | null }) {
   const t = d.totales;
   const estado = ESTADO_RECIBO[d.estado];
   const meta: [string, string][] = [
@@ -25,7 +26,7 @@ function ReciboPdf({ d }: { d: DatosRecibo }) {
       <Page size="A4" style={s.pagina}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 2, borderBottomColor: C.navy, paddingBottom: 10, marginBottom: 12 }}>
           <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
-            <LogoPdf alto={30} />
+            {logo ? <Imagen src={logo} style={{ height: 40, maxWidth: 110, objectFit: "contain" }} /> : <LogoPdf alto={30} />}
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 15, color: C.navy, lineHeight: 1.2, marginBottom: 2 }}>{d.edificio.nombre}</Text>
               <Text style={s.tenue}>{d.edificio.direccion}</Text>
@@ -123,6 +124,6 @@ function ReciboPdf({ d }: { d: DatosRecibo }) {
   );
 }
 
-export function pdfRecibo(d: DatosRecibo) {
-  return renderToBuffer(<ReciboPdf d={d} />);
+export function pdfRecibo(d: DatosRecibo, logo: LogoEdificio | null = null) {
+  return renderToBuffer(<ReciboPdf d={d} logo={logo} />);
 }

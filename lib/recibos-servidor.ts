@@ -1,5 +1,6 @@
 // Solo servidor: usa la clave de Resend (nunca en variables NEXT_PUBLIC_*).
 import { mes, soles, fecha } from "./format";
+import { logoParaPdf } from "./logo-edificio";
 import { pdfRecibo } from "./pdf/ReciboPdf";
 import { nombreArchivoRecibo, rutaPdfRecibo, type DatosRecibo } from "./recibo";
 import type { crearClienteServidor } from "./supabase/server";
@@ -19,7 +20,7 @@ export async function cargarRecibo(supabase: Cliente, departamentoId: string, m:
 /** Genera el PDF, lo guarda en recibos/{edificio}/{departamento}/{AAAAMM}.pdf y registra el recibo. */
 export async function generarRecibo(supabase: Cliente, edificioId: string, departamentoId: string, m: string) {
   const datos = await cargarRecibo(supabase, departamentoId, m);
-  const pdf = await pdfRecibo(datos);
+  const pdf = await pdfRecibo(datos, await logoParaPdf(supabase, edificioId));
   const ruta = rutaPdfRecibo(datos, edificioId);
   const subida = await supabase.storage.from("recibos").upload(ruta, pdf, { contentType: "application/pdf", upsert: true });
   if (subida.error) throw new Error(`No se pudo guardar el PDF: ${subida.error.message}`);

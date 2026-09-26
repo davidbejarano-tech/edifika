@@ -51,10 +51,10 @@ export const MODULOS: Modulo[] = [
     titulo: "Áreas comunes",
     descripcion: "Reservas de parrilla, SUM y gimnasio con calendario compartido.",
     color: "#C77D12",
-    href: null,
+    href: "/areas",
     base: false,
     plan: "pro",
-    disponible: false,
+    disponible: true,
     valor:
       "Los vecinos reservan la parrilla o el SUM desde su celular, sin choques de horario ni cuadernos en portería. El cobro de la reserva se suma a su cuenta del mes.",
     icono: "M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18M8 3v4M16 3v4",

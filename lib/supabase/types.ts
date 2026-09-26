@@ -171,6 +171,47 @@ export type Database = {
           },
         ]
       }
+      certificaciones: {
+        Row: {
+          archivo_path: string | null
+          created_at: string
+          edificio_id: string
+          emitida_en: string | null
+          entidad: string | null
+          id: string
+          nombre: string
+          vence_en: string | null
+        }
+        Insert: {
+          archivo_path?: string | null
+          created_at?: string
+          edificio_id: string
+          emitida_en?: string | null
+          entidad?: string | null
+          id?: string
+          nombre: string
+          vence_en?: string | null
+        }
+        Update: {
+          archivo_path?: string | null
+          created_at?: string
+          edificio_id?: string
+          emitida_en?: string | null
+          entidad?: string | null
+          id?: string
+          nombre?: string
+          vence_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificaciones_edificio_id_fkey"
+            columns: ["edificio_id"]
+            isOneToOne: false
+            referencedRelation: "edificios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compromisos: {
         Row: {
           anulado_motivo: string | null
@@ -331,88 +372,118 @@ export type Database = {
       edificios: {
         Row: {
           agua_cuota: string | null
+          anio_construccion: number | null
           area_comun_m2: number | null
           area_total_m2: number | null
           aviso_inactividad: number
           base_cuota: string | null
+          calle: string | null
           codigo: string
+          constructora: string | null
           creado_por: string | null
           created_at: string
           cuenta_bancaria: string | null
           dia_corte: number
           dia_lectura: number | null
           direccion: string
+          foto_path: string | null
           id: string
+          logo_path: string | null
           monto_fijo_mensual: number | null
           mora_monto: number
           no_depurar_hasta: string | null
           nombre: string
+          numero_calle: string | null
           organizacion_id: string
+          pais: string
           plan: string | null
           publicar_desglose: boolean
+          referencia: string | null
           saldo_inicial: number
           suscripcion_pagada: boolean
           tipo_calculo: Database["public"]["Enums"]["tipo_calculo"] | null
           total_departamentos: number
+          ubigeo: string | null
           ultima_actividad: string
+          urbanizacion: string | null
           validador_designado_id: string | null
           yape_plin: string | null
         }
         Insert: {
           agua_cuota?: string | null
+          anio_construccion?: number | null
           area_comun_m2?: number | null
           area_total_m2?: number | null
           aviso_inactividad?: number
           base_cuota?: string | null
+          calle?: string | null
           codigo: string
+          constructora?: string | null
           creado_por?: string | null
           created_at?: string
           cuenta_bancaria?: string | null
           dia_corte?: number
           dia_lectura?: number | null
           direccion: string
+          foto_path?: string | null
           id?: string
+          logo_path?: string | null
           monto_fijo_mensual?: number | null
           mora_monto?: number
           no_depurar_hasta?: string | null
           nombre: string
+          numero_calle?: string | null
           organizacion_id: string
+          pais?: string
           plan?: string | null
           publicar_desglose?: boolean
+          referencia?: string | null
           saldo_inicial?: number
           suscripcion_pagada?: boolean
           tipo_calculo?: Database["public"]["Enums"]["tipo_calculo"] | null
           total_departamentos: number
+          ubigeo?: string | null
           ultima_actividad?: string
+          urbanizacion?: string | null
           validador_designado_id?: string | null
           yape_plin?: string | null
         }
         Update: {
           agua_cuota?: string | null
+          anio_construccion?: number | null
           area_comun_m2?: number | null
           area_total_m2?: number | null
           aviso_inactividad?: number
           base_cuota?: string | null
+          calle?: string | null
           codigo?: string
+          constructora?: string | null
           creado_por?: string | null
           created_at?: string
           cuenta_bancaria?: string | null
           dia_corte?: number
           dia_lectura?: number | null
           direccion?: string
+          foto_path?: string | null
           id?: string
+          logo_path?: string | null
           monto_fijo_mensual?: number | null
           mora_monto?: number
           no_depurar_hasta?: string | null
           nombre?: string
+          numero_calle?: string | null
           organizacion_id?: string
+          pais?: string
           plan?: string | null
           publicar_desglose?: boolean
+          referencia?: string | null
           saldo_inicial?: number
           suscripcion_pagada?: boolean
           tipo_calculo?: Database["public"]["Enums"]["tipo_calculo"] | null
           total_departamentos?: number
+          ubigeo?: string | null
           ultima_actividad?: string
+          urbanizacion?: string | null
           validador_designado_id?: string | null
           yape_plin?: string | null
         }
@@ -432,6 +503,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "edificios_ubigeo_fkey"
+            columns: ["ubigeo"]
+            isOneToOne: false
+            referencedRelation: "ubigeos"
+            referencedColumns: ["codigo"]
+          },
+          {
             foreignKeyName: "edificios_validador_designado_id_fkey"
             columns: ["validador_designado_id"]
             isOneToOne: false
@@ -448,6 +526,7 @@ export type Database = {
           descripcion: string
           edificio_id: string
           fecha: string
+          frecuencia_meses: number
           id: string
           monto: number
           origen: string
@@ -461,6 +540,7 @@ export type Database = {
           descripcion: string
           edificio_id: string
           fecha: string
+          frecuencia_meses?: number
           id?: string
           monto: number
           origen?: string
@@ -474,6 +554,7 @@ export type Database = {
           descripcion?: string
           edificio_id?: string
           fecha?: string
+          frecuencia_meses?: number
           id?: string
           monto?: number
           origen?: string
@@ -1522,6 +1603,27 @@ export type Database = {
           },
         ]
       }
+      ubigeos: {
+        Row: {
+          codigo: string
+          departamento: string
+          distrito: string
+          provincia: string
+        }
+        Insert: {
+          codigo: string
+          departamento: string
+          distrito: string
+          provincia: string
+        }
+        Update: {
+          codigo?: string
+          departamento?: string
+          distrito?: string
+          provincia?: string
+        }
+        Relationships: []
+      }
       zonas_comunes: {
         Row: {
           activa: boolean
@@ -2068,30 +2170,40 @@ export type Database = {
         Args: { p_edificio: string }
         Returns: {
           agua_cuota: string | null
+          anio_construccion: number | null
           area_comun_m2: number | null
           area_total_m2: number | null
           aviso_inactividad: number
           base_cuota: string | null
+          calle: string | null
           codigo: string
+          constructora: string | null
           creado_por: string | null
           created_at: string
           cuenta_bancaria: string | null
           dia_corte: number
           dia_lectura: number | null
           direccion: string
+          foto_path: string | null
           id: string
+          logo_path: string | null
           monto_fijo_mensual: number | null
           mora_monto: number
           no_depurar_hasta: string | null
           nombre: string
+          numero_calle: string | null
           organizacion_id: string
+          pais: string
           plan: string | null
           publicar_desglose: boolean
+          referencia: string | null
           saldo_inicial: number
           suscripcion_pagada: boolean
           tipo_calculo: Database["public"]["Enums"]["tipo_calculo"] | null
           total_departamentos: number
+          ubigeo: string | null
           ultima_actividad: string
+          urbanizacion: string | null
           validador_designado_id: string | null
           yape_plin: string | null
         }
@@ -2207,6 +2319,24 @@ export type Database = {
           edificio_id: string
           nivel: Database["public"]["Enums"]["nivel_admin"]
           nombre: string
+        }[]
+      }
+      mis_reservas: {
+        Args: { p_edificio: string }
+        Returns: {
+          cargos_pendientes: number
+          estado: Database["public"]["Enums"]["estado_reserva"]
+          fin: string
+          garantia_estado: Database["public"]["Enums"]["estado_garantia"]
+          garantia_monto: number
+          garantia_retenida: number
+          inicio: string
+          nota: string
+          pago_en_revision: boolean
+          reserva_id: string
+          tarifa: number
+          vence_pago_en: string
+          zona: string
         }[]
       }
       modulo_habilitado: {
@@ -2409,6 +2539,29 @@ export type Database = {
           periodo_id: string
         }[]
       }
+      reservas_admin: {
+        Args: { p_edificio: string }
+        Returns: {
+          created_at: string
+          departamento_id: string
+          estado: Database["public"]["Enums"]["estado_reserva"]
+          fin: string
+          garantia_estado: Database["public"]["Enums"]["estado_garantia"]
+          garantia_monto: number
+          garantia_retenida: number
+          inicio: string
+          nota: string
+          numero: string
+          pago_en_revision: boolean
+          puede_gestionar: boolean
+          reserva_id: string
+          responsable: string
+          vence_pago_en: string
+          zona: string
+          zona_id: string
+        }[]
+      }
+      reservas_proximas: { Args: { p_edificio: string }; Returns: number }
       resolver_ausencia: {
         Args: { p_aprobar: boolean; p_ausencia: string; p_nota?: string }
         Returns: undefined

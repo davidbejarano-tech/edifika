@@ -8,6 +8,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { writeFileSync } from "node:fs";
 import { VERSION_TERMINOS } from "../lib/legal";
+import { COOKIE_EDIFICIO } from "../lib/contexto";
 
 const BASE = process.env.PRUEBA_URL || "http://localhost:3000";
 const CLAVE = process.env.DEMO_PASSWORD || "Demo2026!";
@@ -27,6 +28,9 @@ async function cookiesDe(login: { email?: string; codigo?: string; numero?: stri
   if (login.email) {
     const { error } = await sb.auth.signInWithPassword({ email: login.email, password: CLAVE });
     if (error) throw new Error(`${login.email}: ${error.message}`);
+    // Si la cuenta administra varios edificios, entra a Los Ficus (como si lo hubiera elegido)
+    const { data: ed } = await sb.from("edificios").select("id").eq("codigo", "los-ficus").maybeSingle();
+    if (ed) jar.set(COOKIE_EDIFICIO, ed.id);
   } else {
     const r = await fetch(`${url}/functions/v1/login-departamento`, {
       method: "POST",
@@ -72,9 +76,9 @@ async function pdf(nombre: string, ruta: string, cookie: string, esPdf: boolean)
   if (llego && process.env.GUARDAR_PDF) writeFileSync(`${process.env.GUARDAR_PDF}/${nombre.replace(/[^a-z0-9]+/gi, "-")}.pdf`, buf);
 }
 
-async function caso(nombre: string, ruta: string, cookie: string, espera: string) {
+async function caso(nombre: string, ruta: string, cookie: string, espera: string | string[]) {
   const d = await destino(ruta, cookie);
-  const ok = d.startsWith(espera);
+  const ok = [espera].flat().some((e) => d.startsWith(e));
   if (!ok) fallas++;
   console.log(`${ok ? "✔" : "✖"} ${nombre}: ${ruta} → ${d}`);
 }
@@ -88,7 +92,8 @@ async function main() {
   await caso("Bienvenida sin sesión", "/", "", "/ (200)");
   await caso("Registro sin sesión", "/registro", "", "/registro (200)");
   await caso("Asistente sin sesión", "/edificios/nuevo", "", "/login");
-  await caso("Bienvenida con sesión (titular)", "/", titular, "/inicio");
+  // Si titular@ administra más de un edificio, pasa por Mis edificios para elegir: ambas salidas son correctas
+  await caso("Bienvenida con sesión (titular)", "/", titular, ["/inicio", "/edificios?vista="]);
   await caso("Bienvenida con sesión (vecino)", "/", v302, "/cuentas");
   await caso("Mis edificios (titular)", "/edificios", titular, "/edificios (200)");
   await caso("Asistente (titular)", "/edificios/nuevo", titular, "/edificios/nuevo (200)");
@@ -192,11 +197,11 @@ async function main() {
   const sinArea = !/Área total de departamentos|Cálculo de cuota/.test(asistente) && asistente.includes("Departamentos");
   console.log(`${sinArea ? "✔" : "✖"} Asistente sin área ni método de cálculo`);
   if (!sinArea) fallas++;
-  await caso("Titular entra", "/edificios?vista=admin", titular, "/inicio");
+  await caso("Titular entra", "/edificios?vista=admin", titular, ["/inicio", "/edificios?vista="]);
   await caso("Vecino 302 entra", "/edificios?vista=habitante", v302, "/cuentas");
   await caso("Vecino 302 escribe /inicio", "/inicio", v302, "/cuentas");
   await caso("Coadministrador entra", "/edificios?vista=admin", coadmin, "/inicio");
-  await caso("Titular con sesión va a /login", "/login", titular, "/inicio");
+  await caso("Titular con sesión va a /login", "/login", titular, ["/inicio", "/edificios?vista="]);
 
   // El logo siempre lleva al inicio en un clic
   const logo = (href: string) => `aria-label="EDIFIKA, ir al inicio" title="Ir al inicio" href="${href}"`;
@@ -204,6 +209,25 @@ async function main() {
   await contiene("Logo al inicio del panel (titular)", "/cobranza", titular, [logo("/inicio")]);
   await contiene("Logo al inicio del panel (vecino)", "/reportes", v302, [logo("/cuentas")]);
   await contiene("Logo al inicio en Mis edificios", "/edificios", titular, [logo("/")]);
+
+  // Ajustes de setiembre: datos del edificio, certificaciones e importación masiva
+  await contiene("Titular: dirección por partes", "/configuracion", titular, ["Calle, avenida o jirón", "Urbanización", "Referencia", "Distrito", "San Isidro", "Perú", "Año de construcción", "Constructora"]);
+  await contiene("Titular: foto, logo y certificaciones", "/configuracion", titular, ["Foto y logo", "Logo del edificio", "Certificaciones", "Agregar certificación"]);
+  await contiene("Coadministrador: sin subir logo", "/configuracion", coadmin, ["Foto y logo"], ["Agregar certificación"]);
+  await contiene("Titular: importar departamentos", "/departamentos", titular, ["Importar departamentos y ocupantes"]);
+  await contiene("Asistente con plantillas en línea", "/edificios/nuevo", titular, ["Registra"]);
+  const xlsx = await fetch(BASE + "/plantillas/plantilla-departamentos.xlsx");
+  console.log(`${xlsx.ok ? "✔" : "✖"} La plantilla Excel se descarga (${xlsx.status})`);
+  if (!xlsx.ok) fallas++;
+
+  // Etapa 7: áreas comunes (Los Ficus no tiene el módulo activo)
+  await contiene("Titular: áreas comunes", "/areas", titular, ["Áreas comunes", "Reservas", "Zonas", "Garantías", "El módulo no está activo"]);
+  await contiene("Titular: zonas", "/areas?t=zonas", titular, ["Nueva zona"]);
+  await contiene("Coadministrador: zonas sin crear", "/areas?t=zonas", coadmin, ["Zonas"], ["Nueva zona"]);
+  await contiene("Titular: garantías", "/areas?t=garantias", titular, ["En custodia", "Por devolver", "Retenido por daños"]);
+  await contiene("Vecino 302: áreas comunes", "/reservas", v302, ["Áreas comunes", "Mis reservas"]);
+  await contiene("Inicio: áreas comunes se puede probar", "/inicio", titular, ["Probar 14 días gratis"]);
+  await caso("Vecino 302 escribe /areas", "/areas", v302, "/cuentas");
 
   // Etapa 6b: consola de plataforma (la titular demo entra al equipo EDIFIKA solo durante esta prueba)
   await caso("Titular sin equipo EDIFIKA escribe /plataforma/edificios", "/plataforma/edificios", titular, "/edificios");

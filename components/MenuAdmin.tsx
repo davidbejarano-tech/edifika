@@ -32,15 +32,20 @@ const GRUPOS: { grupo: string | null; items: Item[] }[] = [
   { grupo: "Comunicación", items: [{ href: "/chat", texto: "Chat del edificio", listo: true }] },
 ];
 
+// Módulos adicionales activos (RN-17): aparecen solo si el edificio los tiene
+const MODULOS: Item[] = [{ href: "/areas", texto: "Áreas comunes", listo: true }];
+
 // porValidar: pagos en revisión que la persona puede validar (contador junto a Cobranza)
-export function MenuAdmin({ porValidar = 0 }: { porValidar?: number }) {
+export function MenuAdmin({ porValidar = 0, modulos = [] }: { porValidar?: number; modulos?: string[] }) {
   const ruta = usePathname();
+  const extras = MODULOS.filter((m) => modulos.includes(m.href));
+  const grupos = extras.length ? [...GRUPOS, { grupo: "Módulos", items: extras }] : GRUPOS;
   return (
     <nav
       aria-label="Secciones"
       className="flex gap-1 print:hidden overflow-x-auto border-b border-line bg-surface2 px-2 py-1.5 md:top-0 md:h-full md:flex-col md:overflow-visible md:border-r md:border-b-0 md:px-3 md:py-4"
     >
-      {GRUPOS.map((g) => (
+      {grupos.map((g) => (
         <div key={g.grupo ?? "principal"} className="contents md:block">
           {g.grupo && <p className="hidden px-3 pt-4 pb-1 text-xs font-bold text-muted md:block">{g.grupo}</p>}
           {g.items.map((i) =>

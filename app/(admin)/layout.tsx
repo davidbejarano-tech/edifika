@@ -14,7 +14,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!actual) redirect("/edificios");
   if (!actual.nivel) redirect(actual.departamento_id ? "/cuentas" : "/edificios");
   // Equipo EDIFIKA dando soporte (Revisión o Intervención)
-  const { data: soporte } = await supabase.rpc("mi_soporte", { p_edificio: actual.edificio_id }).maybeSingle();
+  const [{ data: soporte }, { data: modulos }, { count: zonas }] = await Promise.all([
+    supabase.rpc("mi_soporte", { p_edificio: actual.edificio_id }).maybeSingle(),
+    supabase.rpc("estado_modulos", { p_edificio: actual.edificio_id }),
+    supabase.from("zonas_comunes").select("id", { count: "exact", head: true }).eq("edificio_id", actual.edificio_id),
+  ]);
+  // Módulos adicionales en el menú: activos o en prueba (o con datos que gestionar, RN-37)
+  const conAreas = (modulos ?? []).some((m) => m.modulo === "areas_comunes" && m.estado !== "bloqueado") || (zonas ?? 0) > 0;
   const vence = soporte
     ? new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", hour: "2-digit", minute: "2-digit", hour12: false }).format(
         new Date(soporte.expira),
@@ -26,7 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="md:col-span-2">
         <Encabezado edificio={actual} vista="admin" variosEdificios={edificios.length > 1} soporte={soporte?.modo ?? null} />
       </div>
-      <MenuAdmin porValidar={actual.pagos_por_validar ?? 0} />
+      <MenuAdmin porValidar={actual.pagos_por_validar ?? 0} modulos={conAreas ? ["/areas"] : []} />
       <main className="mx-auto w-full max-w-[1200px] min-w-0 px-4 pt-5 pb-12 md:px-8">
         {soporte && (
           <div

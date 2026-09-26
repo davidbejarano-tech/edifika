@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { COLUMNAS, EJEMPLO, MAX_FILAS, celdasDeTexto, leerFilas, paraImportar } from "@/lib/departamentos";
+import { FuentesPlantilla } from "@/components/FuentesPlantilla";
+import { EJEMPLO, MAX_FILAS, celdasDeTexto, leerFilas, paraImportar } from "@/lib/departamentos";
 import { mes as nombreMes } from "@/lib/format";
 import { codigoDisponible, registrarEdificio, type DatosEdificio } from "./acciones";
 
@@ -89,12 +90,6 @@ export function Asistente({ miNombre, mesActual, organizaciones, primerEdificio 
     }
   }
 
-  async function descargarPlantilla() {
-    const XLSX = await import("xlsx");
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([COLUMNAS]), "Departamentos");
-    XLSX.writeFile(libro, "plantilla-departamentos.xlsx");
-  }
 
   function crear(conDepartamentos: boolean) {
     setError(null);
@@ -245,6 +240,7 @@ export function Asistente({ miNombre, mesActual, organizaciones, primerEdificio 
             corregirla.
           </p>
           {aviso}
+          <FuentesPlantilla onTexto={(t, origen) => (setTexto(t), setArchivo(origen))} />
           <div className="mb-3 flex flex-wrap gap-2">
             <label className="btn quiet sm cursor-pointer" htmlFor="wz-f">
               Subir Excel o CSV
@@ -256,9 +252,6 @@ export function Asistente({ miNombre, mesActual, organizaciones, primerEdificio 
               className="sr-only"
               onChange={(e) => e.target.files?.[0] && leerArchivo(e.target.files[0])}
             />
-            <button type="button" className="btn quiet sm" onClick={descargarPlantilla}>
-              Descargar plantilla
-            </button>
             <button
               type="button"
               className="btn quiet sm"

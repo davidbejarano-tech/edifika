@@ -2,7 +2,8 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Modal } from "@/components/Modal";
-import { COLUMNAS_ACTUALIZACION, celdasDeTexto, leerActualizacion } from "@/lib/departamentos";
+import { FuentesPlantilla } from "@/components/FuentesPlantilla";
+import { COLUMNAS_ACTUALIZACION, MAX_FILAS, celdasDeTexto, leerActualizacion, leerFilas, paraImportar } from "@/lib/departamentos";
 import { fecha } from "@/lib/format";
 import type { Database } from "@/lib/supabase/types";
 import {
@@ -12,6 +13,7 @@ import {
   cambiarAcceso,
   cambioOcupante,
   editarDepartamento,
+  importarDepartamentos,
   invitarOcupante,
   registrarMedidor,
   restablecerClave,
@@ -20,7 +22,7 @@ import {
 
 type Fila = Database["public"]["Functions"]["departamentos_admin"]["Returns"][number];
 type Medidor = { id: string; departamento_id: string; numero_serie: string; lectura_inicial: number; instalado_en: string; retirado_en: string | null };
-type Ventana = { tipo: "editar" | "medidor" | "cambio"; fila: Fila } | { tipo: "agregar" | "excel" } | null;
+type Ventana = { tipo: "editar" | "medidor" | "cambio"; fila: Fila } | { tipo: "agregar" | "excel" | "importar" } | null;
 
 type Props = {
   filas: Fila[];
@@ -96,6 +98,9 @@ export function Departamentos({ filas, medidores, totalDeclarado, conMedidores, 
         </div>
         {puede && (
           <div className="flex flex-wrap gap-2">
+            <button className="btn quiet" onClick={() => setVentana({ tipo: "importar" })}>
+              Importar departamentos y ocupantes
+            </button>
             <button className="btn quiet" onClick={() => setVentana({ tipo: "excel" })}>
               Áreas y medidores desde Excel
             </button>
@@ -249,6 +254,9 @@ export function Departamentos({ filas, medidores, totalDeclarado, conMedidores, 
 
       <Modal abierto={ventana?.tipo === "agregar"} titulo="Agregar departamento" onCerrar={() => cerrar()}>
         <FormAgregar onListo={cerrar} />
+      </Modal>
+      <Modal abierto={ventana?.tipo === "importar"} titulo="Importar departamentos y ocupantes" onCerrar={() => cerrar()} amplio>
+        <FormImportar numeros={filas.map((f) => f.numero)} onListo={cerrar} />
       </Modal>
       <Modal abierto={ventana?.tipo === "excel"} titulo="Áreas y medidores desde Excel" onCerrar={() => cerrar()}>
         <FormExcel numeros={filas.map((f) => f.numero)} onListo={cerrar} />
@@ -565,5 +573,94 @@ function Campo({
         step={tipo === "number" ? "any" : undefined}
       />
     </div>
+  );
+}
+
+// Carga masiva de departamentos y ocupantes en un edificio que ya existe (RN-27)
+function FormImportar({ numeros, onListo }: { numeros: string[]; onListo: (r: Resultado) => void }) {
+  const [texto, setTexto] = useState("");
+  const [origen, setOrigen] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [enviando, iniciar] = useTransition();
+  const existentes = useMemo(() => new Set(numeros.map((n) => n.toLowerCase())), [numeros]);
+  const filas = useMemo(
+    () =>
+      leerFilas(celdasDeTexto(texto)).map((f) =>
+        !f.error && existentes.has(f.numero.toLowerCase()) ? { ...f, error: `El departamento ${f.numero} ya existe` } : f,
+      ),
+    [texto, existentes],
+  );
+  const conError = filas.filter((f) => f.error);
+
+  async function leerArchivo(f: File) {
+    setError(null);
+    try {
+      if (/\.(csv|txt)$/i.test(f.name)) return (setTexto(await f.text()), setOrigen(f.name));
+      const XLSX = await import("xlsx");
+      const libro = XLSX.read(await f.arrayBuffer());
+      const celdas = XLSX.utils.sheet_to_json<string[]>(libro.Sheets[libro.SheetNames[0]], { header: 1, raw: false, defval: "" });
+      setTexto(celdas.map((c) => c.join("\t")).join("\n"));
+      setOrigen(f.name);
+    } catch {
+      setError("No pudimos leer el archivo. Guárdalo como Excel (.xlsx) o CSV e inténtalo otra vez.");
+    }
+  }
+
+  return (
+    <>
+      <p className="mb-3 text-sm text-muted">
+        Agrega en bloque los departamentos que faltan, con su propietario, inquilino, correo y teléfono (y, si los tienes, área y
+        medidor). Los que ya existen no se tocan. Si una fila tiene un error, no se guarda ninguna.
+      </p>
+      {error && (
+        <p className="err" role="alert">
+          {error}
+        </p>
+      )}
+      <FuentesPlantilla onTexto={(t, o) => (setTexto(t), setOrigen(o))} />
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <label className="btn quiet sm cursor-pointer" htmlFor="im-f">
+          Subir Excel o CSV
+        </label>
+        <input id="im-f" type="file" accept=".xlsx,.xls,.csv,.txt" className="sr-only" onChange={(e) => e.target.files?.[0] && leerArchivo(e.target.files[0])} />
+        {origen && <span className="text-sm text-muted">Leído de {origen}. Puedes corregir abajo.</span>}
+      </div>
+      <div className="field">
+        <label htmlFor="im-t">O pega aquí la tabla</label>
+        <textarea id="im-t" rows={6} value={texto} onChange={(e) => setTexto(e.target.value)} className="font-mono text-[0.82rem]" spellCheck={false} />
+      </div>
+      {filas.length > 0 && (
+        <p className="mb-2 text-sm">
+          <b>{filas.length}</b> {filas.length === 1 ? "departamento" : "departamentos"} leídos
+          {conError.length > 0 && <span className="text-bad"> · {conError.length} con error</span>}
+          {filas.length > MAX_FILAS && <span className="text-bad"> · máximo {MAX_FILAS}</span>}
+        </p>
+      )}
+      {conError.length > 0 && (
+        <div className="errlist mb-3" role="alert">
+          {conError.slice(0, 10).map((f) => (
+            <p key={f.fila}>
+              Fila {f.fila}: {f.error}
+            </p>
+          ))}
+        </div>
+      )}
+      <div className="flex justify-end">
+        <button
+          className="btn"
+          disabled={enviando || filas.length === 0 || conError.length > 0 || filas.length > MAX_FILAS}
+          onClick={() => {
+            setError(null);
+            iniciar(async () => {
+              const r = await importarDepartamentos(paraImportar(filas));
+              if (r.ok) onListo(r);
+              else setError(r.mensaje);
+            });
+          }}
+        >
+          {enviando ? "Importando…" : `Importar ${filas.length || ""} ${filas.length === 1 ? "departamento" : "departamentos"}`}
+        </button>
+      </div>
+    </>
   );
 }

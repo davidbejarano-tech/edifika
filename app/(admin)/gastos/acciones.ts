@@ -31,11 +31,15 @@ export async function registrarGasto(_: Resultado, f: FormData): Promise<Resulta
   if (!categoria || !descripcion) return falla("Escribe la categoría y el detalle del gasto.");
   if (!(monto > 0)) return falla("El monto debe ser mayor que cero.");
   if (!fecha) return falla("Indica la fecha del gasto.");
+  const recurrente = texto(f.get("tipo")) === "recurrente";
+  const frecuencia = Number(texto(f.get("frecuencia_meses")));
+  if (recurrente && ![1, 2, 3, 4, 6, 12].includes(frecuencia)) return falla("Elige cada cuánto se repite el gasto.");
 
   const { error } = await supabase.from("gastos").insert({
     edificio_id: actual.edificio_id,
     periodo_id: texto(f.get("periodo_id")),
-    tipo: texto(f.get("tipo")) === "recurrente" ? "recurrente" : "extraordinario",
+    tipo: recurrente ? "recurrente" : "extraordinario",
+    frecuencia_meses: recurrente ? frecuencia : 1,
     categoria,
     descripcion,
     monto,

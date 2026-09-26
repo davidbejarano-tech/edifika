@@ -14,7 +14,7 @@ export async function confirmarGastos(periodoId: string): Promise<Resultado> {
 
 // RN-07: abrir el mes siguiente (solo titular). abrir_periodo cierra el mes, emite una cuota por
 // departamento con su desglose y registra los gastos recurrentes del nuevo mes.
-export async function abrirMes(recurrentes: { categoria: string; descripcion: string; monto: number }[]): Promise<Resultado> {
+export async function abrirMes(recurrentes: { categoria: string; descripcion: string; monto: number; frecuencia_meses: number }[]): Promise<Resultado> {
   const { supabase, actual } = await obtenerContexto();
   if (!actual) return { ok: false, mensaje: "Elige un edificio." };
   const limpios = recurrentes.filter((r) => r.categoria.trim() && r.monto > 0);

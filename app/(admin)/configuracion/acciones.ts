@@ -38,11 +38,84 @@ function traducir(m: string) {
 
 export async function guardarDatos(_: Resultado, f: FormData): Promise<Resultado> {
   const nombre = texto(f.get("nombre"));
-  const direccion = texto(f.get("direccion"));
   const total = numero(f.get("total"));
-  if (!nombre || !direccion) return { ok: false, mensaje: "El nombre y la dirección son obligatorios." };
+  const calle = texto(f.get("calle"));
+  const ubigeo = texto(f.get("ubigeo"));
+  const anio = numero(f.get("anio"));
+  if (!nombre) return { ok: false, mensaje: "El nombre del edificio es obligatorio." };
+  if (!calle) return { ok: false, mensaje: "Escribe la calle, avenida o jirón." };
+  if (!/^d{6}$/.test(ubigeo)) return { ok: false, mensaje: "Elige el departamento, la provincia y el distrito." };
   if (!total || !Number.isInteger(total) || total < 1) return { ok: false, mensaje: "La cantidad de departamentos debe ser un número entero mayor que cero." };
-  return guardar({ nombre, direccion, total_departamentos: total }, "Datos del edificio guardados.");
+  if (anio !== null && (!Number.isInteger(anio) || anio < 1800 || anio > new Date().getFullYear() + 5)) {
+    return { ok: false, mensaje: "Revisa el año de construcción." };
+  }
+  return guardar(
+    {
+      nombre,
+      total_departamentos: total,
+      calle,
+      numero_calle: texto(f.get("numero")) || null,
+      urbanizacion: texto(f.get("urbanizacion")) || null,
+      referencia: texto(f.get("referencia")) || null,
+      ubigeo,
+      pais: "PE",
+      anio_construccion: anio,
+      constructora: texto(f.get("constructora")) || null,
+    },
+    "Datos del edificio guardados.",
+  );
+}
+
+// Foto o logo ya subidos a Storage por el navegador (solo el titular puede subir: RLS del bucket)
+export async function guardarImagen(tipo: "foto" | "logo", ruta: string | null): Promise<Resultado> {
+  const { supabase, actual } = await obtenerContexto();
+  if (!actual) return { ok: false, mensaje: "Elige un edificio." };
+  if (ruta && !ruta.startsWith(`${actual.edificio_id}/`)) return { ok: false, mensaje: "Ruta de imagen inválida." };
+  const { data: antes } = await supabase.from("edificios").select("foto_path, logo_path").eq("id", actual.edificio_id).single();
+  const anterior = tipo === "foto" ? antes?.foto_path : antes?.logo_path;
+  const r = await guardar(tipo === "foto" ? { foto_path: ruta } : { logo_path: ruta }, ruta ? (tipo === "foto" ? "Foto guardada." : "Logo guardado: aparecerá en los recibos y el estado de cuenta.") : "Imagen quitada.");
+  if (r.ok && anterior && anterior !== ruta) await supabase.storage.from("edificios").remove([anterior]);
+  return r;
+}
+
+export async function urlArchivoEdificio(ruta: string): Promise<string | null> {
+  const { supabase } = await obtenerContexto();
+  const { data } = await supabase.storage.from("edificios").createSignedUrl(ruta, 600);
+  return data?.signedUrl ?? null;
+}
+
+// Certificaciones: la RLS solo deja escribir al titular
+export async function crearCertificacion(c: { nombre: string; entidad: string; emitida_en: string; vence_en: string; archivo_path: string | null }): Promise<Resultado> {
+  const { supabase, actual } = await obtenerContexto();
+  if (!actual) return { ok: false, mensaje: "Elige un edificio." };
+  if (c.nombre.trim().length < 2) return { ok: false, mensaje: "Escribe el nombre de la certificación." };
+  if (c.emitida_en && c.vence_en && c.vence_en < c.emitida_en) return { ok: false, mensaje: "El vencimiento no puede ser antes de la emisión." };
+  const { error } = await supabase
+    .from("certificaciones")
+    .insert({
+      edificio_id: actual.edificio_id,
+      nombre: c.nombre.trim(),
+      entidad: c.entidad.trim() || null,
+      emitida_en: c.emitida_en || null,
+      vence_en: c.vence_en || null,
+      archivo_path: c.archivo_path,
+    })
+    .select("id")
+    .single();
+  if (error) return { ok: false, mensaje: "Solo el administrador titular registra certificaciones." };
+  revalidatePath("/configuracion");
+  revalidatePath("/inicio");
+  return { ok: true, mensaje: "Certificación registrada." };
+}
+
+export async function borrarCertificacion(id: string): Promise<Resultado> {
+  const { supabase } = await obtenerContexto();
+  const { data } = await supabase.from("certificaciones").delete().eq("id", id).select("archivo_path");
+  if (!data?.length) return { ok: false, mensaje: "Solo el administrador titular elimina certificaciones." };
+  if (data[0].archivo_path) await supabase.storage.from("edificios").remove([data[0].archivo_path]);
+  revalidatePath("/configuracion");
+  revalidatePath("/inicio");
+  return { ok: true, mensaje: "Certificación eliminada." };
 }
 
 export async function guardarCobranza(_: Resultado, f: FormData): Promise<Resultado> {

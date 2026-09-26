@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { guardarCobranza, guardarDatos, guardarPago, type Resultado } from "./acciones";
+import { guardarCobranza, guardarPago, type Resultado } from "./acciones";
 
 type Edificio = {
   nombre: string;
@@ -43,31 +43,6 @@ function Pie({ puede, enviando, texto }: { puede: boolean; enviando: boolean; te
         {enviando ? "Guardando…" : texto}
       </button>
     </div>
-  );
-}
-
-export function FormDatos({ e, puede }: { e: Edificio; puede: boolean }) {
-  const [r, accion, enviando] = useActionState(guardarDatos, inicial);
-  return (
-    <form action={accion} className="panel" id="datos">
-      <h3 className="mb-3">Datos del edificio</h3>
-      <Aviso r={r} />
-      <fieldset disabled={!puede} className="grid gap-x-4 sm:grid-cols-2">
-        <div className="field">
-          <label htmlFor="c-n">Nombre del edificio</label>
-          <input id="c-n" name="nombre" defaultValue={e.nombre} required />
-        </div>
-        <div className="field">
-          <label htmlFor="c-d">Dirección</label>
-          <input id="c-d" name="direccion" defaultValue={e.direccion} required />
-        </div>
-        <div className="field">
-          <label htmlFor="c-t">Cantidad total de departamentos</label>
-          <input id="c-t" name="total" type="number" min={1} step={1} defaultValue={e.total_departamentos} required />
-        </div>
-      </fieldset>
-      <Pie puede={puede} enviando={enviando} texto="Guardar datos" />
-    </form>
   );
 }
 

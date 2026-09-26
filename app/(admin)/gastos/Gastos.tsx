@@ -2,9 +2,10 @@
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { fecha, soles } from "@/lib/format";
+import { FRECUENCIAS, nombreFrecuencia } from "@/lib/gastos";
 import { confirmarGastos, eliminarGasto, registrarGasto, type Resultado } from "./acciones";
 
-type Gasto = { id: string; tipo: string; categoria: string; descripcion: string; monto: number; fecha: string; origen: string };
+type Gasto = { id: string; tipo: string; categoria: string; descripcion: string; monto: number; fecha: string; origen: string; frecuencia_meses: number };
 type Props = {
   periodo: { id: string; nombre: string; mes: string; confirmado: boolean };
   gastos: Gasto[];
@@ -25,13 +26,17 @@ export function Gastos({ periodo, gastos, categorias, puedeRegistrar, esTitular 
   const [pendiente, iniciar] = useTransition();
   const [r, enviar, enviando] = useActionState(registrarGasto, inicial);
   const form = useRef<HTMLFormElement>(null);
+  const [tipo, setTipo] = useState("extraordinario");
   const editable = puedeRegistrar && !periodo.confirmado;
   const total = gastos.reduce((s, g) => s + g.monto, 0);
 
   // Tras registrar, se limpia el formulario y se muestra el aviso
   useEffect(() => {
     if (r.mensaje) setAviso(r);
-    if (r.ok) form.current?.reset();
+    if (r.ok) {
+      form.current?.reset();
+      setTipo("extraordinario");
+    }
   }, [r]);
 
   function eliminar(g: Gasto) {
@@ -49,6 +54,7 @@ export function Gastos({ periodo, gastos, categorias, puedeRegistrar, esTitular 
 
   const seccion = (tipo: string, titulo: string) => {
     const lista = gastos.filter((g) => g.tipo === tipo);
+    const conFrecuencia = tipo === "recurrente";
     return (
       <>
         <h3 className="mt-4 mb-2">{titulo}</h3>
@@ -60,6 +66,7 @@ export function Gastos({ periodo, gastos, categorias, puedeRegistrar, esTitular 
                   <th>Fecha</th>
                   <th>Categoría</th>
                   <th>Detalle</th>
+                  {conFrecuencia && <th>Frecuencia</th>}
                   <th className="r">Monto</th>
                   {editable && <th></th>}
                 </tr>
@@ -70,6 +77,7 @@ export function Gastos({ periodo, gastos, categorias, puedeRegistrar, esTitular 
                     <td className="whitespace-nowrap">{fecha(g.fecha)}</td>
                     <td>{g.categoria}</td>
                     <td>{g.descripcion}</td>
+                    {conFrecuencia && <td>{nombreFrecuencia(g.frecuencia_meses)}</td>}
                     <td className="r">{soles(g.monto)}</td>
                     {editable && (
                       <td className="r">
@@ -87,7 +95,7 @@ export function Gastos({ periodo, gastos, categorias, puedeRegistrar, esTitular 
               </tbody>
               <tfoot>
                 <tr className="font-bold">
-                  <td colSpan={3}>Subtotal</td>
+                  <td colSpan={conFrecuencia ? 4 : 3}>Subtotal</td>
                   <td className="r">{soles(lista.reduce((s, g) => s + g.monto, 0))}</td>
                   {editable && <td></td>}
                 </tr>
@@ -142,11 +150,27 @@ export function Gastos({ periodo, gastos, categorias, puedeRegistrar, esTitular 
             <div className="grid gap-x-4 sm:grid-cols-2">
               <div className="field">
                 <label htmlFor="g-t">Tipo</label>
-                <select id="g-t" name="tipo" defaultValue="extraordinario">
+                <select id="g-t" name="tipo" defaultValue="extraordinario" onChange={(e) => setTipo(e.target.value)}>
                   <option value="extraordinario">Extraordinario</option>
-                  <option value="recurrente">Recurrente (se repite cada mes)</option>
+                  <option value="recurrente">Recurrente (se repite)</option>
                 </select>
               </div>
+              {tipo === "recurrente" && (
+                <div className="field">
+                  <label htmlFor="g-fr">Frecuencia</label>
+                  <select id="g-fr" name="frecuencia_meses" required defaultValue="">
+                    <option value="" disabled>
+                      ¿Cada cuánto se paga?
+                    </option>
+                    {FRECUENCIAS.map((f) => (
+                      <option key={f.meses} value={f.meses}>
+                        {f.nombre}
+                        {f.meses > 1 ? ` (cada ${f.meses} meses)` : " (cada mes)"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="field">
                 <label htmlFor="g-c">Categoría</label>
                 <input id="g-c" name="categoria" list="categorias" required placeholder="Ej. Reparaciones" />

@@ -15,7 +15,7 @@ export default async function GastosPage({ searchParams }: { searchParams: Promi
     ? await Promise.all([
         supabase
           .from("gastos")
-          .select("id, tipo, categoria, descripcion, monto, fecha, origen")
+          .select("id, tipo, categoria, descripcion, monto, fecha, origen, frecuencia_meses")
           .eq("periodo_id", periodo.id)
           .order("fecha"),
         supabase.from("gastos").select("categoria").eq("edificio_id", actual.edificio_id).eq("origen", "manual").limit(500),

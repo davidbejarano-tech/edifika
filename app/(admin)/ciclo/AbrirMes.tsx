@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { soles } from "@/lib/format";
+import { FRECUENCIAS } from "@/lib/gastos";
 import { abrirMes, confirmarGastos, type Resultado } from "./acciones";
 
-type Recurrente = { categoria: string; descripcion: string; monto: number };
+type Recurrente = { categoria: string; descripcion: string; monto: number; frecuencia_meses: number };
 
 export function BotonConfirmar({ periodoId, nombre }: { periodoId: string; nombre: string }) {
   const [r, setR] = useState<Resultado | null>(null);
@@ -33,14 +34,15 @@ type Props = {
   esTitular: boolean;
   errorCalculo: string | null;
   recurrentes: Recurrente[];
+  noTocan: { concepto: string; frecuencia: string; proximo: string }[];
   cuotas: { numero: string; total: number }[];
 };
 
 const SUGERIDOS = ["Energía eléctrica", "Internet y cámaras", "Sueldos", "Mantenimiento de ascensor"];
 
-export function AbrirMes({ nombre, nombreSiguiente, confirmado, esTitular, errorCalculo, recurrentes, cuotas }: Props) {
+export function AbrirMes({ nombre, nombreSiguiente, confirmado, esTitular, errorCalculo, recurrentes, noTocan, cuotas }: Props) {
   const inicial: (Recurrente & { clave: number })[] = (
-    recurrentes.length ? recurrentes : SUGERIDOS.map((c) => ({ categoria: c, descripcion: c, monto: 0 }))
+    recurrentes.length ? recurrentes : SUGERIDOS.map((c) => ({ categoria: c, descripcion: c, monto: 0, frecuencia_meses: 1 }))
   ).map((r, i) => ({ ...r, clave: i }));
   const [filas, setFilas] = useState(inicial);
   const [aviso, setAviso] = useState<Resultado>({ ok: false, mensaje: null });
@@ -50,13 +52,13 @@ export function AbrirMes({ nombre, nombreSiguiente, confirmado, esTitular, error
   const totalCuotas = cuotas.reduce((s, c) => s + c.total, 0);
 
   const cambiar = (clave: number, campo: keyof Recurrente, valor: string) =>
-    setFilas((xs) => xs.map((x) => (x.clave === clave ? { ...x, [campo]: campo === "monto" ? Number(valor) : valor } : x)));
+    setFilas((xs) => xs.map((x) => (x.clave === clave ? { ...x, [campo]: campo === "monto" || campo === "frecuencia_meses" ? Number(valor) : valor } : x)));
 
   function abrir() {
     if (!confirm(`¿Abrir ${nombreSiguiente}? Se cerrará ${nombre} y se emitirán ${cuotas.length} cuotas por ${soles(totalCuotas)}.`)) return;
     iniciar(async () =>
       setAviso(
-        await abrirMes(filas.map(({ categoria, descripcion, monto }) => ({ categoria, descripcion: descripcion || categoria, monto }))),
+        await abrirMes(filas.map(({ categoria, descripcion, monto, frecuencia_meses }) => ({ categoria, descripcion: descripcion || categoria, monto, frecuencia_meses }))),
       ),
     );
   }
@@ -81,7 +83,7 @@ export function AbrirMes({ nombre, nombreSiguiente, confirmado, esTitular, error
       <p className="mb-2 text-sm font-semibold text-muted">Gastos recurrentes de {nombreSiguiente}</p>
       <div className="grid gap-2">
         {filas.map((f) => (
-          <div key={f.clave} className="grid grid-cols-[1fr_8rem_auto] items-end gap-2">
+          <div key={f.clave} className="grid grid-cols-[1fr_6.5rem_auto] items-end gap-2 sm:grid-cols-[1fr_9rem_8rem_auto]">
             <div className="field mb-0">
               <label htmlFor={`rc-c-${f.clave}`} className="sr-only">
                 Concepto
@@ -93,6 +95,23 @@ export function AbrirMes({ nombre, nombreSiguiente, confirmado, esTitular, error
                 placeholder="Concepto"
                 disabled={!puedeAbrir}
               />
+            </div>
+            <div className="field order-last col-span-2 mb-0 sm:order-none sm:col-span-1">
+              <label htmlFor={`rc-f-${f.clave}`} className="sr-only">
+                Frecuencia de {f.categoria}
+              </label>
+              <select
+                id={`rc-f-${f.clave}`}
+                value={f.frecuencia_meses}
+                onChange={(e) => cambiar(f.clave, "frecuencia_meses", e.target.value)}
+                disabled={!puedeAbrir}
+              >
+                {FRECUENCIAS.map((fr) => (
+                  <option key={fr.meses} value={fr.meses}>
+                    {fr.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field mb-0">
               <label htmlFor={`rc-m-${f.clave}`} className="sr-only">
@@ -125,12 +144,24 @@ export function AbrirMes({ nombre, nombreSiguiente, confirmado, esTitular, error
       <button
         type="button"
         className="btn ghost sm mt-2"
-        onClick={() => setFilas((xs) => [...xs, { categoria: "", descripcion: "", monto: 0, clave: Date.now() }])}
+        onClick={() => setFilas((xs) => [...xs, { categoria: "", descripcion: "", monto: 0, frecuencia_meses: 1, clave: Date.now() }])}
         disabled={!puedeAbrir}
       >
         + Agregar concepto
       </button>
       <p className="mt-1 text-xs text-muted">Los conceptos sin monto no se registran.</p>
+      {noTocan.length > 0 && (
+        <p className="mt-2 text-sm text-muted">
+          No tocan en {mesCorto}:{" "}
+          {noTocan.map((n, i) => (
+            <span key={n.concepto}>
+              {i > 0 && "; "}
+              {n.concepto} ({n.frecuencia}, próximo en {n.proximo})
+            </span>
+          ))}
+          .
+        </p>
+      )}
 
       {cuotas.length > 0 && (
         <details className="mt-4">

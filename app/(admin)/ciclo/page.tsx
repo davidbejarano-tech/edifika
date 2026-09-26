@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { obtenerContexto } from "@/lib/contexto";
 import { fecha, mes, soles } from "@/lib/format";
+import { mesesEntre, nombreFrecuencia } from "@/lib/gastos";
 import { mesSiguiente, periodosDe } from "@/lib/periodos";
 import { AbrirMes, BotonConfirmar } from "./AbrirMes";
 import { CorteDesarrollo } from "./CorteDesarrollo";
@@ -23,7 +24,9 @@ export default async function CicloPage() {
     );
   }
 
-  const [{ data: ed }, { data: gastos }, { data: recibo }, { data: lecturas }, { count: cuotas }, calculo, { data: corte }] =
+  const siguiente = mesSiguiente(periodo.mes);
+  const haceUnAnio = `${Number(siguiente.slice(0, 4)) - 1}${siguiente.slice(4)}`;
+  const [{ data: ed }, { data: gastos }, { data: recibo }, { data: lecturas }, { count: cuotas }, calculo, { data: corte }, { data: historial }] =
     await Promise.all([
       supabase.from("edificios").select("agua_cuota, dia_corte, dia_lectura").eq("id", actual.edificio_id).single(),
       supabase.from("gastos").select("tipo, categoria, descripcion, monto, origen").eq("periodo_id", periodo.id),
@@ -37,6 +40,14 @@ export default async function CicloPage() {
         .in("tipo", ["cuota", "adelanto"]),
       supabase.rpc("calcular_cuotas", { p_periodo: periodo.id }),
       supabase.from("cortes").select("*").eq("periodo_id", periodo.id).maybeSingle(),
+      supabase
+        .from("gastos")
+        .select("categoria, descripcion, monto, fecha, frecuencia_meses")
+        .eq("edificio_id", actual.edificio_id)
+        .eq("tipo", "recurrente")
+        .eq("origen", "manual")
+        .gte("fecha", haceUnAnio)
+        .order("fecha", { ascending: false }),
     ]);
 
   const lista = gastos ?? [];
@@ -47,9 +58,28 @@ export default async function CicloPage() {
   const leidos = (lecturas ?? []).filter((l) => l.lectura !== null).length;
   const confirmado = !!periodo.gastos_confirmados_en;
   const nombre = mes(periodo.mes);
-  const siguiente = mesSiguiente(periodo.mes);
   const nombreSiguiente = mes(siguiente);
   const diaCorte = ed?.dia_corte ?? 15;
+
+  // Cada gasto recurrente (por concepto) se propone en el mes que le toca según su frecuencia,
+  // contando desde la última vez que se registró
+  const ultimos = new Map<string, NonNullable<typeof historial>[number]>();
+  for (const g of historial ?? []) {
+    const clave = `${g.categoria}|${g.descripcion}`;
+    if (!ultimos.has(clave)) ultimos.set(clave, g);
+  }
+  const tocan = [...ultimos.values()].filter((g) => mesesEntre(g.fecha, siguiente) === g.frecuencia_meses);
+  const noTocan = [...ultimos.values()]
+    .filter((g) => g.frecuencia_meses > 1 && mesesEntre(g.fecha, siguiente) < g.frecuencia_meses)
+    .map((g) => {
+      const [a, m] = g.fecha.slice(0, 7).split("-").map(Number);
+      const t = a * 12 + m - 1 + g.frecuencia_meses;
+      return {
+        concepto: g.categoria,
+        frecuencia: nombreFrecuencia(g.frecuencia_meses).toLowerCase(),
+        proximo: mes(`${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}-01`),
+      };
+    });
 
   const pasos: Paso[] = [
     {
@@ -152,7 +182,13 @@ export default async function CicloPage() {
         confirmado={confirmado}
         esTitular={esTitular}
         errorCalculo={calculo.error?.message ?? null}
-        recurrentes={recurrentes.map((g) => ({ categoria: g.categoria, descripcion: g.descripcion, monto: Number(g.monto) }))}
+        recurrentes={tocan.map((g) => ({
+          categoria: g.categoria,
+          descripcion: g.descripcion,
+          monto: Number(g.monto),
+          frecuencia_meses: g.frecuencia_meses,
+        }))}
+        noTocan={noTocan}
         cuotas={(calculo.data ?? []).map((f) => ({ numero: f.numero, total: Number(f.total) }))}
       />
 

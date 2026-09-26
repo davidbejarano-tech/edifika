@@ -11,13 +11,18 @@ export default async function HabitanteLayout({ children }: { children: React.Re
   if (!(await terminosAceptados(supabase, user.id, user.user_metadata))) redirect("/aceptar-terminos");
   if (!actual) redirect("/edificios");
   if (!actual.departamento_id) redirect(actual.nivel ? "/inicio" : "/edificios");
+  const [{ data: modulos }, { count: reservas }] = await Promise.all([
+    supabase.rpc("estado_modulos", { p_edificio: actual.edificio_id }),
+    supabase.from("reservas").select("id", { count: "exact", head: true }).eq("departamento_id", actual.departamento_id),
+  ]);
+  const conAreas = (modulos ?? []).some((m) => m.modulo === "areas_comunes" && m.estado !== "bloqueado") || (reservas ?? 0) > 0;
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[220px_1fr] md:grid-rows-[auto_1fr] print:block">
       <div className="md:col-span-2">
         <Encabezado edificio={actual} vista="habitante" variosEdificios={edificios.length > 1} />
       </div>
-      <MenuHabitante />
+      <MenuHabitante areas={conAreas} />
       <main className="mx-auto w-full max-w-[1000px] min-w-0 px-4 pt-5 pb-12 md:px-8">{children}</main>
     </div>
   );

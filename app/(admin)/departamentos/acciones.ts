@@ -137,6 +137,15 @@ export async function actualizarDesdeTabla(filas: { numero: string; area: number
   return listo(`${data} ${data === 1 ? "departamento actualizado" : "departamentos actualizados"}.`);
 }
 
+// Carga masiva de departamentos y ocupantes (RN-27): todo o nada, lo valida importar_departamentos()
+export async function importarDepartamentos(filas: Record<string, unknown>[]): Promise<Resultado> {
+  const { supabase, actual } = await obtenerContexto();
+  if (!actual) return falla("Elige un edificio.");
+  const { data, error } = await supabase.rpc("importar_departamentos", { p_edificio: actual.edificio_id, p_filas: filas as never });
+  if (error) return falla(error.message);
+  return listo(`${data} ${data === 1 ? "departamento importado" : "departamentos importados"}. Ya puedes invitar a sus ocupantes.`);
+}
+
 // Invitación y restablecimiento de clave: Edge Function "invitar-habitante" (solo titular)
 async function llamarInvitacion(departamentoId: string, accion: "invitar" | "restablecer"): Promise<Resultado> {
   const { supabase } = await obtenerContexto();

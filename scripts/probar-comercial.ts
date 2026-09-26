@@ -85,7 +85,7 @@ async function main() {
     ok(!(await T.sb.rpc("activar_prueba", { p_edificio: edA, p_modulo: "mantenimiento" })).error, "La titular activa la prueba de Mantenimiento");
     const prueba = (await T.sb.rpc("estado_modulos", { p_edificio: edA })).data!.find((m) => m.modulo === "mantenimiento")!;
     ok(prueba.estado === "prueba" && prueba.dias_prueba === 14, "Queda en prueba con 14 días");
-    await admin.from("modulos_edificio").update({ prueba_hasta: new Date(Date.now() - 86400000).toISOString().slice(0, 10) }).eq("edificio_id", edA);
+    await admin.from("modulos_edificio").update({ prueba_hasta: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10) }).eq("edificio_id", edA); // dos días: seguro en hora de Lima
     const vencida = (await T.sb.rpc("estado_modulos", { p_edificio: edA })).data!.find((m) => m.modulo === "mantenimiento")!;
     ok(vencida.estado === "bloqueado" && vencida.prueba_usada, "Vencida la prueba, vuelve a bloquearse");
     ok(!!(await T.sb.rpc("activar_prueba", { p_edificio: edA, p_modulo: "mantenimiento" })).error, "La prueba no se repite");

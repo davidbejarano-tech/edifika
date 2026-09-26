@@ -1,4 +1,5 @@
-import { Document, Page, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Image as Imagen, Page, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import type { LogoPdf as LogoEdificio } from "../logo-edificio";
 import type { EstadoCuentaDatos } from "../estado-cuenta";
 import { fecha, mes, soles } from "../format";
 import { C, Fila, FilaTotal, LogoPdf, Pie, s } from "./comunes";
@@ -6,7 +7,7 @@ import { C, Fila, FilaTotal, LogoPdf, Pie, s } from "./comunes";
 const hoyLima = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date());
 
 // Estado de cuenta mensual en A4: el mismo contenido que components/EstadoCuenta.tsx
-function EstadoCuentaPdf({ e }: { e: EstadoCuentaDatos }) {
+function EstadoCuentaPdf({ e, logo }: { e: EstadoCuentaDatos; logo: LogoEdificio | null }) {
   const sello = e.oficial ? C.ok : C.aviso;
   const cifras: [string, string, string][] = [
     ["Saldo anterior", soles(e.saldoAnterior), C.tinta],
@@ -19,7 +20,7 @@ function EstadoCuentaPdf({ e }: { e: EstadoCuentaDatos }) {
       <Page size="A4" style={s.pagina}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 2, borderBottomColor: C.navy, paddingBottom: 10, marginBottom: 12 }}>
           <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
-            <LogoPdf alto={30} />
+            {logo ? <Imagen src={logo} style={{ height: 40, maxWidth: 110, objectFit: "contain" }} /> : <LogoPdf alto={30} />}
             <View style={{ flex: 1 }}>
               <Text style={s.tenue}>Estado de cuenta mensual</Text>
               <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 15, color: C.navy, lineHeight: 1.2, marginBottom: 2 }}>{e.nombre}</Text>
@@ -102,6 +103,6 @@ function EstadoCuentaPdf({ e }: { e: EstadoCuentaDatos }) {
   );
 }
 
-export function pdfEstadoCuenta(e: EstadoCuentaDatos) {
-  return renderToBuffer(<EstadoCuentaPdf e={e} />);
+export function pdfEstadoCuenta(e: EstadoCuentaDatos, logo: LogoEdificio | null = null) {
+  return renderToBuffer(<EstadoCuentaPdf e={e} logo={logo} />);
 }
